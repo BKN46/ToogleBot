@@ -1,0 +1,15 @@
+mcl
+java/
+LICENSE
+mcl.cmd
+mcl.jar
+README.md
+config.json
+libs/
+plugins/
+config/
+data/
+logs/
+plugin-libraries/
+plugin-shared-libraries/
+bots/
