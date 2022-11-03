@@ -1,0 +1,2 @@
+def VisibleException(Exception):
+    pass
