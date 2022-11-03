@@ -1,5 +1,6 @@
 from typing import Tuple, Any
 
+import nonebot
 from nonebot.adapters.mirai2 import MessageSegment, MessageChain
 from nonebot.adapters.mirai2.event.base import GroupChatInfo, PrivateChatInfo
 from nonebot.adapters.mirai2.event.message import MessageEvent
@@ -13,6 +14,7 @@ from toogle.message import MessageChain as ToogleChain
 from toogle.message import Plain, Image, At, Element, Group, Member
 from toogle.message_handler import MessageHandler, MessagePack
 
+warning = nonebot.logger.warning # type: ignore
 
 class PluginWrapper:
     def __init__(self, plugin: MessageHandler) -> None:

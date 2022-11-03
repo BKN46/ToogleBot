@@ -38,11 +38,11 @@ TODO
   - [ ] Markov
   - [x] CurrencyExchange
   - [ ] GetHelp
-  - [ ] RunPython
-  - [ ] Mathematica
+  - [x] RunPython
+  - [x] Mathematica
   - [ ] HelpMeSelect
   - [ ] Swear
-  - [ ] Calculator
+  - [x] Calculator
   - [ ] NowTime
   - [ ] DBPedia
 - [ ] DND功能
