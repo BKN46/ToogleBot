@@ -6,12 +6,14 @@ Mirai + Nonebot2实现
 ## 安装
 
 ```plain
-暂时只支持mac/linux
+安装教程只包含mac/linux
+windows请自己研究配置
 ```
 
-1. 安装nonebot2，`python3 -m pip install nb-cli`
-2. 安装mirai，在`./mirai/`下运行`./install.sh`
-3. 如下配置`.env`
+1. 升级pip，`pip3 install -U pip setuptools`
+2. 安装python依赖，`python3 -m pip install -r requirements.txt`
+3. 安装mirai，在`./mirai/`下运行`./install.sh`
+4. 如下配置`.env`
 
 ```ini
 ENVIRONMENT=dev
@@ -23,6 +25,10 @@ MIRAI_PORT=5700               # mirai-api-http端口
 MIRAI_QQ=["123456789"]        # 登陆QQ号
 SUPERUSERS=["123456789"]      # 管理员QQ号
 ```
+
+## Docker使用
+
+TODO
 
 ## 原始功能迁移
 
