@@ -10,7 +10,7 @@ Mirai + Nonebot2实现
 windows请自己研究配置
 ```
 
-1. 升级pip，`pip3 install -U pip setuptools`
+1. 升级pip，`python3 -m pip install -U pip setuptools`
 2. 安装python依赖，`python3 -m pip install -r requirements.txt`
 3. 安装mirai，在`./mirai/`下运行`./install.sh`
 4. 如下配置`.env`
@@ -26,6 +26,11 @@ MIRAI_QQ=["123456789"]        # 登陆QQ号
 SUPERUSERS=["123456789"]      # 管理员QQ号
 ```
 
+## 运行
+
+1. 进入mirai目录，启动mirai服务，`./mcl`
+2. 启动nonebot服务，`python3 -m pip -m nb_cli run`
+
 ## Docker使用
 
 TODO
@@ -37,27 +42,27 @@ TODO
   - [ ] CmdPipe
   - [ ] Markov
   - [x] CurrencyExchange
-  - [ ] GetHelp
+  - [x] GetHelp
   - [x] RunPython
   - [x] Mathematica
-  - [ ] HelpMeSelect
-  - [ ] Swear
+  - [x] HelpMeSelect
+  - [x] Swear
   - [x] Calculator
-  - [ ] NowTime
+  - [x] NowTime
   - [ ] DBPedia
 - [ ] DND功能
   - [ ] Search5EMagic
   - [ ] Search5ECHM
   - [ ] Hangman5EMagic
-  - [ ] FastPythagorean
-  - [ ] UnitConversion
-  - [ ] FastFallCal
+  - [x] FastPythagorean
+  - [x] UnitConversion
+  - [x] FastFallCal
   - [ ] CustomDiceTable
 - [ ] 图片相关
-  - [ ] GetSetu
+  - [x] GetSetu
   - [ ] GetLastSetuJson
   - [ ] GetQutu
-  - [ ] GetLuck
+  - [x] GetLuck
   - [ ] GetNews
   - [ ] GetRandomAnimeFemale
   - [ ] LongTu
@@ -71,8 +76,8 @@ TODO
   - [ ] SWTranslation
   - [ ] SWSpeed
   - [ ] PromoteAuth
-  - [ ] ThunderSkill
-  - [ ] WTVehicleLine
+  - [x] ThunderSkill
+  - [x] WTVehicleLine
   - [ ] ChatStatic
 - [ ] BKNW
   - [ ] BKNWRegist

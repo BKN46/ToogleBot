@@ -21,6 +21,14 @@ class Member:
         self.name = name
 
 
+class Quote(Element):
+    def __init__(self) -> None:
+        pass
+
+    def asDisplay(self) -> str:
+        return f"[Quote origin]"
+
+
 class At(Element):
     def __init__(self, target: int) -> None:
         self.target = target
@@ -38,22 +46,22 @@ class Plain(Element):
 
 
 class Image(Element):
+    id: Optional[str] = None
     base64: Optional[str] = None
     url: Optional[str] = None
     path: Optional[str] = None
 
     def __init__(
         self,
+        id: Optional[str] = None,
         path: Optional[str] = None,
         url: Optional[str] = None,
         base64: Optional[str] = None,
     ) -> None:
-        if base64:
-            self.base64 = base64
-        if path:
-            self.path = path
-        if url:
-            self.url = url
+        self.id = id
+        self.base64 = base64
+        self.path = path
+        self.url = url
 
     def asDisplay(self) -> str:
         return "[图片]"
@@ -79,6 +87,9 @@ class MessageChain:
 
     def asDisplay(self) -> str:
         return "".join(i.asDisplay() for i in self.root)
+
+    def get(self, t):
+        return [item for item in self.root if isinstance(item, t)]
 
     @staticmethod
     def create(message_list: List) -> "MessageChain":

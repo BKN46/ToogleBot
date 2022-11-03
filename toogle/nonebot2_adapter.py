@@ -11,10 +11,14 @@ from nonebot.matcher import Matcher
 from nonebot.params import RegexGroup, RegexMatched, EventMessage
 
 from toogle.message import MessageChain as ToogleChain
-from toogle.message import Plain, Image, At, Element, Group, Member
+from toogle.message import Plain, Image, At, Element, Group, Member, Quote
 from toogle.message_handler import MessageHandler, MessagePack
+from toogle.exceptions import VisibleException
 
-warning = nonebot.logger.warning # type: ignore
+from toogle.configs import config
+
+warning = nonebot.logger.warning  # type: ignore
+
 
 class PluginWrapper:
     def __init__(self, plugin: MessageHandler) -> None:
@@ -36,15 +40,39 @@ class PluginWrapper:
             await matcher.send("不支持该种聊天方式！")
             return
         message_pack = MessagePack(nb2toogle(message), group, member)
-        res = await self.plugin.ret(message_pack)
-        await matcher.send(toogle2nb(res))
+        if get_block(message_pack):
+            return
+        try:
+            res = await self.plugin.ret(message_pack)
+        except VisibleException as e:
+            await matcher.send(f"{repr(e)}")
+            return
+        await matcher.send(toogle2nb(res, message, event))
 
 
-def toogle2nb(message: ToogleChain) -> MessageChain:
+def get_block(message: MessagePack):
+    if str(message.member.id) in config["BLACK_LIST"]:
+        return True
+    return False
+
+
+def toogle2nb(
+    message: ToogleChain, origin: MessageChain, event: MessageEvent
+) -> MessageChain:
     message_list = []
     for item in message.root:
         if isinstance(item, Plain):
             message_list.append(MessageSegment.plain(item.text))
+        elif isinstance(item, Quote):
+            message_list.append(
+                MessageSegment.quote(
+                    event.source.id,  # type: ignore
+                    event.sender.group.id,
+                    event.sender.id,
+                    event.sender.group.id,
+                    origin,
+                )
+            )
         elif isinstance(item, Image):
             message_list.append(MessageSegment.image(base64=item.getBase64()))
             # if item.path:
@@ -64,7 +92,11 @@ def nb2toogle(message: MessageChain) -> ToogleChain:
             message_list.append(Plain(item.data["text"]))
         elif item.type == MessageType.IMAGE:
             message_list.append(
-                Image(url=item.data.get("url"), path=item.data.get("path"))
+                Image(
+                    id=item.data.get("id"),
+                    url=item.data.get("url"),
+                    path=item.data.get("path"),
+                )
             )
         else:
             message_list.append(Element())

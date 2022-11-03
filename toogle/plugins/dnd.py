@@ -4,12 +4,14 @@ import os
 import math
 import re
 
-
 from message_handler import MessageHandler, MessagePack
 from toogle.message_handler import MessagePack, MessageHandler
 from toogle.message import MessageChain, Plain, Image
 
-DND_IMAGES_PATH = "/root/repos/qqbot_graia/large_utils/femagic/chm_jpg/"  # 图片集地址
+from toogle.plugins.dnd.search_5e import search_magic
+from toogle.plugins.dnd.search_chm import search_chm
+
+DND_IMAGES_PATH = "toogle/plugins/dnd/chm_jpg/"  # 图片集地址
 
 
 class Search5EMagic(MessageHandler):
@@ -32,7 +34,7 @@ class CustomDiceTable(MessageHandler):
     async def ret(self, message: MessagePack) -> MessageChain:
         message_content = message.message.asDisplay().split("\n")
         cmd, content = message_content[0], "\n".join(message_content[1:])
-        table_path = settings.BASE_PATH + "tmp/dice_table/" + cmd.split()[1] + ".txt"
+        table_path = "data/dice_table/" + cmd.split()[1] + ".txt"
         table_exist = os.path.isfile(table_path)
         if cmd.startswith("骰表"):
             if not table_exist:

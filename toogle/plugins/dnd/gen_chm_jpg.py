@@ -4,7 +4,7 @@ import threading
 import pickle
 from queue import Queue
 
-# from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup
 from thefuzz import process
 from tqdm import tqdm
 
@@ -37,12 +37,12 @@ def read_chm(path):
             # FILE_QUEUE.put(item)
 
 
-def queue_trans(q: Queue):
-    while not q.empty():
-        f = q.get()
-        item_name = item_name_parse(f)
-        hti.screenshot(html_file=f"{f}", save_as=f"{item_name}.jpg")
-        print(q.qsize())
+# def queue_trans(q: Queue):
+#     while not q.empty():
+#         f = q.get()
+#         item_name = item_name_parse(f)
+#         hti.screenshot(html_file=f"{f}", save_as=f"{item_name}.jpg")
+#         print(q.qsize())
 
 
 def do_transition(q: Queue):

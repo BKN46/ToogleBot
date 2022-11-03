@@ -1,0 +1,6657 @@
+{
+    "M2A4": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "USA"
+    },
+    "M3_Stuart": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "USA"
+    },
+    "M3A1_Stuart": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "USA"
+    },
+    "M5A1": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "USA"
+    },
+    "M24": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "USA"
+    },
+    "M41A1": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "USA"
+    },
+    "M56": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "USA"
+    },
+    "T92": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "USA"
+    },
+    "M50": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "USA"
+    },
+    "M551": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "USA"
+    },
+    "M3_Bradley": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "USA"
+    },
+    "M3A3_Bradley": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "USA"
+    },
+    "HSTV-L": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "USA"
+    },
+    "M2": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "USA"
+    },
+    "M3_Lee": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "USA"
+    },
+    "M4A1": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "USA"
+    },
+    "M4": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "USA"
+    },
+    "M4A2": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "USA"
+    },
+    "M4A1_(76)_W": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "USA"
+    },
+    "M4A2_(76)_W": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "USA"
+    },
+    "M4A3_(76)_W": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "USA"
+    },
+    "T25": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "USA"
+    },
+    "M26": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "USA"
+    },
+    "M46": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "USA"
+    },
+    "M47": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "USA"
+    },
+    "M48A1": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "USA"
+    },
+    "M60": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "USA"
+    },
+    "M60A1_(AOS)": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "USA"
+    },
+    "M60A1_RISE_(P)": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "USA"
+    },
+    "M60A3_TTS": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "USA"
+    },
+    "LVT(A)(1)": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "USA"
+    },
+    "M22": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "USA"
+    },
+    "M4A3_(105)": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "USA"
+    },
+    "M6A1": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "USA"
+    },
+    "M4A3E2": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "USA"
+    },
+    "M4A3E2_(76)_W": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "USA"
+    },
+    "T26E5": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "USA"
+    },
+    "T26E1-1": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "USA"
+    },
+    "T34": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "USA"
+    },
+    "T32": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "USA"
+    },
+    "T32E1": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "USA"
+    },
+    "M103": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "USA"
+    },
+    "T95E1": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "USA"
+    },
+    "XM-803": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "USA"
+    },
+    "MBT-70": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "USA"
+    },
+    "M1_Abrams": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "USA"
+    },
+    "M1A1_Abrams": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "USA"
+    },
+    "IPM1": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "USA"
+    },
+    "M1A1_HC": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "USA"
+    },
+    "M1A2_Abrams": {
+        "rp": 400000,
+        "sl": 1080000,
+        "nation": "USA"
+    },
+    "M13_MGMC": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "USA"
+    },
+    "M15_CGMC": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "USA"
+    },
+    "M16_MGMC": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "USA"
+    },
+    "M19A1": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "USA"
+    },
+    "M42": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "USA"
+    },
+    "M163": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "USA"
+    },
+    "M247": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "USA"
+    },
+    "LAV-AD": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "USA"
+    },
+    "XM975": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "USA"
+    },
+    "ADATS": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "USA"
+    },
+    "M2A2": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "USA"
+    },
+    "M8_HMC": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "USA"
+    },
+    "M3_GMC": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "USA"
+    },
+    "M10_GMC": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "USA"
+    },
+    "M18_GMC": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "USA"
+    },
+    "M36_GMC": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "USA"
+    },
+    "T95": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "USA"
+    },
+    "M60A2": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "USA"
+    },
+    "M1128": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "USA"
+    },
+    "P-26A-34_M2": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "USA"
+    },
+    "P-26A-33": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "USA"
+    },
+    "P-26B-35": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "USA"
+    },
+    "P-400": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "USA"
+    },
+    "P-39N-0": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "USA"
+    },
+    "P-39Q-5": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "USA"
+    },
+    "P-38E": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "USA"
+    },
+    "P-38G-1": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "USA"
+    },
+    "P-63A-5": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "USA"
+    },
+    "P-63A-10": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "USA"
+    },
+    "P-63C-5": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "USA"
+    },
+    "P-38J-15": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "USA"
+    },
+    "P-38L-5-LO": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "USA"
+    },
+    "F-82E": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "USA"
+    },
+    "F-80A-5": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "USA"
+    },
+    "F-80C-10": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "USA"
+    },
+    "F-104A": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "USA"
+    },
+    "F-104C": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "USA"
+    },
+    "F-5E": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "USA"
+    },
+    "P-36A": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "USA"
+    },
+    "P-36C": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "USA"
+    },
+    "P-36G": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "USA"
+    },
+    "P-40E-1": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "USA"
+    },
+    "P-40F-10": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "USA"
+    },
+    "P-51": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "USA"
+    },
+    "P-51C-10": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "USA"
+    },
+    "P-47D-22-RE": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "USA"
+    },
+    "P-47D-25": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "USA"
+    },
+    "P-47D-28": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "USA"
+    },
+    "P-51D-5": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "USA"
+    },
+    "P-51D-30": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "USA"
+    },
+    "P-47N-15": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "USA"
+    },
+    "P-51H-5-NA": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "USA"
+    },
+    "F-84B-26": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "USA"
+    },
+    "F-84G-21-RE": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "USA"
+    },
+    "F-86A-5": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "USA"
+    },
+    "F-86F-25": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "USA"
+    },
+    "F-86F-2": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "USA"
+    },
+    "F-100D": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "USA"
+    },
+    "F-4C_Phantom_II": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "USA"
+    },
+    "F-4E_Phantom_II": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "USA"
+    },
+    "F3F-2": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "USA"
+    },
+    "F2A-1": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "USA"
+    },
+    "F2A-3": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "USA"
+    },
+    "F4F-3": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "USA"
+    },
+    "F4F-4": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "USA"
+    },
+    "F4U-1A": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "USA"
+    },
+    "F4U-1A_(USMC)": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "USA"
+    },
+    "F4U-1D": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "USA"
+    },
+    "F6F-5": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "USA"
+    },
+    "F6F-5N": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "USA"
+    },
+    "F4U-1C": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "USA"
+    },
+    "F4U-4": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "USA"
+    },
+    "F4U-4B": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "USA"
+    },
+    "F8F-1": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "USA"
+    },
+    "F8F-1B": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "USA"
+    },
+    "F7F-1": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "USA"
+    },
+    "F2H-2": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "USA"
+    },
+    "F9F-2": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "USA"
+    },
+    "F9F-5": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "USA"
+    },
+    "F9F-8": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "USA"
+    },
+    "F3H-2": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "USA"
+    },
+    "F8U-2": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "USA"
+    },
+    "F-8E": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "USA"
+    },
+    "F-4J_Phantom_II": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "USA"
+    },
+    "OS2U-1": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "USA"
+    },
+    "OS2U-3": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "USA"
+    },
+    "SB2U-2": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "USA"
+    },
+    "SB2U-3": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "USA"
+    },
+    "SBD-3": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "USA"
+    },
+    "TBF-1C": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "USA"
+    },
+    "A-36": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "USA"
+    },
+    "A-20G-25": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "USA"
+    },
+    "SB2C-1C": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "USA"
+    },
+    "SB2C-4": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "USA"
+    },
+    "PBJ-1J": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "USA"
+    },
+    "PBJ-1H": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "USA"
+    },
+    "P-61C-1": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "USA"
+    },
+    "A-26B-10": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "USA"
+    },
+    "A-26B-50": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "USA"
+    },
+    "AM-1": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "USA"
+    },
+    "AD-2": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "USA"
+    },
+    "AD-4": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "USA"
+    },
+    "F3D-1": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "USA"
+    },
+    "F-84F": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "USA"
+    },
+    "A-4B": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "USA"
+    },
+    "FJ-4B": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "USA"
+    },
+    "AV-8C": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "USA"
+    },
+    "A-10A_Late": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "USA"
+    },
+    "A-7D": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "USA"
+    },
+    "A-7E": {
+        "rp": 400000,
+        "sl": 1080000,
+        "nation": "USA"
+    },
+    "TBD-1": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "USA"
+    },
+    "PBY-5_Catalina": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "USA"
+    },
+    "PBY-5A_Catalina": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "USA"
+    },
+    "B-18A": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "USA"
+    },
+    "PBM-1_\"Mariner\"": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "USA"
+    },
+    "B-34": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "USA"
+    },
+    "B-25J-1": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "USA"
+    },
+    "B-25J-20": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "USA"
+    },
+    "B-26B": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "USA"
+    },
+    "B-17E": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "USA"
+    },
+    "B-17E/L": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "USA"
+    },
+    "PB4Y-2": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "USA"
+    },
+    "B-17G-60-VE": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "USA"
+    },
+    "B-24D-25-CO": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "USA"
+    },
+    "B-29A-BN": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "USA"
+    },
+    "B-57A": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "USA"
+    },
+    "B-57B": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "USA"
+    },
+    "F-105D": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "USA"
+    },
+    "AH-1G": {
+        "rp": 0,
+        "sl": 370000,
+        "nation": "USA"
+    },
+    "UH-1B": {
+        "rp": 99000,
+        "sl": 390000,
+        "nation": "USA"
+    },
+    "AH-64A": {
+        "rp": 390000,
+        "sl": 1010000,
+        "nation": "USA"
+    },
+    "AH-64D": {
+        "rp": 390000,
+        "sl": 1020000,
+        "nation": "USA"
+    },
+    "BT-5": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "USSR"
+    },
+    "BT-7": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "USSR"
+    },
+    "BT-7M": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "USSR"
+    },
+    "T-50": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "USSR"
+    },
+    "T-34_(1940)": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "USSR"
+    },
+    "T-34_(1941)": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "USSR"
+    },
+    "T-34_(1942)": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "USSR"
+    },
+    "T-34E_STZ": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "USSR"
+    },
+    "T-34-57": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "USSR"
+    },
+    "T-34-85_(D-5T)": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "USSR"
+    },
+    "T-34-85": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "USSR"
+    },
+    "T-44": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "USSR"
+    },
+    "T-44-100": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "USSR"
+    },
+    "T-54_(1949)": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "USSR"
+    },
+    "T-54_(1947)": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "USSR"
+    },
+    "T-54_(1951)": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "USSR"
+    },
+    "T-55A": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "USSR"
+    },
+    "T-55AMD-1": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "USSR"
+    },
+    "T-62": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "USSR"
+    },
+    "T-62M-1": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "USSR"
+    },
+    "T-72A": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "USSR"
+    },
+    "T-72B": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "USSR"
+    },
+    "T-72B_(1989)": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "USSR"
+    },
+    "\u0422-90\u0410": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "USSR"
+    },
+    "T-72B3": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "USSR"
+    },
+    "T-26": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "USSR"
+    },
+    "T-26-4": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "USSR"
+    },
+    "T-28_(1938)": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "USSR"
+    },
+    "T-28": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "USSR"
+    },
+    "T-28E": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "USSR"
+    },
+    "KV-1_(L-11)": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "USSR"
+    },
+    "KV-2_(1939)": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "USSR"
+    },
+    "KV-1S": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "USSR"
+    },
+    "KV-1_(ZiS-5)": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "USSR"
+    },
+    "KV-85": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "USSR"
+    },
+    "IS-1": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "USSR"
+    },
+    "IS-2": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "USSR"
+    },
+    "IS-2_(1944)": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "USSR"
+    },
+    "IS-3": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "USSR"
+    },
+    "IS-4M": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "USSR"
+    },
+    "T-10M": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "USSR"
+    },
+    "T-64A_(1971)": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "USSR"
+    },
+    "T-64B": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "USSR"
+    },
+    "T-80B": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "USSR"
+    },
+    "T-80U": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "USSR"
+    },
+    "T-80BVM": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "USSR"
+    },
+    "T-60": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "USSR"
+    },
+    "T-70": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "USSR"
+    },
+    "T-80": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "USSR"
+    },
+    "ASU-57": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "USSR"
+    },
+    "PT-76B": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "USSR"
+    },
+    "ASU-85": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "USSR"
+    },
+    "SU-100P": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "USSR"
+    },
+    "BMP-1": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "USSR"
+    },
+    "Object_906": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "USSR"
+    },
+    "BMP-2": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "USSR"
+    },
+    "BMP-3": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "USSR"
+    },
+    "Object_685": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "USSR"
+    },
+    "2S25": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "USSR"
+    },
+    "2S25M": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "USSR"
+    },
+    "SU-5-1": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "USSR"
+    },
+    "SU-76M": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "USSR"
+    },
+    "SU-122": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "USSR"
+    },
+    "ZiS-30": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "USSR"
+    },
+    "SU-57B": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "USSR"
+    },
+    "YaG-10_(29-K)": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "USSR"
+    },
+    "SU-152": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "USSR"
+    },
+    "ISU-152": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "USSR"
+    },
+    "SU-85": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "USSR"
+    },
+    "SU-85M": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "USSR"
+    },
+    "ISU-122": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "USSR"
+    },
+    "ISU-122S": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "USSR"
+    },
+    "SU-100": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "USSR"
+    },
+    "2S3M": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "USSR"
+    },
+    "SU-122-54": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "USSR"
+    },
+    "Object_268": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "USSR"
+    },
+    "IT-1": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "USSR"
+    },
+    "Shturm-S": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "USSR"
+    },
+    "Khrizantema-S": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "USSR"
+    },
+    "GAZ-AAA_(4M)": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "USSR"
+    },
+    "GAZ-AAA_(DShK)": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "USSR"
+    },
+    "GAZ-MM_(72-K)": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "USSR"
+    },
+    "BTR-152A": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "USSR"
+    },
+    "ZiS-12_(94-KM)": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "USSR"
+    },
+    "ZiS-43": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "USSR"
+    },
+    "ZSU-37": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "USSR"
+    },
+    "ZSU-57-2": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "USSR"
+    },
+    "ZSU-23-4": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "USSR"
+    },
+    "ZSU-37-2": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "USSR"
+    },
+    "2S6": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "USSR"
+    },
+    "Yak-1": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "USSR"
+    },
+    "Yak-1B": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "USSR"
+    },
+    "Yak-7B": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "USSR"
+    },
+    "Yak-9": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "USSR"
+    },
+    "Yak-9B": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "USSR"
+    },
+    "Yak-9T": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "USSR"
+    },
+    "Yak-9K": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "USSR"
+    },
+    "Yak-3": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "USSR"
+    },
+    "Yak-3P": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "USSR"
+    },
+    "Yak-9U": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "USSR"
+    },
+    "Yak-9P": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "USSR"
+    },
+    "Yak-3U": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "USSR"
+    },
+    "Yak-9UT": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "USSR"
+    },
+    "Yak-15P": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "USSR"
+    },
+    "Yak-15": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "USSR"
+    },
+    "Yak-17": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "USSR"
+    },
+    "Yak-23": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "USSR"
+    },
+    "Yak-30D": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "USSR"
+    },
+    "Yak-38M": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "USSR"
+    },
+    "I-15_WR": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "USSR"
+    },
+    "I-15_M-22": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "USSR"
+    },
+    "I-15R": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "USSR"
+    },
+    "I-16_type_5": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "USSR"
+    },
+    "I-16_type_10": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "USSR"
+    },
+    "I-16_type_18": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "USSR"
+    },
+    "I-16_type_24": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "USSR"
+    },
+    "MiG-3-15": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "USSR"
+    },
+    "MiG-3-15_(BK)": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "USSR"
+    },
+    "MiG-3-34": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "USSR"
+    },
+    "I-16_type_27": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "USSR"
+    },
+    "I-185_(M-82)": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "USSR"
+    },
+    "I-185_(M-71)": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "USSR"
+    },
+    "I-225": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "USSR"
+    },
+    "MiG-9": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "USSR"
+    },
+    "MiG-9_(l)": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "USSR"
+    },
+    "MiG-15": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "USSR"
+    },
+    "MiG-15bis": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "USSR"
+    },
+    "MiG-17": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "USSR"
+    },
+    "MiG-19PT": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "USSR"
+    },
+    "MiG-21F-13": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "USSR"
+    },
+    "MiG-21SMT": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "USSR"
+    },
+    "MiG-21bis": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "USSR"
+    },
+    "MiG-23M": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "USSR"
+    },
+    "MiG-23MLD": {
+        "rp": 400000,
+        "sl": 1080000,
+        "nation": "USSR"
+    },
+    "I-15bis": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "USSR"
+    },
+    "I-153_M-62": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "USSR"
+    },
+    "LaGG-3-8": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "USSR"
+    },
+    "LaGG-3-11": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "USSR"
+    },
+    "LaGG-3-35": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "USSR"
+    },
+    "LaGG-3-66": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "USSR"
+    },
+    "La-5": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "USSR"
+    },
+    "La-5F": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "USSR"
+    },
+    "La-5FN": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "USSR"
+    },
+    "La-7": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "USSR"
+    },
+    "La-7B-20": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "USSR"
+    },
+    "La-9": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "USSR"
+    },
+    "Su-9": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "USSR"
+    },
+    "La-200": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "USSR"
+    },
+    "La-15": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "USSR"
+    },
+    "Su-7B": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "USSR"
+    },
+    "Su-7BKL": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "USSR"
+    },
+    "Su-17M2": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "USSR"
+    },
+    "Po-2": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "USSR"
+    },
+    "BB-1": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "USSR"
+    },
+    "Su-2_MV-5": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "USSR"
+    },
+    "Su-2_TSS-1": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "USSR"
+    },
+    "Su-2_(M-82)": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "USSR"
+    },
+    "Yak-2_KABB": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "USSR"
+    },
+    "Pe-3_(e)": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "USSR"
+    },
+    "Pe-3": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "USSR"
+    },
+    "IL-2_(1941)": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "USSR"
+    },
+    "IL-2_(1942)": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "USSR"
+    },
+    "Pe-3bis": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "USSR"
+    },
+    "IL-2-37": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "USSR"
+    },
+    "IL-2M_(1943)": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "USSR"
+    },
+    "IL-2M_type_3": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "USSR"
+    },
+    "Su-6_(AM-42)": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "USSR"
+    },
+    "IL-10": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "USSR"
+    },
+    "IL-10_(1946)": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "USSR"
+    },
+    "Su-6_(M-71F)": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "USSR"
+    },
+    "IL-28": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "USSR"
+    },
+    "IL-28Sh": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "USSR"
+    },
+    "SB_2M-100": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "USSR"
+    },
+    "SB_2M-103": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "USSR"
+    },
+    "SB_2M-103U_MV-3": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "USSR"
+    },
+    "SB_2M-105": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "USSR"
+    },
+    "SB_2M-103U": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "USSR"
+    },
+    "SB_2M-103_MV-3": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "USSR"
+    },
+    "Yak-4": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "USSR"
+    },
+    "Ar-2": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "USSR"
+    },
+    "DB-3B": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "USSR"
+    },
+    "IL-4": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "USSR"
+    },
+    "Pe-2-1": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "USSR"
+    },
+    "Pe-2-31": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "USSR"
+    },
+    "Pe-2-83": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "USSR"
+    },
+    "Yer-2_(M-105)": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "USSR"
+    },
+    "Yer-2_(M-105R)_LU": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "USSR"
+    },
+    "Yer-2_(M-105)_TAT": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "USSR"
+    },
+    "Yer-2_(M-105R)_TAT": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "USSR"
+    },
+    "Pe-8": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "USSR"
+    },
+    "Pe-2-110": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "USSR"
+    },
+    "Pe-2-359": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "USSR"
+    },
+    "Yer-2_(ACh-30B)_(e)": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "USSR"
+    },
+    "Yer-2_(ACh-30B)_(l)": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "USSR"
+    },
+    "Tu-2S": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "USSR"
+    },
+    "Tu-2S-44": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "USSR"
+    },
+    "Tu-2S-59": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "USSR"
+    },
+    "Tu-4": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "USSR"
+    },
+    "Tu-14T": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "USSR"
+    },
+    "Yak-28B": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "USSR"
+    },
+    "MiG-27M": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "USSR"
+    },
+    "MiG-27K": {
+        "rp": 400000,
+        "sl": 1080000,
+        "nation": "USSR"
+    },
+    "Mi-4AV": {
+        "rp": 0,
+        "sl": 390000,
+        "nation": "USSR"
+    },
+    "Mi-24A": {
+        "rp": 170000,
+        "sl": 550000,
+        "nation": "USSR"
+    },
+    "Mi-24V": {
+        "rp": 380000,
+        "sl": 990000,
+        "nation": "USSR"
+    },
+    "Mi-24P": {
+        "rp": 390000,
+        "sl": 1000000,
+        "nation": "USSR"
+    },
+    "Mi-35M": {
+        "rp": 390000,
+        "sl": 1010000,
+        "nation": "USSR"
+    },
+    "Mi-28N": {
+        "rp": 390000,
+        "sl": 1020000,
+        "nation": "USSR"
+    },
+    "Mi-28NM": {
+        "rp": 400000,
+        "sl": 1030000,
+        "nation": "USSR"
+    },
+    "Sd.Kfz.221_(s.Pz.B.41)": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Germany"
+    },
+    "15cm_sIG_33_B_Sfl": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Germany"
+    },
+    "Panzerjager_I": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Germany"
+    },
+    "Sd.Kfz.234/2": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Germany"
+    },
+    "Marder_III": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Germany"
+    },
+    "Marder_III_H": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Germany"
+    },
+    "Dicker_Max": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Germany"
+    },
+    "8,8_cm_Flak_37_Sfl.": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Germany"
+    },
+    "Sturer_Emil": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "Germany"
+    },
+    "Nashorn": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Germany"
+    },
+    "Waffentrager": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "Germany"
+    },
+    "leKPz_M41": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "Germany"
+    },
+    "Marder_A1-": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Germany"
+    },
+    "SPz_BMP-1": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Germany"
+    },
+    "Marder_1A3": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Germany"
+    },
+    "PUMA": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Germany"
+    },
+    "TAM": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Germany"
+    },
+    "Begleitpanzer_57": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Germany"
+    },
+    "Radkampfwagen_90": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Germany"
+    },
+    "TAM_2C": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Germany"
+    },
+    "Pz.III_E": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Germany"
+    },
+    "Pz.III_B": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Germany"
+    },
+    "Pz.III_F": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Germany"
+    },
+    "Pz.III_J": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Germany"
+    },
+    "Pz.III_J1": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Germany"
+    },
+    "Pz.III_L": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Germany"
+    },
+    "Pz.III_M": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Germany"
+    },
+    "Tiger_H1": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Germany"
+    },
+    "Tiger_E": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Germany"
+    },
+    "Tiger_II_(P)": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "Germany"
+    },
+    "Tiger_II_(H)": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "Germany"
+    },
+    "M48A2_C": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Germany"
+    },
+    "M48A2_G_A2": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Germany"
+    },
+    "M48_Super": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Germany"
+    },
+    "KPz-70": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Germany"
+    },
+    "Pz.II_C": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Germany"
+    },
+    "Pz.II_F": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Germany"
+    },
+    "Pz.IV_C": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Germany"
+    },
+    "Pz.IV_E": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Germany"
+    },
+    "Pz.IV_F1": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Germany"
+    },
+    "Pz.IV_F2": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Germany"
+    },
+    "Pz.IV_G": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Germany"
+    },
+    "Pz.IV_H": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Germany"
+    },
+    "Pz.IV_J": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Germany"
+    },
+    "Panther_D": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Germany"
+    },
+    "Panther_A": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "Germany"
+    },
+    "Panther_F": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Germany"
+    },
+    "Panther_G": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "Germany"
+    },
+    "Leopard_I": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Germany"
+    },
+    "Leopard_A1A1": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Germany"
+    },
+    "Leopard_1A5": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Germany"
+    },
+    "Leopard_2K": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Germany"
+    },
+    "Leopard_2A4": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Germany"
+    },
+    "Leopard_2A5": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Germany"
+    },
+    "Leopard_2A6": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "Germany"
+    },
+    "Flakpanzer_I": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Germany"
+    },
+    "Flakpanzer_38": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Germany"
+    },
+    "Sd.Kfz._6/2": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Germany"
+    },
+    "Sd.Kfz.251/21": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Germany"
+    },
+    "Wirbelwind": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Germany"
+    },
+    "Ostwind": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Germany"
+    },
+    "Ostwind_II": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Germany"
+    },
+    "Kugelblitz": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Germany"
+    },
+    "Wiesel_1A4": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Germany"
+    },
+    "Gepard": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Germany"
+    },
+    "Ozelot": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Germany"
+    },
+    "FlaRakPz_1": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Germany"
+    },
+    "FlaRakRad": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "Germany"
+    },
+    "Pz.35(t)": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Germany"
+    },
+    "Pz.38(t)_A": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Germany"
+    },
+    "Pz.38(t)_F": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Germany"
+    },
+    "StuG_III_A": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Germany"
+    },
+    "StuH_42_G": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Germany"
+    },
+    "StuG_III_F": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Germany"
+    },
+    "StuG_III_G": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Germany"
+    },
+    "Jagdpanzer_38(t)": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Germany"
+    },
+    "Jagdpanzer_IV": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "Germany"
+    },
+    "Panzer_IV/70(V)": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Germany"
+    },
+    "Jagdpanther": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "Germany"
+    },
+    "JPz_4-5": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "Germany"
+    },
+    "Ferdinand": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "Germany"
+    },
+    "Jagdtiger": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Germany"
+    },
+    "DF105": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Germany"
+    },
+    "RakJPz_2": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Germany"
+    },
+    "RakJPz_2_(HOT)": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Germany"
+    },
+    "JaPz.K_A2": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Germany"
+    },
+    "Wiesel_1A2": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Germany"
+    },
+    "Bf_109_B-1": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Germany"
+    },
+    "Bf_109_E-1": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Germany"
+    },
+    "Bf_109_E-3": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Germany"
+    },
+    "Bf_109_E-4": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Germany"
+    },
+    "Bf_109_F-1": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Germany"
+    },
+    "Bf_109_F-2": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Germany"
+    },
+    "Bf_109_F-4": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Germany"
+    },
+    "Bf_109_F-4/trop": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Germany"
+    },
+    "Bf_109_G-2/trop": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "Germany"
+    },
+    "Bf_109_G-6": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "Germany"
+    },
+    "Bf_109_G-14": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "Germany"
+    },
+    "Bf_109_G-10": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Germany"
+    },
+    "Bf_109_K-4": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "Germany"
+    },
+    "Me_262_A-1a": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "Germany"
+    },
+    "Me_262_A-1a/Jabo": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Germany"
+    },
+    "Me_262_C-1a": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Germany"
+    },
+    "Me_262_C-2b": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Germany"
+    },
+    "Me_163_B": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Germany"
+    },
+    "Me_163_B-0": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Germany"
+    },
+    "CL-13A_Mk_5": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Germany"
+    },
+    "CL-13B_Mk.6": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Germany"
+    },
+    "F-86K_(Germany)": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Germany"
+    },
+    "F-104G": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Germany"
+    },
+    "F-4F": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "Germany"
+    },
+    "He_51_A-1": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Germany"
+    },
+    "He_51_B-1": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Germany"
+    },
+    "He_51_C-1": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Germany"
+    },
+    "He_51_C-1/L": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Germany"
+    },
+    "He_112_V-5": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Germany"
+    },
+    "He_112_A-0": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Germany"
+    },
+    "He_112_B-0": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Germany"
+    },
+    "He_100_D-1": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Germany"
+    },
+    "Fw_190_A-1": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Germany"
+    },
+    "Fw_190_A-4": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Germany"
+    },
+    "Fw_190_A-5/U2": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Germany"
+    },
+    "Fw_190_A-5": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "Germany"
+    },
+    "Fw_190_A-8": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "Germany"
+    },
+    "Fw_190_F-8": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "Germany"
+    },
+    "Fw_190_D-9": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "Germany"
+    },
+    "Fw_190_D-12": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Germany"
+    },
+    "Ta_152_H-1": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "Germany"
+    },
+    "Ta_152_C-3": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "Germany"
+    },
+    "He_162_A-2": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "Germany"
+    },
+    "MiG-15bis_(Germany)": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Germany"
+    },
+    "MiG-19S_(Germany)": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Germany"
+    },
+    "MiG-21MF_(Germany)": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Germany"
+    },
+    "MiG-21bis-SAU_(Germany)": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "Germany"
+    },
+    "MiG-23MLA_(Germany)": {
+        "rp": 400000,
+        "sl": 1080000,
+        "nation": "Germany"
+    },
+    "Do_17_Z-7": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Germany"
+    },
+    "Do_217_J-1": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Germany"
+    },
+    "Do_217_J-2": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Germany"
+    },
+    "Ju_88_C-6": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Germany"
+    },
+    "Bf_110_C-7": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Germany"
+    },
+    "Bf_110_F-2": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Germany"
+    },
+    "Do_217_N-1": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Germany"
+    },
+    "Do_217_N-2": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Germany"
+    },
+    "Bf_110_G-2": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Germany"
+    },
+    "Bf_110_G-4": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Germany"
+    },
+    "Me_410_A-1": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Germany"
+    },
+    "Me_410_A-1/U2": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "Germany"
+    },
+    "Me_410_B-1": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Germany"
+    },
+    "Me_410_B-1/U2": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Germany"
+    },
+    "Me_410_B-6/R3": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "Germany"
+    },
+    "Do_335_A-0": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "Germany"
+    },
+    "Ho_229_V3": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "Germany"
+    },
+    "G.91_R/3_(Germany)": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Germany"
+    },
+    "Hs_123_A-1": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Germany"
+    },
+    "Ju_87_B-2": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Germany"
+    },
+    "Ju_87_R-2": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Germany"
+    },
+    "Ju_87_G-1": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Germany"
+    },
+    "Ju_87_G-2": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Germany"
+    },
+    "Ju_87_D-3": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Germany"
+    },
+    "Ju_87_D-5": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Germany"
+    },
+    "Hs_129_B-3": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Germany"
+    },
+    "Hs_129_B-2": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Germany"
+    },
+    "Me_410_A-1/U4": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "Germany"
+    },
+    "Me_410_B-2/U4": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Germany"
+    },
+    "Do_335_A-1": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Germany"
+    },
+    "Me_262_A-1/U4": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "Germany"
+    },
+    "F-84F_(Germany)": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Germany"
+    },
+    "Su-22UM3K_(Germany)": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Germany"
+    },
+    "Do_17_E-1": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Germany"
+    },
+    "Do_17_Z-2": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Germany"
+    },
+    "BV_138_C-1": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Germany"
+    },
+    "He_111_H-3": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Germany"
+    },
+    "Ju_88_A-1": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Germany"
+    },
+    "Ju_88_A-4": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Germany"
+    },
+    "Fw_200_C-1": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Germany"
+    },
+    "He_111_H-6": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Germany"
+    },
+    "He_111_H-16": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Germany"
+    },
+    "Me_264": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Germany"
+    },
+    "Do_217_E-2": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "Germany"
+    },
+    "Do_217_E-4": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Germany"
+    },
+    "Do_217_K-1": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "Germany"
+    },
+    "Do_217_M-1": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "Germany"
+    },
+    "Ju_188_A-2": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Germany"
+    },
+    "He_177_A-5": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "Germany"
+    },
+    "Ar_234_B-2": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "Germany"
+    },
+    "Ar_234_C-3": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Germany"
+    },
+    "IL-28_(Germany)": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Germany"
+    },
+    "A13_Mk_I": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Britain"
+    },
+    "A13_Mk_II": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Britain"
+    },
+    "Crusader_II": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Britain"
+    },
+    "Crusader_III": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Britain"
+    },
+    "Cromwell_V": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Britain"
+    },
+    "Cromwell_I": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Britain"
+    },
+    "Sherman_II": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Britain"
+    },
+    "Sherman_Firefly": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Britain"
+    },
+    "Challenger": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "Britain"
+    },
+    "Comet_I": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "Britain"
+    },
+    "Centurion_Mk_1": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Britain"
+    },
+    "Centurion_Mk_3": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "Britain"
+    },
+    "Caernarvon": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "Britain"
+    },
+    "Centurion_Mk_10": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Britain"
+    },
+    "Conqueror": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Britain"
+    },
+    "Chieftain_Mk_3": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Britain"
+    },
+    "Chieftain_Mk_5": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Britain"
+    },
+    "Chieftain_Mk_10": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Britain"
+    },
+    "Challenger_Mk.2": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Britain"
+    },
+    "Challenger_Mk.3": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Britain"
+    },
+    "Challenger_2": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Britain"
+    },
+    "Challenger_2_(2F)": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "Britain"
+    },
+    "Challenger_2_TES": {
+        "rp": 400000,
+        "sl": 1080000,
+        "nation": "Britain"
+    },
+    "Black_Night": {
+        "rp": 400000,
+        "sl": 1080000,
+        "nation": "Britain"
+    },
+    "Stuart_I": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Britain"
+    },
+    "Stuart_III": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Britain"
+    },
+    "Valentine_I": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Britain"
+    },
+    "Valentine_XI": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Britain"
+    },
+    "Valentine_IX": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Britain"
+    },
+    "Matilda_III": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Britain"
+    },
+    "Churchill_I": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Britain"
+    },
+    "Churchill_III": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Britain"
+    },
+    "Churchill_VII": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Britain"
+    },
+    "Charioteer_Mk_VII": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "Britain"
+    },
+    "FV4202": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Britain"
+    },
+    "Vickers_Mk.1": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Britain"
+    },
+    "Vickers_Mk.3": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Britain"
+    },
+    "VFM5": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Britain"
+    },
+    "Vickers_Mk.7": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Britain"
+    },
+    "Tetrarch_I": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Britain"
+    },
+    "Daimler_Mk_II": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Britain"
+    },
+    "Archer": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Britain"
+    },
+    "Gun_Carrier_(3-in)": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Britain"
+    },
+    "Achilles": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Britain"
+    },
+    "Avenger": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Britain"
+    },
+    "Tortoise": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Britain"
+    },
+    "FV4005": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "Britain"
+    },
+    "Conway": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "Britain"
+    },
+    "Swingfire": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Britain"
+    },
+    "Striker": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Britain"
+    },
+    "Warrior": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Britain"
+    },
+    "ZT3A2": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Britain"
+    },
+    "Light_AA_Mk_I": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Britain"
+    },
+    "Staghound_AA": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Britain"
+    },
+    "AEC_AA": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Britain"
+    },
+    "Crusader_AA_Mk_I": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Britain"
+    },
+    "Crusader_AA_Mk_II": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Britain"
+    },
+    "Ystervark": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "Britain"
+    },
+    "Falcon": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Britain"
+    },
+    "Chieftain_Marksman": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Britain"
+    },
+    "ZA-35": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Britain"
+    },
+    "Stormer_HVM": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Britain"
+    },
+    "ADATS_(M113)": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "Britain"
+    },
+    "SARC_MkVI_(2pdr)": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Britain"
+    },
+    "SARC_MkVI_(6pdr)": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Britain"
+    },
+    "Concept_3": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "Britain"
+    },
+    "Ratel_90": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "Britain"
+    },
+    "Eland_90_Mk.7": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "Britain"
+    },
+    "Ratel_20": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Britain"
+    },
+    "Rooikat_Mk.1D": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Britain"
+    },
+    "Olifant_Mk.1A": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Britain"
+    },
+    "Rooikat_MTTD": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Britain"
+    },
+    "Olifant_Mk.2": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Britain"
+    },
+    "TTD": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Britain"
+    },
+    "Fury_Mk_I": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Britain"
+    },
+    "Fury_Mk_II": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Britain"
+    },
+    "Hurricane_Mk_IIB/Trop": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Britain"
+    },
+    "Hurricane_Mk_IV": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Britain"
+    },
+    "Hurricane_Mk_I/L": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Britain"
+    },
+    "Typhoon_Mk_Ia": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Britain"
+    },
+    "Typhoon_Mk_Ib/L": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "Britain"
+    },
+    "Tempest_Mk_V": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "Britain"
+    },
+    "Tempest_Mk_V_(Vickers_P)": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Britain"
+    },
+    "Tempest_Mk_II": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "Britain"
+    },
+    "Vampire_FB_5": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Britain"
+    },
+    "Venom_FB.4": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Britain"
+    },
+    "Hunter_F.1": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Britain"
+    },
+    "Hunter_F.6": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Britain"
+    },
+    "Phantom_FGR.2": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Britain"
+    },
+    "Gladiator_Mk_IIF": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Britain"
+    },
+    "Gladiator_Mk_IIS": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Britain"
+    },
+    "Gladiator_Mk_II": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Britain"
+    },
+    "Spitfire_Mk_Ia": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Britain"
+    },
+    "Spitfire_Mk_IIa": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Britain"
+    },
+    "Spitfire_Mk_IIb": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Britain"
+    },
+    "Spitfire_Mk_Vb/trop": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Britain"
+    },
+    "Spitfire_Mk_Vb": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Britain"
+    },
+    "Spitfire_Mk_Vc/trop": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Britain"
+    },
+    "Spitfire_Mk_Vc": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "Britain"
+    },
+    "Spitfire_F_Mk_IX": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Britain"
+    },
+    "Spitfire_F_Mk_XVI": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "Britain"
+    },
+    "Spitfire_LF_Mk_IX": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "Britain"
+    },
+    "Spitfire_F_Mk_XIVe": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Britain"
+    },
+    "Spitfire_F_Mk_XVIIIe": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Britain"
+    },
+    "Spitfire_F_Mk_22": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "Britain"
+    },
+    "Spitfire_F_Mk_24": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "Britain"
+    },
+    "Meteor_F_Mk_3": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "Britain"
+    },
+    "Sea_Meteor_F_Mk_3": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Britain"
+    },
+    "Meteor_F_Mk_4_G.41F": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Britain"
+    },
+    "Meteor_F_Mk_4_G.41G": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Britain"
+    },
+    "Meteor_F_Mk_8_G.41K": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Britain"
+    },
+    "Javelin_F.(A.W.)_Mk.9": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Britain"
+    },
+    "Lightning_F.6": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Britain"
+    },
+    "Nimrod_Mk_I": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Britain"
+    },
+    "Nimrod_Mk_II": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Britain"
+    },
+    "Sea_Gladiator_Mk_I": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Britain"
+    },
+    "Sea_Hurricane_Mk_IB": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Britain"
+    },
+    "Sea_Hurricane_Mk_IC": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Britain"
+    },
+    "Firefly_F_Mk_I": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Britain"
+    },
+    "Firefly_FR_Mk_V": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "Britain"
+    },
+    "Firebrand_TF_Mk_IV": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Britain"
+    },
+    "Seafire_LF_Mk.III": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "Britain"
+    },
+    "Seafire_F_Mk_XVII": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "Britain"
+    },
+    "Seafire_FR_47": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Britain"
+    },
+    "Sea_Fury_FB_11": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "Britain"
+    },
+    "Attacker_FB_1": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "Britain"
+    },
+    "Sea_Hawk_FGA.6": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Britain"
+    },
+    "Sea_Venom_FAW_20": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Britain"
+    },
+    "Scimitar_F_Mk.1": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Britain"
+    },
+    "Phantom_FG.1": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Britain"
+    },
+    "V-156-B1": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Britain"
+    },
+    "Blenheim_Mk_IV": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Britain"
+    },
+    "Beaufort_Mk_VIII": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Britain"
+    },
+    "Beaufighter_Mk_VIc": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Britain"
+    },
+    "Beaufighter_Mk_X": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Britain"
+    },
+    "Mosquito_FB_Mk_VI": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Britain"
+    },
+    "Mosquito_FB_Mk_XVIII": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "Britain"
+    },
+    "Beaufighter_Mk_21": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Britain"
+    },
+    "Whirlwind_Mk_I": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "Britain"
+    },
+    "Brigand_B_1": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Britain"
+    },
+    "Hornet_Mk.III": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "Britain"
+    },
+    "Swift_F.1": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Britain"
+    },
+    "Swift_F.7": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Britain"
+    },
+    "Harrier_GR.3": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Britain"
+    },
+    "Jaguar_GR.1": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Britain"
+    },
+    "Jaguar_GR.1A": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Britain"
+    },
+    "Swordfish_Mk_I": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Britain"
+    },
+    "Hampden_Mk_I": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Britain"
+    },
+    "Hampden_TB_Mk_I": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Britain"
+    },
+    "Sunderland_Mk_IIIa": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Britain"
+    },
+    "Sunderland_Mk_V": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Britain"
+    },
+    "Wellington_Mk_Ic": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Britain"
+    },
+    "Wellington_Mk_Ic/L": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Britain"
+    },
+    "Wellington_Mk_III": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Britain"
+    },
+    "Wellington_Mk_X": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Britain"
+    },
+    "Halifax_B_Mk_IIIa": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Britain"
+    },
+    "Stirling_B_Mk_I": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Britain"
+    },
+    "Stirling_B_Mk_III": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Britain"
+    },
+    "Lancaster_B_Mk_I": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "Britain"
+    },
+    "Lancaster_B_Mk_III": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Britain"
+    },
+    "Lincoln_B_Mk_II": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "Britain"
+    },
+    "Shackleton_MR.Mk.2": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "Britain"
+    },
+    "Canberra_B_Mk_2": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "Britain"
+    },
+    "Canberra_B_(I)_Mk_6": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Britain"
+    },
+    "Buccaneer_S.2": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Britain"
+    },
+    "Scout_AH.Mk.1": {
+        "rp": 0,
+        "sl": 390000,
+        "nation": "Britain"
+    },
+    "Wasp_HAS.Mk.1": {
+        "rp": 170000,
+        "sl": 550000,
+        "nation": "Britain"
+    },
+    "Lynx_AH.Mk.1": {
+        "rp": 390000,
+        "sl": 1000000,
+        "nation": "Britain"
+    },
+    "AH_Mk.1_Apache": {
+        "rp": 390000,
+        "sl": 1020000,
+        "nation": "Britain"
+    },
+    "Ha-Go": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Japan"
+    },
+    "Ke-Ni": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Japan"
+    },
+    "Ka-Mi": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Japan"
+    },
+    "M24_(Japan)": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Japan"
+    },
+    "M4A3_(76)_W_(Japan)": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "Japan"
+    },
+    "M41A1_(Japan)": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Japan"
+    },
+    "Type_60_SPRG_(C)": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "Japan"
+    },
+    "Type_60_ATM": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "Japan"
+    },
+    "Type_87_RCV": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Japan"
+    },
+    "Type_89": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Japan"
+    },
+    "I-Go_Ko": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Japan"
+    },
+    "Chi-Ha": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Japan"
+    },
+    "Ho-I": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Japan"
+    },
+    "Chi-Ha_Kai": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Japan"
+    },
+    "Chi-He": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Japan"
+    },
+    "Chi-Nu": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Japan"
+    },
+    "Chi-To": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Japan"
+    },
+    "Chi-To_Late": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "Japan"
+    },
+    "Chi-Ri_II": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "Japan"
+    },
+    "ST-A1": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Japan"
+    },
+    "ST-A2": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "Japan"
+    },
+    "Type_61": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "Japan"
+    },
+    "ST-A3": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "Japan"
+    },
+    "M47_(Japan)": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Japan"
+    },
+    "STB-1": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Japan"
+    },
+    "Type_74_(C)": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Japan"
+    },
+    "Type_74_(E)": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Japan"
+    },
+    "Type_74_(F)": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Japan"
+    },
+    "Type_90": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Japan"
+    },
+    "Type_90_(B)": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "Japan"
+    },
+    "Type_10": {
+        "rp": 400000,
+        "sl": 1080000,
+        "nation": "Japan"
+    },
+    "Ho-Ro": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Japan"
+    },
+    "Ro-Go_Exp.": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Japan"
+    },
+    "Ho-Ni_I": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Japan"
+    },
+    "Ho-Ni_III": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Japan"
+    },
+    "Chi-Ha_LG": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Japan"
+    },
+    "Na-To": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Japan"
+    },
+    "Type_75_SPH": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "Japan"
+    },
+    "Ho-Ri_Production": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Japan"
+    },
+    "Type_16": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Japan"
+    },
+    "Type_94": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Japan"
+    },
+    "Ta-Se": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Japan"
+    },
+    "M16_MGMC_(Japan)": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Japan"
+    },
+    "So-Ki": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Japan"
+    },
+    "M19A1_(Japan)": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Japan"
+    },
+    "M42_(Japan)": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "Japan"
+    },
+    "Type_87": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Japan"
+    },
+    "Type_93": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Japan"
+    },
+    "A5M4": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Japan"
+    },
+    "A6M2-N": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Japan"
+    },
+    "N1K1": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Japan"
+    },
+    "A6M2_mod._11": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Japan"
+    },
+    "A6M2": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Japan"
+    },
+    "J2M2": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Japan"
+    },
+    "A6M3": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Japan"
+    },
+    "A6M3_mod._22": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Japan"
+    },
+    "A6M3_mod._22Ko": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "Japan"
+    },
+    "A6M5": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "Japan"
+    },
+    "A6M5_otsu": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Japan"
+    },
+    "A6M5_Hei": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Japan"
+    },
+    "A7M2": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Japan"
+    },
+    "N1K1-Ja": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "Japan"
+    },
+    "N1K2-J": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "Japan"
+    },
+    "N1K2-Ja": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Japan"
+    },
+    "J2M3": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Japan"
+    },
+    "J2M5": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "Japan"
+    },
+    "J7W1": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "Japan"
+    },
+    "Kikka": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "Japan"
+    },
+    "F-86F-30__(Japan)": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Japan"
+    },
+    "F-86F-40__(Japan)": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Japan"
+    },
+    "F-104J": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Japan"
+    },
+    "F-4EJ_Phantom_II": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Japan"
+    },
+    "F-4EJ_Kai_Phantom_II": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "Japan"
+    },
+    "Ki-10-I": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Japan"
+    },
+    "Ki-10-II": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Japan"
+    },
+    "Ki-10-I_C": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Japan"
+    },
+    "Ki-10-II_C": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Japan"
+    },
+    "Ki-27_otsu": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Japan"
+    },
+    "Ki-43-I": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Japan"
+    },
+    "Ki-43-II": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Japan"
+    },
+    "Ki-44-I": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Japan"
+    },
+    "Ki-44-II_hei": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Japan"
+    },
+    "Ki-61-I_ko": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Japan"
+    },
+    "Ki-61-I_otsu": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Japan"
+    },
+    "Ki-100": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Japan"
+    },
+    "Ki-43-III_otsu": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Japan"
+    },
+    "Ki-61-I_hei": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Japan"
+    },
+    "Ki-61-I_tei": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "Japan"
+    },
+    "Ki-61-II_Kai": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Japan"
+    },
+    "Ki-84_ko": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "Japan"
+    },
+    "Ki-84_otsu": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Japan"
+    },
+    "Ki-84_hei": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "Japan"
+    },
+    "Ki-200": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Japan"
+    },
+    "T-2": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Japan"
+    },
+    "F-1": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Japan"
+    },
+    "Ki-32": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Japan"
+    },
+    "J1N1": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Japan"
+    },
+    "Ki-45_tei": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Japan"
+    },
+    "Ki-45_otsu": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Japan"
+    },
+    "Ki-45_hei": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Japan"
+    },
+    "Ki-45_ko": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Japan"
+    },
+    "Ki-109": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Japan"
+    },
+    "Ki-102_otsu": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Japan"
+    },
+    "Ki-108_Kai": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "Japan"
+    },
+    "J5N1": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "Japan"
+    },
+    "Ki-83": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Japan"
+    },
+    "B5N2": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Japan"
+    },
+    "D3A1": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Japan"
+    },
+    "B6N1_Model_11": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Japan"
+    },
+    "B6N2_Model_12": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Japan"
+    },
+    "B6N2a_Model_12Ko": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Japan"
+    },
+    "D4Y1": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Japan"
+    },
+    "D4Y2": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Japan"
+    },
+    "D4Y3_Ko": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Japan"
+    },
+    "B7A2": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Japan"
+    },
+    "P1Y1_mod._11": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "Japan"
+    },
+    "R2Y2_Kai_V1": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "Japan"
+    },
+    "R2Y2_Kai_V2": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Japan"
+    },
+    "R2Y2_Kai_V3": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Japan"
+    },
+    "F1M2": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Japan"
+    },
+    "Ki-21-Ia": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Japan"
+    },
+    "H6K4": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Japan"
+    },
+    "H8K2": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Japan"
+    },
+    "G4M1": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Japan"
+    },
+    "Ki-49-I": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Japan"
+    },
+    "Ki-49-IIa": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Japan"
+    },
+    "Ki-49-IIb": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Japan"
+    },
+    "Ki-49-IIb/L": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Japan"
+    },
+    "Ki-67-I_Ko": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "Japan"
+    },
+    "Ki-67-I_otsu": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Japan"
+    },
+    "G5N1": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "Japan"
+    },
+    "G8N1": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "Japan"
+    },
+    "UH-1B_(Japan)": {
+        "rp": 0,
+        "sl": 390000,
+        "nation": "Japan"
+    },
+    "AH-1S_early": {
+        "rp": 380000,
+        "sl": 990000,
+        "nation": "Japan"
+    },
+    "AH-1S": {
+        "rp": 390000,
+        "sl": 1000000,
+        "nation": "Japan"
+    },
+    "AH-64DJP": {
+        "rp": 390000,
+        "sl": 1020000,
+        "nation": "Japan"
+    },
+    "M8_LAC_(China)": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "China"
+    },
+    "M3A3_Stuart_(China)": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "China"
+    },
+    "M5A1_(China)": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "China"
+    },
+    "M24_(China)": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "China"
+    },
+    "PT-76_(China)": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "China"
+    },
+    "Type_63-I": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "China"
+    },
+    "Type_62": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "China"
+    },
+    "ZBD86": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "China"
+    },
+    "M48A1_(China)": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "China"
+    },
+    "M41D": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "China"
+    },
+    "M60A3_TTS_(China)": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "China"
+    },
+    "CM11": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "China"
+    },
+    "T-26_(China)": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "China"
+    },
+    "Chi-Ha_(China)": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "China"
+    },
+    "Chi-Ha_Kai_(China)": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "China"
+    },
+    "T-34_(1943)_(China)": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "China"
+    },
+    "M4A4_(China)": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "China"
+    },
+    "M4A1_(75)_W_(China)": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "China"
+    },
+    "\u0422-34-85_(S-53)_(China)": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "China"
+    },
+    "\u0422-34-85_Gai": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "China"
+    },
+    "IS-2_(China)": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "China"
+    },
+    "IS-2_mod.1944_(China)": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "China"
+    },
+    "Type_59": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "China"
+    },
+    "Type_69": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "China"
+    },
+    "ZTZ59D1": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "China"
+    },
+    "ZTZ88A": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "China"
+    },
+    "ZTZ96": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "China"
+    },
+    "ZTZ96A": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "China"
+    },
+    "ZTZ99-II": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "China"
+    },
+    "ZTZ99-III": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "China"
+    },
+    "CCKW_353_(M45)": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "China"
+    },
+    "ZSD63": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "China"
+    },
+    "Ph\u00f2ng_kh\u00f4ng_T-34": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "China"
+    },
+    "M42_(China)": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "China"
+    },
+    "WZ305": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "China"
+    },
+    "PGZ09": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "China"
+    },
+    "PGZ04A": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "China"
+    },
+    "M8_HMC_(China)": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "China"
+    },
+    "SU-76M_(China)": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "China"
+    },
+    "LVT(A)(4)_(ZiS-2)_(China)": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "China"
+    },
+    "M10_(China)": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "China"
+    },
+    "ISU-152_(China)": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "China"
+    },
+    "M18_(China)": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "China"
+    },
+    "ISU-122_(China)": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "China"
+    },
+    "M36_(China)": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "China"
+    },
+    "SU-100_(China)": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "China"
+    },
+    "M113A1_(TOW)_(China)": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "China"
+    },
+    "PTL02": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "China"
+    },
+    "CM25": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "China"
+    },
+    "PTZ89": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "China"
+    },
+    "ZLT11": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "China"
+    },
+    "Gladiator_Mk_I_(China)": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "China"
+    },
+    "CW-21": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "China"
+    },
+    "P-66": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "China"
+    },
+    "P-40E-1_(China)": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "China"
+    },
+    "P-43A-1_(China)": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "China"
+    },
+    "P-47D-23-RA_(China)": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "China"
+    },
+    "P-47D-30_(China)": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "China"
+    },
+    "P-51D-20_(China)": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "China"
+    },
+    "P-38L-1_(China)": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "China"
+    },
+    "P-51K_(China)": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "China"
+    },
+    "F-86F-30_(China)": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "China"
+    },
+    "F-86F-40_(China)": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "China"
+    },
+    "F-100A_(China)": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "China"
+    },
+    "F-104A_(China)": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "China"
+    },
+    "F-104G_(China)": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "China"
+    },
+    "F-5A_(China)": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "China"
+    },
+    "I-15bis_(China)": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "China"
+    },
+    "I-153_M-62_(China)": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "China"
+    },
+    "I-16_Chung_28_(China)": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "China"
+    },
+    "I-16_type_5_(China)": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "China"
+    },
+    "I-16_type_10_(China)": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "China"
+    },
+    "Ki-27_otsu_(China)": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "China"
+    },
+    "Ki-43-III_ko_(China)": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "China"
+    },
+    "Ki-44-II_hei_(China)": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "China"
+    },
+    "Ki-61-I_otsu_(China)": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "China"
+    },
+    "I-16_type_17_(China)": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "China"
+    },
+    "La-11_(China)": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "China"
+    },
+    "La-9_(China)": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "China"
+    },
+    "MiG-9_(China)": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "China"
+    },
+    "MiG-9_(l)_(China)": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "China"
+    },
+    "J-2": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "China"
+    },
+    "J-4": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "China"
+    },
+    "J-6A": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "China"
+    },
+    "J-7II": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "China"
+    },
+    "J-7E": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "China"
+    },
+    "J-8B": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "China"
+    },
+    "Hs_123_A-1_(China)": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "China"
+    },
+    "V-11": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "China"
+    },
+    "V-12D": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "China"
+    },
+    "B-25J-30_(China)": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "China"
+    },
+    "Mosquito_FB.Mk.26": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "China"
+    },
+    "IL-10_(1946)_(China)": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "China"
+    },
+    "F-84G-21-RE_(China)": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "China"
+    },
+    "Q-5_early": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "China"
+    },
+    "Q-5A": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "China"
+    },
+    "Martin_139WC": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "China"
+    },
+    "A-29": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "China"
+    },
+    "SB_2M-103U_(China)": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "China"
+    },
+    "DB-3A_(China)": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "China"
+    },
+    "P1Y1_mod._11_(China)": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "China"
+    },
+    "PB4Y-2_(China)": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "China"
+    },
+    "Tu-2S-44_(China)": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "China"
+    },
+    "Tu-4_(China)": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "China"
+    },
+    "H-5": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "China"
+    },
+    "AB_41": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Italy"
+    },
+    "L6/40": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Italy"
+    },
+    "AB_43": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Italy"
+    },
+    "M3A3_(Italy)": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Italy"
+    },
+    "M24_(Italy)": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Italy"
+    },
+    "Breda_501": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Italy"
+    },
+    "M18_(Italy)": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Italy"
+    },
+    "FIAT_6614": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Italy"
+    },
+    "AUBL/74": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "Italy"
+    },
+    "C13_T90": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "Italy"
+    },
+    "R3_T106_FA": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Italy"
+    },
+    "Centauro_I_105": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Italy"
+    },
+    "Centauro_I_105_R": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Italy"
+    },
+    "VCC-80/60": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Italy"
+    },
+    "Centauro_I_120": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "Italy"
+    },
+    "M13/40_(I)": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Italy"
+    },
+    "M13/40_(III)": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Italy"
+    },
+    "M14/41": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Italy"
+    },
+    "M15/42": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Italy"
+    },
+    "Pz.III_N_(Italy)": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Italy"
+    },
+    "P40": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Italy"
+    },
+    "M4A4_(Italy)": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Italy"
+    },
+    "M4_Tipo_IC": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "Italy"
+    },
+    "Sherman_Vc_(Italy)": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "Italy"
+    },
+    "M26A1": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "Italy"
+    },
+    "M47_(105/55)": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Italy"
+    },
+    "OF-40": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Italy"
+    },
+    "OF-40_Mk.2A": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Italy"
+    },
+    "Leopard_1A5_(Italy)": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Italy"
+    },
+    "Ariete_(P)": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Italy"
+    },
+    "Ariete_PSO": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Italy"
+    },
+    "Ariete": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "Italy"
+    },
+    "AS_42": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Italy"
+    },
+    "M42_Contraereo": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Italy"
+    },
+    "R3_T20_FA-HS": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Italy"
+    },
+    "SIDAM_25": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Italy"
+    },
+    "SIDAM_25_(Mistral)": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Italy"
+    },
+    "OTOMATIC": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "Italy"
+    },
+    "L3/33_CC": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Italy"
+    },
+    "M11/39": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Italy"
+    },
+    "47/32_L40": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Italy"
+    },
+    "75/18_M41": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Italy"
+    },
+    "75/32_M41": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Italy"
+    },
+    "75/34_M42": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Italy"
+    },
+    "105/25_M43": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Italy"
+    },
+    "75/34_M43": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Italy"
+    },
+    "90/53_M41M": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Italy"
+    },
+    "StuG_III_G_(Italy)": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "Italy"
+    },
+    "75/46_M43": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Italy"
+    },
+    "M36B1": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "Italy"
+    },
+    "M113A1_(TOW)": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Italy"
+    },
+    "Dardo": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Italy"
+    },
+    "VCC-80/30": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Italy"
+    },
+    "Re.2000_serie_1": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Italy"
+    },
+    "Re.2000_G.A.": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Italy"
+    },
+    "Re.2002_Early": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Italy"
+    },
+    "Re.2001_serie_1": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Italy"
+    },
+    "Re.2001_CB": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Italy"
+    },
+    "Re.2001_CN": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Italy"
+    },
+    "Re.2005_serie_0": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Italy"
+    },
+    "Vampire_FB_52A": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Italy"
+    },
+    "CL-13_Mk.4": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Italy"
+    },
+    "F-86K_(Italy)": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Italy"
+    },
+    "F-104G_(Italy)": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Italy"
+    },
+    "F-104S": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Italy"
+    },
+    "F-104S.ASA": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Italy"
+    },
+    "CR.32": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Italy"
+    },
+    "CR.32_quater": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Italy"
+    },
+    "CR.42": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Italy"
+    },
+    "G.50_serie_2": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Italy"
+    },
+    "G.50_AS_serie_7": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Italy"
+    },
+    "C._200_serie_3": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Italy"
+    },
+    "C._200_serie_7": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Italy"
+    },
+    "C._202": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Italy"
+    },
+    "C._202EC": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Italy"
+    },
+    "C._205_serie_1": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Italy"
+    },
+    "C._205_serie_3": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Italy"
+    },
+    "G.55_sottoserie_0": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "Italy"
+    },
+    "G.55_serie_1": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Italy"
+    },
+    "C._205N2": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "Italy"
+    },
+    "Bf_109_G-14/AS_(Italy)": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Italy"
+    },
+    "G.56": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "Italy"
+    },
+    "Sagittario_2": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "Italy"
+    },
+    "G.91_pre-serie": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Italy"
+    },
+    "G.91_R/1": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Italy"
+    },
+    "G.91_YS": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Italy"
+    },
+    "Ba.65_(K.14)_L": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Italy"
+    },
+    "Ju_87_R-2_(Italy)": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Italy"
+    },
+    "Breda_88_(P.XI)": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Italy"
+    },
+    "F.C.20_Bis": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Italy"
+    },
+    "Ju_87_D-3_(Italy)": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Italy"
+    },
+    "P.108A_serie_2": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Italy"
+    },
+    "SM.91": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Italy"
+    },
+    "SM.92": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Italy"
+    },
+    "F-84G-21-RE_(Italy)": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Italy"
+    },
+    "F-84F_(Italy)": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Italy"
+    },
+    "S.81": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Italy"
+    },
+    "B.R.20DR": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Italy"
+    },
+    "B.R.20M_M1": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Italy"
+    },
+    "S.M.79_serie_1": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Italy"
+    },
+    "S.M.79_serie_8": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Italy"
+    },
+    "S.M.79_AS": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Italy"
+    },
+    "S.M.79_bis/T.M": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Italy"
+    },
+    "S.M.79_B": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Italy"
+    },
+    "Z.1007_bis_serie_3": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Italy"
+    },
+    "Z.1007_bis_serie_5": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Italy"
+    },
+    "P.108B_serie_1": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Italy"
+    },
+    "P.108B_serie_2": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "Italy"
+    },
+    "AB_205_A-1": {
+        "rp": 0,
+        "sl": 370000,
+        "nation": "Italy"
+    },
+    "A.109EOA-2": {
+        "rp": 390000,
+        "sl": 1000000,
+        "nation": "Italy"
+    },
+    "A129CBT": {
+        "rp": 390000,
+        "sl": 1020000,
+        "nation": "Italy"
+    },
+    "AMC.34_YR": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "France"
+    },
+    "AMD.35": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "France"
+    },
+    "AMC.35_(ACG.1)": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "France"
+    },
+    "Crusader_Mk.II_(France)": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "France"
+    },
+    "AMX-13_(FL11)": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "France"
+    },
+    "E.B.R._(1951)": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "France"
+    },
+    "AMX-13": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Israel"
+    },
+    "AML-90": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "Israel"
+    },
+    "AMX-13-90": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "France"
+    },
+    "AMX-13_(HOT)": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "France"
+    },
+    "MARS_15": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "France"
+    },
+    "H.35": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "France"
+    },
+    "H.39": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "France"
+    },
+    "S.35": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "France"
+    },
+    "M3A3_Stuart_(France)": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "France"
+    },
+    "M4A1_(France)": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "France"
+    },
+    "M4A4_(France)": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "France"
+    },
+    "M4A4_(SA50)": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "France"
+    },
+    "Char_25t": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "France"
+    },
+    "Lorraine_40t": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "France"
+    },
+    "AMX-30_(1972)": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "France"
+    },
+    "AMX-30B2": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "France"
+    },
+    "AMX-30B2_BRENUS": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "France"
+    },
+    "Leclerc": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "France"
+    },
+    "Leclerc_S2": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "France"
+    },
+    "Leclerc_SXXI": {
+        "rp": 400000,
+        "sl": 1080000,
+        "nation": "France"
+    },
+    "FCM.36": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "France"
+    },
+    "R.35_(SA38)": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "France"
+    },
+    "D2": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "France"
+    },
+    "B1_bis": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "France"
+    },
+    "M4A3_(105)_(France)": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "France"
+    },
+    "ARL-44_(ACL-1)": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "France"
+    },
+    "M4A3E2_(France)": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "France"
+    },
+    "AMX_M4": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "France"
+    },
+    "AMX-50": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "France"
+    },
+    "AMX-50_Surbaiss": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "France"
+    },
+    "AMX-32": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "France"
+    },
+    "AMX-40": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "France"
+    },
+    "P.7.T_AA": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "France"
+    },
+    "CCKW_353_AA": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "France"
+    },
+    "AMX-13_DCA_40": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "France"
+    },
+    "AMX-30_DCA": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "France"
+    },
+    "Roland_1": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "France"
+    },
+    "ItO_90M_(Israel)": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "France"
+    },
+    "AMR.35_ZT3": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "France"
+    },
+    "Lorraine_37L": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "France"
+    },
+    "SAu_40": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "France"
+    },
+    "M10_GMC_(France)": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "France"
+    },
+    "ARL-44": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "France"
+    },
+    "CA_Lorraine": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "France"
+    },
+    "ELC_bis": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "France"
+    },
+    "AMX-50_Foch": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "France"
+    },
+    "AMX-10RC": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "France"
+    },
+    "AMX-30_ACRA": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "France"
+    },
+    "SK-105A2": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "France"
+    },
+    "D.371": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "France"
+    },
+    "D.373": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "France"
+    },
+    "C.R.714": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "France"
+    },
+    "M.S.405C1": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "France"
+    },
+    "M.S.406C1": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "France"
+    },
+    "M.S.410": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "France"
+    },
+    "V.G.33C-1": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "France"
+    },
+    "D.520": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "France"
+    },
+    "M.B.157": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "France"
+    },
+    "VB.10C-1": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "France"
+    },
+    "VB.10-02": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "France"
+    },
+    "M.D.450B_Ouragan": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "France"
+    },
+    "M.D.450B_Barougan": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "France"
+    },
+    "M.D.452_IIA": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "France"
+    },
+    "M.D.452_IIC": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "France"
+    },
+    "Mystere_IVA": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "France"
+    },
+    "Super_Mystere_B2": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "France"
+    },
+    "Mirage_IIIC": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "France"
+    },
+    "Mirage_IIIE": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "France"
+    },
+    "Mirage_F1C": {
+        "rp": 400000,
+        "sl": 1080000,
+        "nation": "France"
+    },
+    "D.500": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "France"
+    },
+    "D.501": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "France"
+    },
+    "H-75A-1": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "France"
+    },
+    "H-75A-4": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "France"
+    },
+    "Br.693AB2": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "France"
+    },
+    "Potez_630": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "France"
+    },
+    "Potez_631": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "France"
+    },
+    "F6F-5_(France)": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "France"
+    },
+    "F6F-5N_(France)": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "France"
+    },
+    "P-63C-5_(France)": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "France"
+    },
+    "Seafire_LF_Mk.III_(France)": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "France"
+    },
+    "F8F-1B_(France)": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "France"
+    },
+    "F-84F_(France)": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "France"
+    },
+    "F-86K_(France)": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "France"
+    },
+    "F-8E(FN)_(France)": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "France"
+    },
+    "V-156-F": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "France"
+    },
+    "A-35B_(France)": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "France"
+    },
+    "SB2C-5_(France)": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "France"
+    },
+    "AD-4_(France)": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "France"
+    },
+    "F4U-7": {
+        "rp": 71000,
+        "sl": 210000,
+        "nation": "France"
+    },
+    "F-84G-26-RE_(France)": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "France"
+    },
+    "F-100D_(France)": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "France"
+    },
+    "F.222.2": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "France"
+    },
+    "Potez_633": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "France"
+    },
+    "Martin_167-A3": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "France"
+    },
+    "N.C.223.3": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "France"
+    },
+    "M.B.174A-3": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "France"
+    },
+    "LeO_451_early": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "France"
+    },
+    "LeO_451_late": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "France"
+    },
+    "M.B.175T": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "France"
+    },
+    "B-26C": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "France"
+    },
+    "M.B.162": {
+        "rp": 33000,
+        "sl": 140000,
+        "nation": "France"
+    },
+    "PB4Y-2_(France)": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "France"
+    },
+    "S.O.4050_Vautour_IIB": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "France"
+    },
+    "S.O.4050_Vautour_IIA": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "France"
+    },
+    "Etendard_IVM": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "France"
+    },
+    "Jaguar_A": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "France"
+    },
+    "Mirage_5F": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "France"
+    },
+    "Strv_m/31": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Sweden"
+    },
+    "Ikv_72": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Sweden"
+    },
+    "Strv_m/41_S-II": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Sweden"
+    },
+    "Pvkv_II": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Sweden"
+    },
+    "Ikv_103": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Sweden"
+    },
+    "Ikv_91": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "Sweden"
+    },
+    "U-SH_405": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Sweden"
+    },
+    "Ikv_91-105": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Sweden"
+    },
+    "Strf_9040B": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Sweden"
+    },
+    "Strf_9040C": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Sweden"
+    },
+    "CV_90120": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Sweden"
+    },
+    "Strv_m/38": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Sweden"
+    },
+    "Strv_m/40L": {
+        "rp": 5900,
+        "sl": 6300,
+        "nation": "Sweden"
+    },
+    "Lago_I": {
+        "rp": 9200,
+        "sl": 22000,
+        "nation": "Sweden"
+    },
+    "Strv_m/42_EH": {
+        "rp": 14000,
+        "sl": 55000,
+        "nation": "Sweden"
+    },
+    "Strv_m/42_DT": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Sweden"
+    },
+    "Strv_74": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Sweden"
+    },
+    "Strv_81": {
+        "rp": 82000,
+        "sl": 240000,
+        "nation": "Sweden"
+    },
+    "Strv_101": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Sweden"
+    },
+    "Strv_103A": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Sweden"
+    },
+    "Strv_103\u0421": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Sweden"
+    },
+    "Strv_104": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Sweden"
+    },
+    "Strv_105": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Sweden"
+    },
+    "Strv_121": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Sweden"
+    },
+    "Strv_122A": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Sweden"
+    },
+    "Strv_122B_PLSS": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "Sweden"
+    },
+    "Pvlvv_fm/42": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Sweden"
+    },
+    "Pbv_301": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Sweden"
+    },
+    "Lvtdgb_m/40": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Sweden"
+    },
+    "L-62_ANTI_II": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Sweden"
+    },
+    "Lvkv_42": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Sweden"
+    },
+    "VEAK_40": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Sweden"
+    },
+    "Lvkv_9040C": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Sweden"
+    },
+    "Lvrbv_701": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Sweden"
+    },
+    "ASRAD-R": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Sweden"
+    },
+    "ItO_90M": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "Sweden"
+    },
+    "Spj_fm/43-44": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Sweden"
+    },
+    "Sav_m/43_(1944)": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Sweden"
+    },
+    "Sav_m/43_(1946)": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Sweden"
+    },
+    "Pvkv_m/43_(1946)": {
+        "rp": 40000,
+        "sl": 150000,
+        "nation": "Sweden"
+    },
+    "Pvkv_m/43_(1963)": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Sweden"
+    },
+    "Bkan_1C": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Sweden"
+    },
+    "UDES_33": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Sweden"
+    },
+    "Pvrbv_551": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Sweden"
+    },
+    "Strf_9040_BILL": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Sweden"
+    },
+    "J8A": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Sweden"
+    },
+    "J6B": {
+        "rp": 0,
+        "sl": 0,
+        "nation": "Sweden"
+    },
+    "J11": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Sweden"
+    },
+    "J20": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Sweden"
+    },
+    "J22-A": {
+        "rp": 11000,
+        "sl": 38000,
+        "nation": "Sweden"
+    },
+    "J22-B": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Sweden"
+    },
+    "J21A-1": {
+        "rp": 26000,
+        "sl": 110000,
+        "nation": "Sweden"
+    },
+    "J21A-2": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "Sweden"
+    },
+    "J26": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "Sweden"
+    },
+    "J21RA": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Sweden"
+    },
+    "J29A": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Sweden"
+    },
+    "J29F": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Sweden"
+    },
+    "J32B": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Sweden"
+    },
+    "J35D": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Sweden"
+    },
+    "JA37C": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "Sweden"
+    },
+    "B17BS": {
+        "rp": 2900,
+        "sl": 700,
+        "nation": "Sweden"
+    },
+    "B17B": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Sweden"
+    },
+    "B17A": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Sweden"
+    },
+    "A21A-3": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "Sweden"
+    },
+    "A21RB": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Sweden"
+    },
+    "A28B": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Sweden"
+    },
+    "A29B": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Sweden"
+    },
+    "A32A": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Sweden"
+    },
+    "AJ37": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Sweden"
+    },
+    "B3C": {
+        "rp": 4000,
+        "sl": 2100,
+        "nation": "Sweden"
+    },
+    "B18A": {
+        "rp": 7900,
+        "sl": 10000,
+        "nation": "Sweden"
+    },
+    "B18B": {
+        "rp": 18000,
+        "sl": 77000,
+        "nation": "Sweden"
+    },
+    "T18B": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "Sweden"
+    },
+    "T18B_(57)": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "Sweden"
+    },
+    "SK60B": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Sweden"
+    },
+    "SAAB-105G": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Sweden"
+    },
+    "HKP3C": {
+        "rp": 0,
+        "sl": 370000,
+        "nation": "Sweden"
+    },
+    "HKP2": {
+        "rp": 99000,
+        "sl": 390000,
+        "nation": "Sweden"
+    },
+    "HKP9A": {
+        "rp": 380000,
+        "sl": 990000,
+        "nation": "Sweden"
+    },
+    "HKP9A_(FC)": {
+        "rp": 390000,
+        "sl": 1000000,
+        "nation": "Sweden"
+    },
+    "AHS": {
+        "rp": 390000,
+        "sl": 1010000,
+        "nation": "Sweden"
+    },
+    "M-51": {
+        "rp": 0,
+        "sl": 200000,
+        "nation": "Israel"
+    },
+    "Magach_1": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "Israel"
+    },
+    "Magach_2": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Israel"
+    },
+    "Magach_6": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Israel"
+    },
+    "Magach_6A": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Israel"
+    },
+    "Magach_6B": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Israel"
+    },
+    "Gal_Batash": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Israel"
+    },
+    "Sho't": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "Israel"
+    },
+    "Tiran_4S": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Israel"
+    },
+    "Sho't_Kal_Alef": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Israel"
+    },
+    "Sho't_Kal_Gimel": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Israel"
+    },
+    "Merkava_Mk.1B": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Israel"
+    },
+    "Merkava_Mk.2B": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Israel"
+    },
+    "Merkava_Mk.4B": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "Israel"
+    },
+    "Merkava_Mk.4M": {
+        "rp": 400000,
+        "sl": 1080000,
+        "nation": "Israel"
+    },
+    "Zachlam_Tager": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Israel"
+    },
+    "Hovet": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Israel"
+    },
+    "Machbet": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Israel"
+    },
+    "Spitfire_Mk_IXc_(Israel)": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "Israel"
+    },
+    "Spitfire_Mk.IX_(CW)_(Israel)": {
+        "rp": 63000,
+        "sl": 200000,
+        "nation": "Israel"
+    },
+    "Meteor_NF.13_(Israel)": {
+        "rp": 110000,
+        "sl": 310000,
+        "nation": "Israel"
+    },
+    "Meteor_F.8_(Israel)": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Israel"
+    },
+    "Mystere_IVA_(Israel)": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Israel"
+    },
+    "Sambad": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Israel"
+    },
+    "Sa'ar": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Israel"
+    },
+    "Mirage_IIICJ": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Israel"
+    },
+    "Kfir_C.7": {
+        "rp": 390000,
+        "sl": 1060000,
+        "nation": "Israel"
+    },
+    "S-199": {
+        "rp": 0,
+        "sl": 170000,
+        "nation": "Israel"
+    },
+    "P-51D-20-NA_(Israel)": {
+        "rp": 54000,
+        "sl": 180000,
+        "nation": "Israel"
+    },
+    "M.D.450B_Ouragan_(Israel)": {
+        "rp": 95000,
+        "sl": 270000,
+        "nation": "Israel"
+    },
+    "A-4H_(Israel)": {
+        "rp": 180000,
+        "sl": 500000,
+        "nation": "Israel"
+    },
+    "A-4E_Early_(M)_(Israel)": {
+        "rp": 220000,
+        "sl": 590000,
+        "nation": "Israel"
+    },
+    "A-4N_(Israel)": {
+        "rp": 270000,
+        "sl": 740000,
+        "nation": "Israel"
+    },
+    "F-4E_Phantom_II_(Israel)": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Israel"
+    },
+    "B-17G_(Israel)": {
+        "rp": 46000,
+        "sl": 170000,
+        "nation": "Israel"
+    },
+    "Vautour_IIA_(Israel)": {
+        "rp": 130000,
+        "sl": 370000,
+        "nation": "Israel"
+    },
+    "Vautour_IIN_(Israel)": {
+        "rp": 150000,
+        "sl": 420000,
+        "nation": "Israel"
+    },
+    "Nesher": {
+        "rp": 340000,
+        "sl": 930000,
+        "nation": "Israel"
+    }
+}
