@@ -37,4 +37,4 @@ def get_squadron_players(squadron_name: str):
 if __name__ == "__main__":
     # print(get_player_realistic_stat("BKN46"), file=open("get_r_stat.html", "w", encoding="utf-8"))
     # print(get_player_stat("BKN46"), file=open("get_stat.html", "w", encoding="utf-8"))
-    print(refresh_player_stat("_Soyuz_"))
+    print(refresh_player_stat("BKN46"))

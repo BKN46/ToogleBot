@@ -1,6 +1,9 @@
-import signal
 import base64
+import os
 import re
+import signal
+
+import PIL.Image
 
 from toogle.configs import config
 
@@ -47,3 +50,10 @@ def filter_emoji(desstr, restr=""):
     except re.error:
         co = re.compile("[\uD800-\uDBFF][\uDC00-\uDFFF]")
     return co.sub(restr, desstr)
+
+
+def create_path(path):
+    if os.path.isdir(path):
+        return
+    else:
+        os.makedirs(path)

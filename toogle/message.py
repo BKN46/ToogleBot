@@ -1,8 +1,12 @@
-from typing import List, Sequence, Optional
+import os
+from typing import List, Optional, Sequence
 
+import PIL.Image
 import requests
 
-from toogle.utils import get_base64_encode
+from toogle.utils import create_path, get_base64_encode, read_base64_pic
+
+create_path('data/buffer')
 
 class Element:
     def asDisplay(self) -> str:
@@ -56,10 +60,13 @@ class Image(Element):
         id: Optional[str] = None,
         path: Optional[str] = None,
         url: Optional[str] = None,
+        bytes: Optional[bytes] = None,
         base64: Optional[str] = None,
     ) -> None:
         self.id = id
         self.base64 = base64
+        if bytes:
+            self.base64 = get_base64_encode(bytes)
         self.path = path
         self.url = url
 
@@ -67,14 +74,38 @@ class Image(Element):
         return "[图片]"
 
     def getBase64(self) -> str:
-        if self.path:
-            image_bytes = open(self.path, 'rb').read()
+        image_bytes = self.getBytes()
+        self.base64 = get_base64_encode(image_bytes)
+        return self.base64
+
+    def getBytes(self) -> bytes:
+        if self.base64:
+            image_bytes = read_base64_pic(self.base64)
+        elif self.path:
+            image_bytes = open(self.path, "rb").read()
         elif self.url:
             image_bytes = requests.get(self.url).raw
         else:
-            image_bytes = b''
-        self.base64 = get_base64_encode(image_bytes)
-        return self.base64
+            image_bytes = b""
+        return image_bytes
+
+    def save(self, path: str):
+        image_bytes = self.getBytes()
+        with open(path, "wb") as f:
+            f.write(image_bytes)
+
+    @staticmethod
+    def buffered_url_pic(pic_url) -> "Image":
+        buffer_path = "data/buffer/"
+        all_buffer = os.listdir(buffer_path)
+
+        trans_url = pic_url.replace("://", "_").replace("/", "_")
+
+        if trans_url in all_buffer:
+            return Image.fromLocalFile(buffer_path + trans_url)
+
+        PIL.Image.open(requests.get(pic_url, stream=True).raw).save(buffer_path + trans_url)
+        return Image.fromLocalFile(buffer_path + trans_url)
 
     @staticmethod
     def fromLocalFile(path: str) -> "Image":

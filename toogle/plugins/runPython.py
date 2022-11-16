@@ -2,9 +2,9 @@ import contextlib
 import sys
 from io import StringIO
 
-from toogle.message_handler import MessagePack, MessageHandler
 from toogle.message import MessageChain, Plain
-from toogle.utils import set_timeout, handle_TLE
+from toogle.message_handler import MessageHandler, MessagePack
+from toogle.utils import handle_TLE, set_timeout
 
 
 class RunPython(MessageHandler):

@@ -2,8 +2,9 @@ import datetime
 from typing import Dict
 
 import MySQLdb
-from toogle.utils import filter_emoji
+
 from toogle.configs import config
+from toogle.utils import filter_emoji
 
 
 class DatetimeUtils:

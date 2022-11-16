@@ -1,7 +1,8 @@
 import re
 from typing import Any, Dict
 
-from toogle.message import MessageChain, Member, Group, Plain
+from toogle.message import Group, Member, MessageChain, Plain
+
 
 class MessagePack:
     def __init__(
@@ -35,3 +36,6 @@ class MessageHandler:
 
     async def ret(self, message: MessagePack) -> MessageChain:
         return MessageChain([])
+
+def get_user_name(message: MessagePack) -> str:
+    return message.member.name or str(message.member.id)

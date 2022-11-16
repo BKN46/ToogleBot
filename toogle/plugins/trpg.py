@@ -1,15 +1,16 @@
 import json
-import random
-import os
 import math
+import os
+import random
 import re
 
-from message_handler import MessageHandler, MessagePack
-from toogle.message_handler import MessagePack, MessageHandler
-from toogle.message import MessageChain, Plain, Image
-
+from toogle.message import Image, MessageChain, Plain
+from toogle.message_handler import MessageHandler, MessagePack
 from toogle.plugins.dnd.search_5e import search_magic
 from toogle.plugins.dnd.search_chm import search_chm
+from toogle.utils import create_path
+
+create_path('data/dice_table')
 
 DND_IMAGES_PATH = "toogle/plugins/dnd/chm_jpg/"  # 图片集地址
 

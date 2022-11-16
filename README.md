@@ -29,7 +29,7 @@ SUPERUSERS=["123456789"]      # 管理员QQ号
 ## 运行
 
 1. 进入mirai目录，启动mirai服务，`./mcl`
-2. 启动nonebot服务，`python3 -m pip -m nb_cli run`
+2. 启动nonebot服务，`python3 -m nb_cli run`
 
 ## Docker使用
 
@@ -49,36 +49,25 @@ TODO
   - [x] Swear
   - [x] Calculator
   - [x] NowTime
-  - [ ] DBPedia
-- [ ] DND功能
-  - [ ] Search5EMagic
-  - [ ] Search5ECHM
-  - [ ] Hangman5EMagic
+  - [x] GetRemake
+- [x] DND功能
+  - [x] Search5EMagic
+  - [x] Search5ECHM
   - [x] FastPythagorean
   - [x] UnitConversion
   - [x] FastFallCal
-  - [ ] CustomDiceTable
-- [ ] 图片相关
+  - [x] CustomDiceTable
+- [x] 图片相关
   - [x] GetSetu
-  - [ ] GetLastSetuJson
-  - [ ] GetQutu
+  - [x] GetQutu
   - [x] GetLuck
-  - [ ] GetNews
-  - [ ] GetRandomAnimeFemale
-  - [ ] LongTu
-  - [ ] GetAICompose
-  - [ ] HistoryTu
-- [ ] 其他
-  - [ ] Sleep
+  - [x] GetRandomAnimeFemale
+  - [x] LongTu
+  - [x] GetAICompose
+  - [x] HistoryTu
 - [ ] 定时
   - [ ] SetScheduler
 - [ ] 工具
-  - [ ] SWTranslation
-  - [ ] SWSpeed
-  - [ ] PromoteAuth
   - [x] ThunderSkill
   - [x] WTVehicleLine
   - [ ] ChatStatic
-- [ ] BKNW
-  - [ ] BKNWRegist
-  - [ ] GetRemake

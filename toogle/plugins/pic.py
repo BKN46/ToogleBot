@@ -1,14 +1,20 @@
-import random
 import math
 import os
+import random
 
-import PIL.Image, PIL.FontFile, PIL.ImageFont, PIL.ImageDraw
+import PIL.FontFile
+import PIL.Image
+import PIL.ImageDraw
+import PIL.ImageFont
 
-from toogle.message_handler import MessagePack, MessageHandler
-from toogle.message import MessageChain, Plain, Quote, Member
-from toogle.message import Image
-
+from toogle.message import At, Image, Member, MessageChain, Plain, Quote
+from toogle.message_handler import MessageHandler, MessagePack
 from toogle.sql import SQLConnection
+from toogle.utils import create_path
+
+create_path('data/qutu')
+create_path('data/long_img')
+create_path('data/history_img')
 
 qutu_path = "data/qutu/"
 
@@ -133,10 +139,50 @@ class LongTu(MessageHandler):
             pics = message.message.get(Image)
             for image in pics:
                 image_file_name = f"{image.id}".replace("{", "").replace("}", "")  # type: ignore
-                if image.path:  # type: ignore
-                    os.system(f"cp {image.path} {IMAGES_PATH}{image_file_name}")  # type: ignore
-                elif image.url:  # type: ignore
-                    with open(f"{IMAGES_PATH}{image_file_name}", "wb") as f:  # type: ignore
-                        image_byte = image.getBase64()  # type: ignore
-                        f.write(image_byte)
+                image.save(image_file_name) # type: ignore
             return MessageChain.create([Plain(f"搞定, 存了{len(pics)}张龙图")])
+
+
+class HistoryTu(MessageHandler):
+    trigger = r"^(记史|存黑历史|黑历史)"
+    thread_limit = True
+    readme = "群史官"
+
+    async def ret(self, message: MessagePack) -> MessageChain:
+        group_id = str(message.group.id)
+        IMAGES_PATH = f"data/history_img/"  # 图片集地址
+        if group_id not in os.listdir(IMAGES_PATH):
+            os.mkdir(f"{IMAGES_PATH}{group_id}/")
+        IMAGES_PATH = f"{IMAGES_PATH}{group_id}/"  # 图片集地址
+        message_content = message.message.asDisplay()
+        if message_content.startswith("黑历史"):
+            at = message.message.get(At)
+            if at:
+                text_filter = f"{at[0].target}|||" # type: ignore
+                message_content = MessageChain.create([
+                    i for i in message.message.root if type(i) != At
+                ]).asDisplay().strip()
+            else:
+                text_filter = ""
+            if "随机" in message_content:
+                files = [IMAGES_PATH + x for x in os.listdir(IMAGES_PATH) if text_filter in x]
+                file = random.choice(files)
+                return MessageChain.create([Image.fromLocalFile(file)])
+            elif message_content == "黑历史":
+                return MessageChain.create([
+                    GetQutu.get_all_pic(IMAGES_PATH, text_filter=text_filter, x_size=200, y_size=100),
+                ])
+            else:
+                num = int(message.message.asDisplay().strip().split()[-1])
+                files = [IMAGES_PATH + x for x in os.listdir(IMAGES_PATH) if text_filter in x]
+                file = files[num]
+                return MessageChain.create([Image.fromLocalFile(file)])
+        else:
+            pics = message.message.get(Image)
+            at = message.message.get(At)
+            for image in pics:
+                image_file_name = f"{image.id}".replace("{", "").replace("}", "") # type: ignore
+                if at:
+                    image_file_name = f"{at[0].target}|||{image_file_name}" # type: ignore
+                image.save(image_file_name) # type: ignore
+            return MessageChain.create([Plain(f"搞定, 存了{len(pics)}张黑历史")])
