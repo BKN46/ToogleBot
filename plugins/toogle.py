@@ -1,10 +1,11 @@
 import time
-from typing import Tuple, Any
+from typing import Any, Tuple
 
-from nonebot.rule import to_me
+import nonebot
 from nonebot.adapters import Message
-from nonebot.plugin import on_regex
 from nonebot.params import RegexGroup
+from nonebot.plugin import on_regex
+from nonebot.rule import to_me
 
 echo = on_regex("^22222$")
 
@@ -20,6 +21,7 @@ from toogle.index import export_plugins
 for plugin in export_plugins:
     matcher = on_regex(plugin.plugin.trigger)
     matcher.append_handler(plugin.ret)
+    nonebot.logger.success(f"[{plugin.plugin.name}] imported") # type: ignore
 
 get_help = on_regex("^#help#")
 
@@ -29,7 +31,7 @@ async def handle_help():
     res = []
     for mod in export_plugins:
         res.append(
-            f"{mod.plugin.__module__} :\n【触发正则】 {mod.plugin.trigger}\n【说明】 {mod.plugin.readme}"
+            f"{mod.plugin.name} :\n【触发正则】 {mod.plugin.trigger}\n【说明】 {mod.plugin.readme}"
         )
     res.append("\n大黄狗 Powered By BKN\n")
     await get_help.send(f"\n{'#'*15}\n".join(res))

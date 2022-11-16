@@ -8,6 +8,7 @@ from toogle.utils import handle_TLE, set_timeout
 
 
 class RunPython(MessageHandler):
+    name = "Python解释器"
     trigger = r"^#python#"
     readme = "简易python脚本运行，屏蔽敏感库(sys,os,dir,exec,eval等)"
 

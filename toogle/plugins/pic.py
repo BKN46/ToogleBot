@@ -19,6 +19,7 @@ create_path('data/history_img')
 qutu_path = "data/qutu/"
 
 class GetQutu(MessageHandler):
+    name = "趣图"
     trigger = r"^#qutu#"
     white_list = True
     thread_limit = True
@@ -101,6 +102,7 @@ class GetQutu(MessageHandler):
 
 
 class LongTu(MessageHandler):
+    name = "随机龙图"
     trigger = r"^(随机龙图|所有龙图|删龙图|存龙图|指定龙图)"
     thread_limit = True
     readme = "存龙图"
@@ -144,6 +146,7 @@ class LongTu(MessageHandler):
 
 
 class HistoryTu(MessageHandler):
+    name = "黑历史"
     trigger = r"^(记史|存黑历史|黑历史)"
     thread_limit = True
     readme = "群史官"

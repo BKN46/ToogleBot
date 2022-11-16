@@ -5,14 +5,15 @@ import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
 
-import toogle.plugins.pic.waifu as Waifu
+import toogle.plugins.compose.waifu as Waifu
 from toogle.message import Image, Member, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack, get_user_name
-from toogle.plugins.pic.waifu_battle import Dice
+from toogle.plugins.compose.waifu_battle import Dice
 from toogle.sql import DatetimeUtils, SQLConnection
 
 
 class GetRandomAnimeFemale(MessageHandler):
+    name = "随机ACG老婆"
     trigger = r"^(随机老婆|随机老公|我的老婆$|我的老公$|锁定老婆$|锁定老公$|对象排行|可选对象属性$|我要NTR|我要ntr|换妻)"
     thread_limit = True
     readme = "随机冻漫角色"

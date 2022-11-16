@@ -1,15 +1,16 @@
 import random
 import re
 
-from scipy.signal import fftconvolve
 from matplotlib import pyplot as plt
+from scipy.signal import fftconvolve
 
-from toogle.message_handler import MessagePack, MessageHandler
-from toogle.message import MessageChain, Plain, Image
+from toogle.message import Image, MessageChain, Plain
+from toogle.message_handler import MessageHandler, MessagePack
 
 pic_path = "data/dice_tmp.jpg"
 
 class Dice(MessageHandler):
+    name = "骰子"
     trigger = r"(^(\.|。|\.r|。r)(`|)(\d|d))|(#.*[d|/].*#)"
     readme = "骰娘，.1d20kh或者.1d20kl来指定优劣势，支持如.1d6+1d20+3这样的简单组合运算。使用`来查看概率分布"
 

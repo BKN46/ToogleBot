@@ -1,17 +1,17 @@
-import random
 import json
+import random
 
-import requests
 import PIL.Image
+import requests
 
-from toogle.message_handler import MessagePack, MessageHandler
-from toogle.message import MessageChain, Plain, Image
-from toogle.sql import SQLConnection, DatetimeUtils
-
-from toogle.plugins.pic.luck import get_luck_pic, max_resize
+from toogle.message import Image, MessageChain, Plain
+from toogle.message_handler import MessageHandler, MessagePack
+from toogle.plugins.compose.luck import get_luck_pic, max_resize
+from toogle.sql import DatetimeUtils, SQLConnection
 
 
 class GetLuck(MessageHandler):
+    name = "每日运势"
     trigger = r"^#luck#"
     # white_list = True
     thread_limit = True
@@ -34,6 +34,7 @@ class GetLuck(MessageHandler):
 
 
 class GetSetu(MessageHandler):
+    name = "色图"
     trigger = r"^#setu#"
     white_list = True
     thread_limit = True

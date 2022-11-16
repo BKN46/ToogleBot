@@ -13,6 +13,7 @@ from toogle.sql import DatetimeUtils, SQLConnection
 
 
 class GetRemake(MessageHandler):
+    name = "科学remake"
     trigger = r"^/remake"
     # white_list = True
     readme = "随机remake，数据来源自世界银行"

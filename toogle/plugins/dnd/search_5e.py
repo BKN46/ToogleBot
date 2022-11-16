@@ -1,19 +1,15 @@
 import json
 import os
 import random
+import pickle
 
 from thefuzz import fuzz, process
 
 from toogle.plugins.dnd.langconv import Converter
 
-DATA_PATH = "toogle/plugins/dnd/magic_data/"
-DATA_INDEX = json.loads(open(DATA_PATH + "index.json", "r").read())
-DATA = {
-    extension: json.loads(
-        open(DATA_PATH + extension_path, "r", encoding="utf-8", errors="ignore").read()
-    )["spell"]
-    for extension, extension_path in DATA_INDEX.items()
-}
+DND_DATA = pickle.load(open('data/dnd_data.pickle', 'rb'))
+DATA_INDEX = DND_DATA['DATA_INDEX']
+DATA = DND_DATA['DATA']
 DATA_FLATEN = []
 for k, v in DATA.items():
     DATA_FLATEN += v

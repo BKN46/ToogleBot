@@ -119,6 +119,7 @@ def generate_markov_model(text_list):
 class Markov(MessageHandler):
     # markov = pickle.load(open("/root/repos/qqbot_graia/markov_save", "rb"))
     # white_list = True
+    name = "对话机器人"
     trigger = r"^\s\s"
     readme = "基于马尔可夫链与隐含狄利克雷关系的垃圾话回答生成"
 

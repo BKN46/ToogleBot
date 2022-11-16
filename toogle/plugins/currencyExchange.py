@@ -7,6 +7,7 @@ from toogle.message import MessageChain, Plain, Image
 
 
 class CurrencyExchange(MessageHandler):
+    name = "货币转换"
     currency_map = {
         "USD": "usd",
         "usd": "usd",

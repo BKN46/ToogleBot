@@ -8,6 +8,7 @@ from toogle.message import MessageChain, Plain, Quote
 
 
 class HelpMeSelect(MessageHandler):
+    name = "随机选择"
     trigger = r"^[是|应该](.*还是.*)"
     readme = "随机选项"
 
@@ -47,6 +48,7 @@ class HelpMeSelect(MessageHandler):
 
 
 class NowTime(MessageHandler):
+    name = "世界时间"
     time_mapping = {
         "夏威夷": -10,
         "阿拉斯加": -9,
@@ -147,6 +149,7 @@ class NowTime(MessageHandler):
 
 
 class Swear(MessageHandler):
+    name = "骂人"
     trigger = r"^骂我$"
     white_list = False
     thread_limit = False

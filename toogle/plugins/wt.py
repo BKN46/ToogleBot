@@ -3,11 +3,12 @@ import re
 from toogle.message import Image as GImage
 from toogle.message import Member, MessageChain, Plain, Quote
 from toogle.message_handler import MessageHandler, MessagePack
-from toogle.plugins.wt.get_wt_data import get_line_cost
-from toogle.plugins.wt.main import get_player_recent_data
+from toogle.plugins.thunderskill.get_wt_data import get_line_cost
+from toogle.plugins.thunderskill.main import get_player_recent_data
 
 
 class WTVehicleLine(MessageHandler):
+    name = "战雷开线资源查询"
     trigger = r"^研发(.*)到(.*)"
     white_list = False
     thread_limit = True
@@ -20,6 +21,7 @@ class WTVehicleLine(MessageHandler):
 
 
 class ThunderSkill(MessageHandler):
+    name = "快速Thunder Skill查询"
     trigger = r"^TS\s"
     white_list = False
     readme = "快查Thunder Skill近期战绩"

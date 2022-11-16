@@ -1,11 +1,11 @@
-from toogle.message import At, Image, Member, MessageChain, Plain, Quote
+from toogle.message import Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack
-from toogle.plugins.pic.novelai import (get_ai_generate, get_balance,
-                                        get_base64_encode)
+from toogle.plugins.compose.novelai import get_ai_generate, get_balance
 from toogle.sql import DatetimeUtils, SQLConnection
 
 
 class GetAICompose(MessageHandler):
+    name = "AI画图"
     trigger = r"^.ai\s"
     thread_limit = True
     # white_list = True

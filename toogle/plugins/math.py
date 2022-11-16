@@ -4,14 +4,15 @@ import re
 import numpy as np
 from matplotlib import pyplot as plt
 
-from toogle.message_handler import MessagePack, MessageHandler
-from toogle.message import MessageChain, Plain, Image
-from toogle.utils import set_timeout, handle_TLE
+from toogle.message import Image, MessageChain, Plain
+from toogle.message_handler import MessageHandler, MessagePack
+from toogle.utils import handle_TLE, set_timeout
 
 pic_path = "data/math_plt.jpg"
 
 
 class Mathematica(MessageHandler):
+    name = "数学绘图"
     trigger = r"^#math#"
     # white_list = True
     readme = "数学用"
@@ -115,6 +116,7 @@ class Mathematica(MessageHandler):
 
 
 class Calculator(MessageHandler):
+    name = "计算器"
     trigger = r"=$"
     readme = "计算器"
 
@@ -181,6 +183,7 @@ class Calculator(MessageHandler):
 
 
 class FastPythagorean(MessageHandler):
+    name = "快速勾股计算"
     trigger = r"^勾股 (([1-9]\d*\.?\d*)|(0\.\d*[1-9]))"
     white_list = False
     readme = "直角边快速勾股，方便跑团立体空间计算"
@@ -192,6 +195,7 @@ class FastPythagorean(MessageHandler):
 
 
 class FastFallCal(MessageHandler):
+    name = "快速坠落时间计算"
     unit_conversion = {
         "尺": 0.3048,
         "ft": 0.3048,
@@ -221,6 +225,7 @@ class FastFallCal(MessageHandler):
 
 
 class UnitConversion(MessageHandler):
+    name = "单位转换"
     trans_mapping = {
         "英磅": ["公斤", 0.45359237],
         "磅": ["公斤", 0.45359237],

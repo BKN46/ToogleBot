@@ -2,17 +2,18 @@ import pickle
 
 from thefuzz import process
 
-CHM_LIST = pickle.load(
-    open("toogle/plugins/dnd/chm.pickle", "rb")
-)
+DND_DATA = pickle.load(open("data/dnd_data.pickle", "rb"))
+
+CHM_LIST = DND_DATA['CHM_LIST']
 
 
 def search_chm(text):
     match_list = [x["title"] for x in CHM_LIST if text in x["title"]]
     if len(match_list) == 1:
         res = match_list[0] + ".jpg"
+        return CHM_LIST['CHM_PICS'][res]
     elif text in match_list:
-        return text + ".jpg"
+        return CHM_LIST['CHM_PICS'][text + ".jpg"]
     elif len(match_list) > 1:
         res = process.extract(text, CHM_LIST, limit=10)
         res = (
