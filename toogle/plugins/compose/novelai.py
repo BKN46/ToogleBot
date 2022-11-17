@@ -3,28 +3,15 @@ import random
 
 import requests
 
+from toogle.configs import config
+
 req_site = {
     "NovelAI": {
         "hosts": "https://api.novelai.net",
         "headers": {
-            "authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IllWUndYVFRsOHBkeC1aOFRYUW5wbiIsIm5jIjoiMDhwMnZRRER0bHBVM3k5WDVObFJ3IiwiaWF0IjoxNjY3ODg4NDQxLCJleHAiOjE2NzA0ODA0NDF9._p8n228FJoOkkkw38uMOBtyrSCrBhqHjmBLpc3I4TS8",
+            "authorization": config.get("NovelAICookie"),
             "origin": "https://novelai.net",
             "referer": "https://novelai.net/",
-            "sec-ch-ua": '''"Google Chrome";v="105", "Not)A;Brand";v="8", "Chromium";v="105"''',
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": '''"Windows"''',
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-site",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
-        },
-    },
-    "Nya": {
-        "hosts": "https://api.nya.la",
-        "headers": {
-            "authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ing0djVwQ3dLZmR3WjdvTVNTTTd0NiIsIm5jIjoibnd5Rm9JR1ZLeldZT1RDd3BDTEVxIiwiaWF0IjoxNjY1MzY4MDg5LCJleHAiOjE2Njc5NjAwODl9.Xoeisgz_ACdkEk3UsaLmkuDhYQYABMGWqQoyFFDKFyE",
-            "origin": "https://api.nya.la",
-            "referer": "https://api.nya.la/",
             "sec-ch-ua": '''"Google Chrome";v="105", "Not)A;Brand";v="8", "Chromium";v="105"''',
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '''"Windows"''',
