@@ -1,10 +1,10 @@
+import datetime
 import random
 import re
-import datetime
 from functools import reduce
 
-from toogle.message_handler import MessagePack, MessageHandler
 from toogle.message import MessageChain, Plain, Quote
+from toogle.message_handler import MessageHandler, MessagePack
 
 
 class HelpMeSelect(MessageHandler):

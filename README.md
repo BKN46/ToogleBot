@@ -40,7 +40,7 @@ TODO
 - [ ] 基础功能
   - [x] Dice
   - [ ] CmdPipe
-  - [ ] Markov
+  - [x] Markov
   - [x] CurrencyExchange
   - [x] GetHelp
   - [x] RunPython

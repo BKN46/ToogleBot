@@ -7,6 +7,9 @@ from tqdm import tqdm
 
 from toogle.message import At, Image, Member, MessageChain, Plain, Quote
 from toogle.message_handler import MessageHandler, MessagePack
+from toogle.utils import create_path
+
+create_path('data/markov')
 
 MARKOV_DATA_PATH = "data/markov/"
 MARKOV_SAVE = {
@@ -124,7 +127,9 @@ class Markov(MessageHandler):
     readme = "基于马尔可夫链与隐含狄利克雷关系的垃圾话回答生成"
 
     async def ret(self, message: MessagePack) -> MessageChain:
-        self.markov = MARKOV_SAVE[str(message.group.id)]
+        self.markov = MARKOV_SAVE.get(str(message.group.id))
+        if not self.markov:
+            raise Exception('No markov in this group')
         message_plain = message.message.asDisplay()
         return MessageChain.create(
             [Plain(Markov.get_reply(message_plain, self.markov))]

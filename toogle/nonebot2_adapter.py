@@ -1,4 +1,5 @@
-from typing import Any, Tuple
+import re
+from typing import Any, Optional, Sequence, Tuple
 
 import nonebot
 from nonebot.adapters.mirai2 import MessageChain, MessageSegment
@@ -29,16 +30,10 @@ class PluginWrapper:
         event: MessageEvent,
         message: MessageChain = EventMessage(),
     ) -> None:
-        if isinstance(event.sender, GroupChatInfo):
-            group = Group(event.sender.group.id, event.sender.group.name)
-            member = Member(event.sender.id, event.sender.name)
-        elif isinstance(event.sender, PrivateChatInfo):
-            group = Group(0, "私聊")
-            member = Member(event.sender.id, event.sender.nickname)
-        else:
+        message_pack = PluginWrapper.get_message_pack(matcher, event, message)
+        if not message_pack:
             await matcher.send("不支持该种聊天方式！")
             return
-        message_pack = MessagePack(nb2toogle(message), group, member)
         if get_block(message_pack):
             return
         try:
@@ -47,6 +42,46 @@ class PluginWrapper:
             await matcher.send(f"{repr(e)}")
             return
         await matcher.send(toogle2nb(res, message, event))
+
+    @staticmethod
+    def get_message_pack(
+        matcher: Matcher,
+        event: MessageEvent,
+        message: MessageChain = EventMessage(),
+    ) -> Optional[MessagePack]:
+        if isinstance(event.sender, GroupChatInfo):
+            group = Group(event.sender.group.id, event.sender.group.name)
+            member = Member(event.sender.id, event.sender.name)
+        elif isinstance(event.sender, PrivateChatInfo):
+            group = Group(0, "私聊")
+            member = Member(event.sender.id, event.sender.nickname)
+        else:
+            return None
+        return MessagePack(nb2toogle(message), group, member)
+
+class LinearHandler:
+    def __init__(self, plugins: Sequence[PluginWrapper]) -> None:
+        self.plugins = plugins
+
+    async def ret(
+        self,
+        matcher: Matcher,
+        event: MessageEvent,
+        message: MessageChain = EventMessage()
+    ) -> None:
+        message_pack = PluginWrapper.get_message_pack(matcher, event, message)
+        if not message_pack:
+            await matcher.send("不支持该种聊天方式！")
+            return
+        for plugin in self.plugins:
+            if plugin.plugin.is_trigger(message_pack):
+                try:
+                    res = await plugin.plugin.ret(message_pack)
+                except VisibleException as e:
+                    await matcher.send(f"{repr(e)}")
+                    return
+                await matcher.send(toogle2nb(res, message, event))
+                return
 
 
 def get_block(message: MessagePack):
@@ -63,15 +98,16 @@ def toogle2nb(
         if isinstance(item, Plain):
             message_list.append(MessageSegment.plain(item.text))
         elif isinstance(item, Quote):
-            message_list.append(
-                MessageSegment.quote(
-                    event.source.id,  # type: ignore
-                    event.sender.group.id,
-                    event.sender.id,
-                    event.sender.group.id,
-                    origin,
-                )
-            )
+            pass
+            # message_list.append(
+            #     MessageSegment.quote(
+            #         event.source.id,  # type: ignore
+            #         event.sender.group.id,
+            #         event.sender.id,
+            #         event.sender.group.id,
+            #         origin,
+            #     )
+            # )
         elif isinstance(item, Image):
             message_list.append(MessageSegment.image(base64=item.getBase64()))
             # if item.path:

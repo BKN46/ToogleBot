@@ -1,6 +1,7 @@
-from toogle.nonebot2_adapter import PluginWrapper
-from toogle.plugins import (basic, currencyExchange, dice, math, novelai, pic,
-                            remaking, runPython, setu, trpg, waifu, wt)
+from toogle.nonebot2_adapter import LinearHandler, PluginWrapper
+from toogle.plugins import (basic, currencyExchange, dice, markov, math,
+                            novelai, pic, remaking, runPython, setu, trpg,
+                            waifu, wt)
 
 export_plugins = [
     PluginWrapper(plugin)
@@ -29,5 +30,8 @@ export_plugins = [
         novelai.GetAICompose,
         waifu.GetRandomAnimeFemale,
         remaking.GetRemake,
+        markov.Markov,
     ]
 ]
+
+linear_handler = LinearHandler(export_plugins)

@@ -4,11 +4,16 @@ import os
 import random
 import re
 
+from toogle.exceptions import ErrException
 from toogle.message import Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack
-from toogle.plugins.dnd.search_5e import search_magic
-from toogle.plugins.dnd.search_chm import search_chm
 from toogle.utils import create_path
+
+try:
+    from toogle.plugins.dnd.search_5e import search_magic
+    from toogle.plugins.dnd.search_chm import search_chm
+except Exception as e:
+    raise ErrException('导入DND组件出现问题，请确data/dnd_data.pickle存在')
 
 create_path('data/dice_table')
 
