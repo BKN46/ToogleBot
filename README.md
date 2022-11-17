@@ -20,6 +20,7 @@ ENVIRONMENT=dev
 VERIFY_KEY= xxxxxxxxx         # mirai-api-http密钥
 driver=~fastapi+~websockets
 
+CONCURRENCY=false             # 是否matcher并行模式（同一消息多个触发）
 MIRAI_HOST=127.0.0.1          # mirai-api-http地址
 MIRAI_PORT=5700               # mirai-api-http端口
 MIRAI_QQ=["123456789"]        # 登陆QQ号
