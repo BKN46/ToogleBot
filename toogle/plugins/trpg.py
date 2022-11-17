@@ -17,7 +17,7 @@ except Exception as e:
 
 create_path('data/dice_table')
 
-DND_IMAGES_PATH = "toogle/plugins/dnd/chm_jpg/"  # 图片集地址
+DND_IMAGES_PATH = "toogle/data/dnd/chm_jpg/"  # 图片集地址
 
 
 class Search5EMagic(MessageHandler):
@@ -81,7 +81,6 @@ class CustomDiceTable(MessageHandler):
 
 
 class Search5ECHM(MessageHandler):
-    name = "DND5E 天麟不全书查询"
     trigger = r"^dnd5e"
     white_list = False
     readme = "DND5E 天麟不全书查询"
@@ -89,8 +88,10 @@ class Search5ECHM(MessageHandler):
     async def ret(self, message: MessagePack) -> MessageChain:
         msg = message.message.asDisplay()[5:].strip()
         res = search_chm(msg)
-        if isinstance(res, bytes):
-            res = Image(bytes=res)
+        if res.endswith("jpg"):
+            res = Image.fromLocalFile(DND_IMAGES_PATH + res)
+        else:
+            res = Plain(res)
         return MessageChain.create([res])
 
 '''
