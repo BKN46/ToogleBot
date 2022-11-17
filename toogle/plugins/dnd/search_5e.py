@@ -1,7 +1,7 @@
 import json
 import os
-import random
 import pickle
+import random
 
 from thefuzz import fuzz, process
 

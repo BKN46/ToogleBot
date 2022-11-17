@@ -1,4 +1,6 @@
+import os
 import re
+import time
 from typing import Any, Optional, Sequence, Tuple
 
 import nonebot
@@ -18,10 +20,15 @@ from toogle.message import Plain, Quote
 from toogle.message_handler import MessageHandler, MessagePack
 
 warning = nonebot.logger.warning  # type: ignore
-
+if "traffic_control.py" in os.listdir('data'):
+    from data.traffic_control import TRAFFIC_CTRL
+else:
+    TRAFFIC_CTRL = {}
+    nonebot.logger.warning("Traffic time control is not available. please check `data/traffic_control.py`") # type: ignore
 
 class PluginWrapper:
     def __init__(self, plugin: MessageHandler) -> None:
+        self.plugin_class = plugin
         self.plugin = plugin()
 
     async def ret(
@@ -35,6 +42,9 @@ class PluginWrapper:
             await matcher.send("不支持该种聊天方式！")
             return
         if get_block(message_pack):
+            return
+        if not is_traffic_free(self.plugin_class, message_pack):
+            await matcher.send(get_traffic_time(self.plugin_class, message_pack))
             return
         try:
             res = await self.plugin.ret(message_pack)
@@ -75,6 +85,9 @@ class LinearHandler:
             return
         for plugin in self.plugins:
             if plugin.plugin.is_trigger(message_pack):
+                if not is_traffic_free(plugin.plugin_class, message_pack):
+                    await matcher.send(get_traffic_time(plugin.plugin_class, message_pack))
+                    return
                 try:
                     res = await plugin.plugin.ret(message_pack)
                 except VisibleException as e:
@@ -88,6 +101,23 @@ def get_block(message: MessagePack):
     if str(message.member.id) in config["BLACK_LIST"]:
         return True
     return False
+
+
+def get_traffic_time(plugin: MessageHandler, message: MessagePack) -> str:
+    tz = TRAFFIC_CTRL.get(plugin.__class__.__name__).get(str(message.group.id)) # type: ignore
+    tz = ", ".join([f"{x[0]}:00 - {x[1]}:00" for x in tz]) # type: ignore
+    return f'管理员设置，该功能在 {tz} 时段禁用'
+
+
+def is_traffic_free(plugin: MessageHandler, message: MessagePack) -> bool:
+    plugin_traffic = TRAFFIC_CTRL.get(plugin.__class__.__name__)
+    group_id = str(message.group.id)
+    if plugin_traffic and group_id in plugin_traffic.keys():
+        now_hr = time.localtime().tm_hour
+        for traffic_time in plugin_traffic[group_id]:
+            if now_hr >= traffic_time[0] and now_hr < traffic_time[1]:
+                return False
+    return True
 
 
 def toogle2nb(
