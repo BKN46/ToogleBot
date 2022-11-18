@@ -5,6 +5,7 @@ from io import StringIO
 from toogle.message import MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack
 from toogle.utils import handle_TLE, set_timeout
+from toogle.configs import config
 
 
 class RunPython(MessageHandler):
@@ -14,7 +15,7 @@ class RunPython(MessageHandler):
 
     async def ret(self, message: MessagePack) -> MessageChain:
         text = message.message.asDisplay()[8:]
-        running_res: str = RunPython.get_exec(text, message.member.id == 1149887546)
+        running_res: str = RunPython.get_exec(text, str(message.member.id) in config["SUPERUSERS"])
         return MessageChain.create([Plain(running_res)])
 
     @staticmethod

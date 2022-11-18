@@ -230,14 +230,4 @@ class SQLConnection:
 
 
 if __name__ == "__main__":
-    # print(datetime.datetime.now())
-    # print(SQLConnection.insert_user("752941266"))
-    # user_info = SQLConnection.get_user("1149887546")
-    # print(DatetimeUtils.is_today(user_info[2]))
-    # print(
-    #     SQLConnection.update_user(
-    #         1149887546, f"last_luck='{DatetimeUtils.get_now_time()}'"
-    #     )
-    # )
-    timer_info = {"year": 2022, "month": 2, "day": 19, "hour": 20, "minute": 0}
-    print(SQLConnection.insert_crond("11111", 1149887546, 325353479, **timer_info))
+    pass
