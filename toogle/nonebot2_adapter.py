@@ -1,5 +1,6 @@
 import os
 import re
+import signal
 import time
 import traceback
 from typing import Any, Optional, Sequence, Tuple
@@ -47,15 +48,7 @@ class PluginWrapper:
         if not is_traffic_free(self.plugin, message_pack):
             await matcher.send(get_traffic_time(self.plugin, message_pack))
             return
-        try:
-            res = await self.plugin.ret(message_pack)
-            await matcher.send(toogle2nb(res, message, event))
-        except VisibleException as e:
-            await matcher.send(f"{repr(e)}")
-            return
-        except Exception as e:
-            print(traceback.format_exc(), file=open("err.log", "a"))
-            nonebot.logger.error(f"[{self.plugin.name}] {repr(e)}") # type: ignore
+        await plugin_run(self.plugin, message_pack, matcher, event, message)
 
     @staticmethod
     def get_message_pack(
@@ -92,16 +85,31 @@ class LinearHandler:
                 if not is_traffic_free(plugin.plugin, message_pack):
                     await matcher.send(get_traffic_time(plugin.plugin, message_pack))
                     return
-                try:
-                    res = await plugin.plugin.ret(message_pack)
-                    await matcher.send(toogle2nb(res, message, event))
-                except VisibleException as e:
-                    await matcher.send(f"{repr(e)}")
-                    return
-                except Exception as e:
-                    print(traceback.format_exc(), file=open("err.log", "a"))
-                    nonebot.logger.error(f"[{plugin.plugin.name}] {repr(e)}") # type: ignore
+                await plugin_run(plugin.plugin, message_pack, matcher, event, message)
                 return
+
+async def plugin_run(
+    plugin: MessageHandler,
+    message_pack: MessagePack,
+    matcher: Matcher,
+    event: MessageEvent,
+    message: MessageChain
+):
+    def handle_timeout(signum, frame):
+        raise VisibleException(f"[To {message_pack.member.id}] {plugin.name}运行超时，请稍后重试")
+
+    try:
+        signal.signal(signal.SIGALRM, handle_timeout)
+        signal.alarm(60)
+        res = await plugin.ret(message_pack)
+        await matcher.send(toogle2nb(res, message, event))
+        signal.alarm(0)
+    except VisibleException as e:
+        await matcher.send(f"{repr(e)}")
+        return
+    except Exception as e:
+        print(traceback.format_exc(), file=open("err.log", "a"))
+        nonebot.logger.error(f"[{plugin.name}] {repr(e)}") # type: ignore
 
 
 def get_block(message: MessagePack):

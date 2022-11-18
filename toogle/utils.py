@@ -26,9 +26,7 @@ def set_timeout(num, callback):
             try:
                 signal.signal(signal.SIGALRM, handle)  # 设置信号和回调函数
                 signal.alarm(num)  # 设置 num 秒的闹钟
-                print("start alarm signal.")
                 r = func(*args, **kwargs)
-                print("close alarm signal.")
                 signal.alarm(0)  # 关闭闹钟
                 return r
             except RuntimeError as e:
