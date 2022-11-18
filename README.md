@@ -94,6 +94,7 @@ TODO
   - [x] Calculator
   - [x] NowTime
   - [x] GetRemake
+  - [x] Lottery
 - [x] DND功能
   - [x] Search5EMagic
   - [x] Search5ECHM

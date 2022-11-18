@@ -17,6 +17,7 @@ export_plugins = [
         basic.HelpMeSelect,
         basic.NowTime,
         basic.Swear,
+        basic.Lottery,
         setu.GetLuck,
         setu.GetSetu,
         wt.ThunderSkill,

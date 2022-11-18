@@ -1,10 +1,16 @@
 import datetime
+import os
+import pickle
 import random
 import re
 from functools import reduce
 
-from toogle.message import MessageChain, Plain, Quote
+from toogle.message import At, MessageChain, Plain, Quote
 from toogle.message_handler import MessageHandler, MessagePack
+from toogle.utils import create_path
+
+LOTTERY_PATH = "data/lottery/"
+create_path(LOTTERY_PATH)
 
 
 class HelpMeSelect(MessageHandler):
@@ -157,3 +163,103 @@ class Swear(MessageHandler):
 
     async def ret(self, message: MessagePack) -> MessageChain:
         return MessageChain.create([Plain("因为这个功能还在开发中，所以我只能先说一句你妈死了。")])
+
+
+class Lottery(MessageHandler):
+    name = "抽奖"
+    trigger = r"^(发起抽奖|查看抽奖|参与抽奖|抽([0-9])+人\s(.*)$)"
+    white_list = False
+    thread_limit = False
+    readme = "发起抽奖/参与抽奖"
+
+    """ lottery dict
+    {
+        'group': str,
+        'creator': str,
+        'draw_list': list[str],
+    }
+    """
+
+    async def ret(self, message: MessagePack) -> MessageChain:
+        message_content = message.message.asDisplay()
+        lottery_list = [x.replace(".pickle", "") for x in os.listdir(LOTTERY_PATH)]
+        if message_content.startswith("发起抽奖"):
+            lottery_name = message_content[4:].strip()
+            if lottery_name in lottery_list:
+                return MessageChain.create([Plain(f"[{lottery_name}]抽奖已存在")])
+            lottery_dict = {
+                "group": str(message.group.id),
+                "creator": str(message.member.id),
+                "draw_list": [],
+            }
+            lottery_path = f"{LOTTERY_PATH}{lottery_name}.pickle"
+            pickle.dump(lottery_dict, open(lottery_path, "wb"))
+            return MessageChain.create([Plain(f"成功创建[{lottery_name}]抽奖")])
+
+        elif message_content.startswith("查看抽奖"):
+            lottery_name = message_content[4:].strip()
+            if lottery_name not in lottery_list:
+                return MessageChain.create([Plain(f"[{lottery_name}]抽奖不存在")])
+            lottery_path = f"{LOTTERY_PATH}{lottery_name}.pickle"
+            lottery_dict = pickle.load(open(lottery_path, "rb"))
+            lottery_member_num = len(lottery_dict["draw_list"])
+            res = (
+                f"[{lottery_name}]由{lottery_dict['creator']}创建\n"
+                f"抽奖名单共{lottery_member_num}人：\n" + "\n".join(lottery_dict["draw_list"])
+            )
+            return MessageChain.create([Plain(res)])
+
+        elif message_content.startswith("参与抽奖"):
+            lottery_name = message_content[4:].strip()
+            if lottery_name not in lottery_list:
+                return MessageChain.create([Plain(f"[{lottery_name}]抽奖不存在")])
+            lottery_path = f"{LOTTERY_PATH}{lottery_name}.pickle"
+            lottery_dict = pickle.load(open(lottery_path, "rb"))
+            member_id = str(message.member.id)
+            if member_id in lottery_dict.get("draw_list"):
+                return MessageChain.create([Plain(f"你已经在[{lottery_name}]抽奖名单中")])
+            lottery_dict["draw_list"].append(member_id)
+            pickle.dump(lottery_dict, open(lottery_path, "wb"))
+            return MessageChain.create([Plain(f"成功参与[{lottery_name}]抽奖")])
+
+        elif message_content.startswith("抽"):
+            re_match = re.search(self.trigger, message_content)
+            number = int(re_match.group(2))  # type: ignore
+            lottery_name = re_match.group(3)  # type: ignore
+            if lottery_name not in lottery_list:
+                return MessageChain.create([Plain(f"[{lottery_name}]抽奖不存在")])
+
+            lottery_path = f"{LOTTERY_PATH}{lottery_name}.pickle"
+            lottery_dict = pickle.load(open(lottery_path, "rb"))
+
+            if str(message.member.id) != lottery_dict["creator"]:
+                return MessageChain.create([Plain(f"你不是[{lottery_name}]抽奖的创建人")])
+
+            lottery_member_num = len(lottery_dict["draw_list"])
+            if lottery_member_num < number:
+                return MessageChain.create(
+                    [
+                        Plain(
+                            f"[{lottery_name}]抽奖名单人数不足，需{number}人，现有{lottery_member_num}人"
+                        )
+                    ]
+                )
+
+            lucky_list = random.sample(lottery_dict["draw_list"], number)
+            at_list = []
+            for x in lucky_list:
+                at_list += [
+                    Plain(f"{x} "),
+                    At(target=int(x)),
+                ]
+            os.remove(lottery_path)
+            return MessageChain.create(
+                [
+                    Plain(
+                        f"[{lottery_name}]抽奖共{lottery_member_num}人，抽{number}人\n中奖名单为：\n"
+                    )
+                ]
+                + at_list
+            )
+
+        return MessageChain.create([Plain(f"[抽奖]未知错误")])
