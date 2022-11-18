@@ -43,15 +43,17 @@ class PluginWrapper:
             return
         if get_block(message_pack):
             return
-        if not is_traffic_free(self.plugin_class, message_pack):
-            await matcher.send(get_traffic_time(self.plugin_class, message_pack))
+        if not is_traffic_free(self.plugin, message_pack):
+            await matcher.send(get_traffic_time(self.plugin, message_pack))
             return
         try:
             res = await self.plugin.ret(message_pack)
+            await matcher.send(toogle2nb(res, message, event))
         except VisibleException as e:
             await matcher.send(f"{repr(e)}")
             return
-        await matcher.send(toogle2nb(res, message, event))
+        except Exception as e:
+            nonebot.logger.error(f"[{self.plugin.name}] {repr(e)}") # type: ignore
 
     @staticmethod
     def get_message_pack(
@@ -85,15 +87,17 @@ class LinearHandler:
             return
         for plugin in self.plugins:
             if plugin.plugin.is_trigger(message_pack):
-                if not is_traffic_free(plugin.plugin_class, message_pack):
-                    await matcher.send(get_traffic_time(plugin.plugin_class, message_pack))
+                if not is_traffic_free(plugin.plugin, message_pack):
+                    await matcher.send(get_traffic_time(plugin.plugin, message_pack))
                     return
                 try:
                     res = await plugin.plugin.ret(message_pack)
+                    await matcher.send(toogle2nb(res, message, event))
                 except VisibleException as e:
                     await matcher.send(f"{repr(e)}")
                     return
-                await matcher.send(toogle2nb(res, message, event))
+                except Exception as e:
+                    nonebot.logger.error(f"[{plugin.plugin.name}] {repr(e)}") # type: ignore
                 return
 
 
@@ -104,13 +108,14 @@ def get_block(message: MessagePack):
 
 
 def get_traffic_time(plugin: MessageHandler, message: MessagePack) -> str:
-    tz = TRAFFIC_CTRL.get(plugin.__class__.__name__).get(str(message.group.id)) # type: ignore
+    tz = TRAFFIC_CTRL.get(plugin.name).get(str(message.group.id)) # type: ignore
     tz = ", ".join([f"{x[0]}:00 - {x[1]}:00" for x in tz]) # type: ignore
     return f'管理员设置，该功能在 {tz} 时段禁用'
 
 
 def is_traffic_free(plugin: MessageHandler, message: MessagePack) -> bool:
-    plugin_traffic = TRAFFIC_CTRL.get(plugin.__class__.__name__)
+    nonebot.logger.success(f"Triggered [{plugin.name}]") # type: ignore
+    plugin_traffic = TRAFFIC_CTRL.get(plugin.name)
     group_id = str(message.group.id)
     if plugin_traffic and group_id in plugin_traffic.keys():
         now_hr = time.localtime().tm_hour
