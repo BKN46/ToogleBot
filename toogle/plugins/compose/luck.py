@@ -7,7 +7,7 @@ from toogle.message import MessageChain, Plain, Quote, Member
 from toogle.message import Image as GImage
 
 pic_temp_path = "data/luck_tmp.png"
-font_path = "toogle/plugins/pic/AaRunXing.ttf"
+font_path = "toogle/plugins/compose/AaRunXing.ttf"
 
 def circle_corner(img, radii, trans):
     # 画圆（用于分离4个角）

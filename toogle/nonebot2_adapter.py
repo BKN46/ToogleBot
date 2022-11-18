@@ -1,6 +1,7 @@
 import os
 import re
 import time
+import traceback
 from typing import Any, Optional, Sequence, Tuple
 
 import nonebot
@@ -53,6 +54,7 @@ class PluginWrapper:
             await matcher.send(f"{repr(e)}")
             return
         except Exception as e:
+            print(traceback.format_exc(), file=open("err.log", "a"))
             nonebot.logger.error(f"[{self.plugin.name}] {repr(e)}") # type: ignore
 
     @staticmethod
@@ -97,6 +99,7 @@ class LinearHandler:
                     await matcher.send(f"{repr(e)}")
                     return
                 except Exception as e:
+                    print(traceback.format_exc(), file=open("err.log", "a"))
                     nonebot.logger.error(f"[{plugin.plugin.name}] {repr(e)}") # type: ignore
                 return
 

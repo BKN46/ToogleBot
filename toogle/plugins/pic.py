@@ -56,7 +56,7 @@ class GetQutu(MessageHandler):
             ".mirai",
         ]  # 图片格式
         IMAGE_SAVE_PATH = "data/tmp.jpg"  # 图片转换后的地址
-        font_path = "toogle/plugins/pic/AaRunXing.ttf"
+        font_path = "toogle/plugins/compose/AaRunXing.ttf"
         font = PIL.ImageFont.truetype(font_path, 15)
 
         # 获取图片集地址下的所有图片名称

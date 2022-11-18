@@ -84,7 +84,7 @@ class Image(Element):
         elif self.path:
             image_bytes = open(self.path, "rb").read()
         elif self.url:
-            image_bytes = requests.get(self.url).raw
+            image_bytes = requests.get(self.url).content
         else:
             image_bytes = b""
         return image_bytes
