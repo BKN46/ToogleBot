@@ -13,7 +13,7 @@ try:
     from toogle.plugins.dnd.search_5e import search_magic
     from toogle.plugins.dnd.search_chm import search_chm
 except Exception as e:
-    raise ErrException('导入DND组件出现问题，请确data/dnd_data.pickle存在')
+    raise ErrException('导入DND组件出现问题，请确data/dnd5e_data存在')
 
 create_path('data/dice_table')
 
