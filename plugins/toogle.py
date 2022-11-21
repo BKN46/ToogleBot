@@ -25,14 +25,12 @@ if config.get("CONCURRENCY") == 'true':
         try:
             matcher = on_regex(plugin.plugin.trigger)
             matcher.append_handler(plugin.ret)
-            nonebot.logger.success(f"[{plugin.plugin.name}] imported") # type: ignore
         except Exception as e:
-            nonebot.logger.error(f"[{plugin.plugin.name}] failed to import: {repr(e)}") # type: ignore
+            nonebot.logger.error(f"[{plugin.plugin.name}] failed to add matcher/handler: {repr(e)}") # type: ignore
         
 else:
     matcher = on_message()
     matcher.append_handler(linear_handler.ret)
-    nonebot.logger.success(f"Toogle linear handler imported") # type: ignore
 
 
 get_help = on_regex("^#help#")
