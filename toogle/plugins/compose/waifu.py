@@ -12,6 +12,9 @@ import PIL.ImageDraw
 import PIL.ImageFont
 import requests
 
+SAVE_PATH = "data/waifu_rank.png"
+FONT_TYPE = "toogle/plugins/compose/Arial Unicode MS Font.ttf"
+
 PARAM_KEYWORD = {
     "黑发": ["hair_color", 1, 1],
     "黄发": ["hair_color", 2, 1],
@@ -572,8 +575,6 @@ def calc_confirm():
 
 
 BASE_PATH = ""
-SAVE_PATH = BASE_PATH + "tmp/waifu_rank.png"
-FONT_TYPE = BASE_PATH + "large_utils/Arial Unicode MS Font.ttf"
 
 SIZE = [1500, 4000]
 PIC_SIZE = [350, int(SIZE[1] / 10)]
@@ -593,7 +594,7 @@ RANK_COLOR = {
 
 
 def buffered_url_pic(pic_url):
-    buffer_path = BASE_PATH + "tmp/buffer/"
+    buffer_path = BASE_PATH + "data/buffer/"
     all_buffer = os.listdir(buffer_path)
 
     trans_url = pic_url.replace("://", "_").replace("/", "_")

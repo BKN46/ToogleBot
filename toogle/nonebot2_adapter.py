@@ -1,9 +1,13 @@
+import datetime
 import os
+from multiprocessing import Semaphore
 import re
 import signal
 import time
 import traceback
 from typing import Any, Optional, Sequence, Tuple
+from urllib3.exceptions import HTTPError as UrllibError
+from requests.exceptions import HTTPError as RequestsError
 
 import nonebot
 from nonebot.adapters.mirai2 import MessageChain, MessageSegment
@@ -21,6 +25,7 @@ from toogle.message import MessageChain as ToogleChain
 from toogle.message import Plain, Quote
 from toogle.message_handler import MessageHandler, MessagePack
 
+THREAD_SEM = Semaphore(1)
 warning = nonebot.logger.warning  # type: ignore
 if "traffic_control.py" in os.listdir('data'):
     from data.traffic_control import TRAFFIC_CTRL
@@ -98,18 +103,35 @@ async def plugin_run(
     def handle_timeout(signum, frame):
         raise VisibleException(f"[To {message_pack.member.id}] {plugin.name}运行超时，请稍后重试")
 
+    if plugin.thread_limit and not THREAD_SEM.acquire(timeout=1):
+        toogle_message = ToogleChain.create([
+            At(target=message_pack.member.id),
+            Plain(f"我知道你很急，但你别急")
+        ])
+        res = toogle2nb(toogle_message, message, event)
+        await matcher.send(res)
+        return
+
     try:
         signal.signal(signal.SIGALRM, handle_timeout)
         signal.alarm(60)
         res = await plugin.ret(message_pack)
         await matcher.send(toogle2nb(res, message, event))
         signal.alarm(0)
+    except (UrllibError, RequestsError):
+        await matcher.send(f"爬虫网络连接错误，请稍后尝试")
     except VisibleException as e:
-        await matcher.send(f"{repr(e)}")
-        return
+        await matcher.send(f"{e.__str__()}")
     except Exception as e:
-        print(traceback.format_exc(), file=open("err.log", "a"))
+        print(
+            f"{'*'*20}\n[{datetime.datetime.now().strftime('%Y-%m-%d, %H:%M:%S')}]"\
+            f"[{plugin.name}] {repr(e)}\n{'*'*20}\n{traceback.format_exc()}"
+             , file=open("err.log", "a")
+        )
         nonebot.logger.error(f"[{plugin.name}] {repr(e)}") # type: ignore
+    finally:
+        if plugin.thread_limit:
+            THREAD_SEM.release()
 
 
 def get_block(message: MessagePack):

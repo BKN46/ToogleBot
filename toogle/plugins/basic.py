@@ -251,6 +251,7 @@ class Lottery(MessageHandler):
                 at_list += [
                     Plain(f"{x} "),
                     At(target=int(x)),
+                    Plain(f"\n"),
                 ]
             os.remove(lottery_path)
             return MessageChain.create(
