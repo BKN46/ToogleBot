@@ -20,7 +20,7 @@ for index, plugin_name in enumerate(plugin_list):
         continue
     for x in dir(plugin_module):
         tmp = getattr(plugin_module, x)
-        if inspect.isclass(tmp) and issubclass(tmp, MessageHandler):
+        if inspect.isclass(tmp) and tmp.__name__ != 'MessageHandler' and issubclass(tmp, MessageHandler):
             export_plugins.append(PluginWrapper(tmp))  # type: ignore
             nonebot.logger.success(f"[{tmp.__name__}] imported ({index + 1}/{len(plugin_list)})")  # type: ignore
 
