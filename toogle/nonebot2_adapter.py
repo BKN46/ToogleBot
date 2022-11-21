@@ -1,13 +1,11 @@
 import datetime
 import os
-from multiprocessing import Semaphore
 import re
 import signal
 import time
 import traceback
+from multiprocessing import Semaphore
 from typing import Any, Optional, Sequence, Tuple
-from urllib3.exceptions import HTTPError as UrllibError
-from requests.exceptions import HTTPError as RequestsError
 
 import nonebot
 from nonebot.adapters.mirai2 import MessageChain, MessageSegment
@@ -17,6 +15,8 @@ from nonebot.adapters.mirai2.message import MessageType
 # from nonebot.adapters import Event, Message
 from nonebot.matcher import Matcher
 from nonebot.params import EventMessage, RegexGroup, RegexMatched
+from requests.exceptions import HTTPError as RequestsError
+from urllib3.exceptions import HTTPError as UrllibError
 
 from toogle.configs import config
 from toogle.exceptions import VisibleException
@@ -125,8 +125,10 @@ async def plugin_run(
     except Exception as e:
         print(
             f"{'*'*20}\n[{datetime.datetime.now().strftime('%Y-%m-%d, %H:%M:%S')}]"\
-            f"[{plugin.name}] {repr(e)}\n{'*'*20}\n{traceback.format_exc()}"
-             , file=open("err.log", "a")
+            f"[{plugin.name}] {repr(e)}\n"\
+            f"[{message_pack.group.id}][{message_pack.member.id}]{message_pack.message.asDisplay()}\n"\
+            f"\n{'*'*20}\n{traceback.format_exc()}"
+            , file=open("err.log", "a")
         )
         nonebot.logger.error(f"[{plugin.name}] {repr(e)}") # type: ignore
     finally:

@@ -2,8 +2,8 @@ import re
 
 import requests
 
-from toogle.message_handler import MessagePack, MessageHandler
-from toogle.message import MessageChain, Plain, Image
+from toogle.message import Image, MessageChain, Plain
+from toogle.message_handler import MessageHandler, MessagePack
 
 
 class CurrencyExchange(MessageHandler):
@@ -100,7 +100,7 @@ class CurrencyExchange(MessageHandler):
 
         if matchs:
             if matchs.group(1) in self.exhibit_list:
-                raise Exception("")
+                raise Exception("触发一刀")
             currency = matchs.group(3)
             if currency in self.block_chain_map:
                 rates = self.get_blockchain()
@@ -112,7 +112,7 @@ class CurrencyExchange(MessageHandler):
             res = num / rate
             res = f"{matchs.group(1)} ({num:,.2f} {rate_mark})\n折合人民币为 ¥{res:,.2f}"
         else:
-            res = f"请求失败"
+            raise Exception("误触发")
         return MessageChain.create([Plain(res)])
 
     def cn2digit(self, cn_str):
