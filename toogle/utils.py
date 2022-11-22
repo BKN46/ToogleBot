@@ -87,18 +87,19 @@ def text2img(
     text: str,
     font_path: str = "toogle/plugins/compose/Arial Unicode MS Font.ttf",
     word_size: int = 20,
-    max_size: Tuple[int, int] = (500, 300),
+    max_size: Tuple[int, int] = (500, 1000),
     padding: Tuple[int, int] = (20, 20),
     bg_color: Tuple[int, int, int] = (255, 255, 255),
     font_color: Tuple[int, int, int] = (20, 20, 20),
 ) -> bytes:
     font = PIL.ImageFont.truetype(font_path, word_size)
     text = get_font_wrap(text, font, max_size[0] - 2 * padding[0])  # type: ignore
-    text_box = font.getbbox(text)  # type: ignore
+    text_width = max([font.getbbox(x)[2] for x in text.split('\n')])
+    text_height = sum([font.getbbox(x)[3] for x in text.split('\n')])  # type: ignore
 
     gen_image = PIL.Image.new(
         "RGBA",
-        (text_box[2] + 2 * padding[0], min(max_size[1], text_box[3] + 2 * padding[1])),
+        (text_width + 2 * padding[0], min(max_size[1], text_height + 2 * padding[1])),
         bg_color,
     )
     draw = PIL.ImageDraw.Draw(gen_image)
