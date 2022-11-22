@@ -165,7 +165,7 @@ def nation_parse(name, out_seed):
         if nation_line.get("PPP人均国民收入"):
             ppp_income = float(nation_line.get("PPP人均国民收入"))  # type: ignore
             pt_income = income * ppp_income / avg_income / 17090 * 10550
-            ras(f"PPP后约等价为中国2021年月薪{pt_income*6.35/12:.2f}¥ (6.35汇率计算)")
+            ras(f"PPP后约等价为中国2021年月薪{pt_income*7/12:.2f}¥ (7汇率计算)")
     if nation_line.get("失业率"):
         tmp = random.random() * 100
         if tmp <= float(nation_line.get("失业率")):  # type: ignore
@@ -192,7 +192,8 @@ def nation_parse(name, out_seed):
         life_time = random.gauss(avg_lt, avg_lt / 10)
         score *= math.sqrt(life_time / avg_lt)
         rae(f"你的预期寿命为{life_time:.1f}年")
-    rae(f"# 投胎得分: {score:.2f} 本次投胎种子: #{seed}")
+    rae(f"# 投胎得分: {score:.2f}")
+    # rae(f"本次投胎种子: #{seed}")
     p_res["score"] = score
     p_res["seed"] = seed
     return "".join(res), p_res, game_data

@@ -4,7 +4,8 @@ from typing import List, Optional, Sequence
 import PIL.Image
 import requests
 
-from toogle.utils import create_path, get_base64_encode, read_base64_pic
+from toogle.utils import (create_path, get_base64_encode, read_base64_pic,
+                          text2img)
 
 create_path('data/buffer')
 
@@ -93,6 +94,10 @@ class Image(Element):
         image_bytes = self.getBytes()
         with open(path, "wb") as f:
             f.write(image_bytes)
+
+    @staticmethod
+    def text_image(text: str, **kwargs) -> "Image":
+        return Image(bytes=text2img(text, **kwargs))
 
     @staticmethod
     def buffered_url_pic(pic_url) -> "Image":

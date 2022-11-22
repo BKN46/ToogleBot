@@ -29,7 +29,7 @@ class GetRemake(MessageHandler):
                     for i, x in enumerate(SQLConnection.get_top_remake()) # type: ignore
                 ]
             )
-            return MessageChain.create([Plain(res)])
+            return MessageChain.create([Image.text_image(res)])
         elif message.message.asDisplay().split()[-1].startswith("top"):
             res = "Remake世界排行:\n"
             res += "\n".join(
@@ -38,7 +38,7 @@ class GetRemake(MessageHandler):
                     for i, x in enumerate(SQLConnection.get_top_remake()) # type: ignore
                 ]
             )
-            return MessageChain.create([Plain(res)])
+            return MessageChain.create([Image.text_image(res)])
         elif message.message.asDisplay().split()[-1].startswith("lowd"):
             res = "Remake倒数世界排行:\n"
             res += "\n".join(
@@ -47,7 +47,7 @@ class GetRemake(MessageHandler):
                     for i, x in enumerate(SQLConnection.get_low_remake()) # type: ignore
                 ]
             )
-            return MessageChain.create([Plain(res)])
+            return MessageChain.create([Image.text_image(res)])
         elif message.message.asDisplay().split()[-1].startswith("low"):
             res = "Remake倒数世界排行:\n"
             res += "\n".join(
@@ -56,14 +56,14 @@ class GetRemake(MessageHandler):
                     for i, x in enumerate(SQLConnection.get_low_remake()) # type: ignore
                 ]
             )
-            return MessageChain.create([Plain(res)])
+            return MessageChain.create([Image.text_image(res)])
         elif message.message.asDisplay().split()[-1].startswith("#"):
             seed = message.message.asDisplay().split("#")[-1]
             try:
                 res = get_remake(message.member.name, seed=seed)
             except Exception as e:
                 res = get_remake("", seed=seed)
-            return MessageChain.create([Plain(res[0])])
+            return MessageChain.create([Image.text_image(res[0])])
         elif (
             not user
             or not user[4]
@@ -89,6 +89,6 @@ class GetRemake(MessageHandler):
             SQLConnection.update_user(
                 message.member.id, f"last_remake='{DatetimeUtils.get_now_time()}'"
             )
-            return MessageChain.create([Plain(res[0])])
+            return MessageChain.create([Image.text_image(res[0])])
         else:
             return MessageChain.create([Plain("一天只能remake一次～")])

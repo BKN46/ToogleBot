@@ -1,10 +1,12 @@
-import random, datetime, json
+import datetime
+import json
+import random
 
 import requests
-from PIL import Image, ImageFont, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
-from toogle.message import MessageChain, Plain, Quote, Member
 from toogle.message import Image as GImage
+from toogle.message import Member, MessageChain, Plain, Quote
 
 pic_temp_path = "data/luck_tmp.png"
 font_path = "toogle/plugins/compose/AaRunXing.ttf"
@@ -48,14 +50,23 @@ def get_setu():
 
 
 def get_font_wrap(text, font, box_width):
-    single_font_width = font.getsize("一")[0]
-    line_text_num = int(box_width / single_font_width)
-    i = line_text_num - 1
     res = []
     for line in text.split('\n'):
-        while i < len(line):
-            line = line[:i] + '\n' + line[i:]
-            i += line_text_num
+        line_width = font.getbbox(line)[2] # type: ignore
+        while box_width < line_width:
+            split_pos = int(box_width / line_width * len(line)) - 1
+            while True:
+                lw = font.getbbox(line[:split_pos])[2] # type: ignore
+                rw = font.getbbox(line[:split_pos + 1])[2] # type: ignore
+                if lw > box_width:
+                    split_pos -= 1
+                elif rw < box_width:
+                    split_pos += 1
+                else:
+                    break
+            res.append(line[:split_pos])
+            line = line[split_pos:]
+            line_width = font.getbbox(line)[2] # type: ignore
         res.append(line)
     return '\n'.join(res)
 
