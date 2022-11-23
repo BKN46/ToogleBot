@@ -35,11 +35,14 @@ def get_search(text: str):
         "北A": "BJ",
     }
 
-    search_list = [
-        (classify_map[x["SecurityTypeName"]] + x["Code"], x["Name"])
-        for x in res.json()["QuotationCodeTable"]["Data"]
-        if x["SecurityTypeName"] in classify_map.keys()
-    ]
+    try:
+        search_list = [
+            (classify_map[x["SecurityTypeName"]] + x["Code"], x["Name"])
+            for x in res.json()["QuotationCodeTable"]["Data"]
+            if x["SecurityTypeName"] in classify_map.keys()
+        ]
+    except Exception as e:
+        return []
 
     return search_list
 
@@ -197,7 +200,7 @@ def render_report(code: str):
     general_report = get_general_info(code)
     quarter_report = get_quarter_report(code)
     bussiness_info, bussiness_report = get_bussiness(code)
-    report_range = len(quarter_report) if len(quarter_report) < 3 else 3
+    report_range = len(quarter_report) if len(quarter_report) < 4 else 4
 
     divide = "-" * 70 + "\n"
 
