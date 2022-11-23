@@ -75,6 +75,20 @@ def get_general_info(code: str):
     return res.json()
 
 
+def get_topic(code: str):
+    url = f"http://emweb.securities.eastmoney.com/PC_HSF10/CoreConception/PageAjax?code={code}"
+    res = requests.get(url)
+    block = " ".join([x['BOARD_NAME'] for x in res.json()['ssbk']])
+    return block
+
+
+def get_news(code: str):
+    url = f"http://emweb.securities.eastmoney.com/PC_HSF10/NewsBulletin/PageAjax?code={code}"
+    res = requests.get(url)
+    news = [x['title'] for x in res.json()['gsgg']]
+    return news
+
+
 def get_text_size(font, text):
     text_width = max([font.getbbox(x)[2] for x in text.split("\n")])  # type: ignore
     text_height = sum([font.getbbox(x)[3] for x in text.split("\n")])  # type: ignore
@@ -155,13 +169,13 @@ def num_parse(num, divided: int = 1, precision: int = 4):
 
 def render_report(code: str):
     general_info = {
-        "名称": "zxzb.SECUCODE",
-        "代码": "zxzb.SECURITY_NAME_ABBR",
+        "代码": "zxzb.SECUCODE",
+        "名称": "zxzb.SECURITY_NAME_ABBR",
         "报告时间": "zxzb.REPORT_DATE",
         "总市值": "zxzbOther.TOTAL_MARKET_CAP",
         "总股本": "zxzb.TOTAL_SHARE",
         "流通股本": "zxzb.FREE_SHARE",
-        "市盈率": "zxzbOther.PB_NEW_NOTICE",
+        "市盈率": "zxzbOther.PE_DYNAMIC",
     }
     bussiness_refer = {
         "收入模块": "ITEM_NAME",
@@ -212,8 +226,9 @@ def render_report(code: str):
             value = general_report[index[0]][0][index[1]]
         else:
             value = general_report[index[0]][index[1]]
-        value = num_parse(value)
+        value = num_parse(value, divided=10000, precision=2)
         result_text += f"{key + ':':{chn_space}<9}{value:{chn_space}<15}\n"
+    result_text += f"{'相关板块:':{chn_space}<9}{get_topic(code)}\n"
     result_text += divide
 
     # 经营内容
@@ -249,10 +264,16 @@ def render_report(code: str):
                 value = num_parse(quarter_report[q_index][t2_content])
                 result_text += f"{value:^24}"
             result_text += "\n"
+    result_text += divide
+
+    # 公告
+    result_text += "公司公告:\n\n"
+    news_all = get_news(code)
+    for news in news_all[:min(5, len(news_all))]:
+        result_text += f"{news}\n"
 
     text = result_text
     pic = text2img(text, font_path=font_path, max_size=(1000, 5000), word_size=14)
-    # PIL.Image.open(io.BytesIO(pic)).show()
     return pic
 
 
@@ -266,5 +287,6 @@ def search_report(code: str):
 
 
 if __name__ == "__main__":
-    render_report("SZ301061")
+    res = render_report("SZ301061")
+    PIL.Image.open(io.BytesIO(res)).show()
     # get_search("中顺")
