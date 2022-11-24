@@ -8,7 +8,7 @@ import requests
 
 font_path = "toogle/plugins/compose/TW-Sung-98-1-2.ttf"
 chn_space = chr(12288)
-
+divide = "-" * 70 + "\n"
 
 def get_quarter_report(code: str):
     url = f"http://emweb.securities.eastmoney.com/PC_HSF10/NewFinanceAnalysis/ZYZBAjaxNew?type=0&code={code}"
@@ -24,20 +24,44 @@ def get_bussiness(code: str):
 
 
 def get_search(text: str):
+    classify_map = {
+        "沪A": "SH",
+        "深A": "SZ",
+        "北A": "BJ",
+        "港股": "HK",
+        "美股": "US",
+    }
+    text = text.replace('.', '')
+    for k, v in classify_map.items():
+        if text.startswith(v):
+            text = text[2:]
+            classify_map = {k: v}
+            break
+
     url = (
         f"https://searchapi.eastmoney.com/api/suggest/get?input={text}&type=14&count=10"
     )
     res = requests.get(url)
 
-    classify_map = {
-        "沪A": "SH",
-        "深A": "SZ",
-        "北A": "BJ",
-    }
+    def get_code(code: str):
+        url = (
+            f"https://datacenter.eastmoney.com/securities/api/data/v1/get?"
+            f"reportName=RPT_USF10_INFO_ORGPROFILE&columns=SECUCODE"
+            f"&quoteColumns=&filter=(SECURITY_CODE=\"{code}\")&pageNumber=1&pageSize=200&sortTypes=&sortColumns=&source=SECURITIES"
+        )
+        return requests.get(url).json()['result']['data'][0]['SECUCODE']
+
+    def get_secucode(x):
+        if x["SecurityTypeName"] == "港股":
+            return f"{x['Code']}.HK"
+        if x["SecurityTypeName"] == "美股":
+            return get_code(x['Code'])
+        else:
+            return classify_map[x["SecurityTypeName"]] + x["Code"]
 
     try:
         search_list = [
-            (classify_map[x["SecurityTypeName"]] + x["Code"], x["Name"])
+            (get_secucode(x), classify_map[x["SecurityTypeName"]] + x["Name"], classify_map[x["SecurityTypeName"]] + x["Code"])
             for x in res.json()["QuotationCodeTable"]["Data"]
             if x["SecurityTypeName"] in classify_map.keys()
         ]
@@ -78,14 +102,199 @@ def get_general_info(code: str):
 def get_topic(code: str):
     url = f"http://emweb.securities.eastmoney.com/PC_HSF10/CoreConception/PageAjax?code={code}"
     res = requests.get(url)
-    block = " ".join([x['BOARD_NAME'] for x in res.json()['ssbk']])
+    block = " ".join([x["BOARD_NAME"] for x in res.json()["ssbk"]])
     return block
+
+
+def get_HK_gerneral(code: str):
+    general_info = {
+        "代码": "SECUCODE",
+        "名称": "SECURITY_NAME_ABBR",
+        "报告时间": "REPORT_DATE",
+        "总市值": "TOTAL_MARKET_CAP",
+        "发行股本": "HK_COMMON_SHARES",
+        "市盈率": "PE_TTM",
+    }
+    url = (
+        f"https://datacenter.eastmoney.com/securities/api/data/v1/get?"
+        f"reportName=RPT_HKF10_FN_MAININDICATOR&columns=HKF10_FN_MAININDICATOR_NEW&filter=(SECUCODE=\"{code}\")"
+        f"&pageNumber=1&pageSize=1&sortTypes=-1&sortColumns=STD_REPORT_DATE&source=F10"
+    )
+    res = requests.get(url).json()['result']['data']
+    result_text = "[港股](单位：人民币)\n"
+    for t1_key, t1_content in general_info.items():
+        value = num_parse(res[0][t1_content], divided=10000, precision=2)
+        result_text += f"{t1_key + ':':{chn_space}<9}{value:{chn_space}<15}\n"
+    return result_text
+
+
+def get_HK_quarter_report(code: str):
+    key_refer = {
+        "股票指标": {
+            "基本每股收益": "BASIC_EPS",
+            "每股净资产": "BPS",
+            "每股经营现金流": "PER_NETCASH_OPERATE",
+            "总资产回报率": "ROA",
+        },
+        "营业指标": {
+            "营业总收入": "OPERATE_INCOME",
+            "营业利润": "OPERATE_PROFIT",
+            "净利润": "HOLDER_PROFIT",
+        },
+        "财务指标": {
+            "资产总额": "TOTAL_ASSETS",
+            "负债总额": "TOTAL_LIABILITIES",
+        },
+    }
+    url = (
+        f"https://datacenter.eastmoney.com/securities/api/data/v1/get?"
+        f'reportName=RPT_HKF10_FN_MAININDICATOR&columns=HKF10_FN_MAININDICATOR_DATA&filter=(SECUCODE="{code}")'
+        f"&pageNumber=1&pageSize=4&sortTypes=-1&sortColumns=STD_REPORT_DATE&source=F10"
+    )
+    res = requests.get(url)
+    result_text = ""
+    quarter_report = res.json()['result']['data']
+    report_range = len(quarter_report) if len(quarter_report) < 4 else 4
+    result_text += f"{'':{chn_space}^16}"
+    for q_index in range(report_range):
+        q_name = quarter_report[q_index]["REPORT_DATE"].split()[0]
+        result_text += f"{q_name:^24}"
+
+    for t1_key, t1_content in key_refer.items():
+        result_text += f"\n{t1_key}\n\n"
+        for t2_key, t2_content in t1_content.items():
+            result_text += f"{t2_key:{chn_space}^16}"
+            for q_index in range(report_range):
+                value = num_parse(quarter_report[q_index][t2_content])
+                result_text += f"{value:^24}"
+            result_text += "\n"
+    return result_text
+
+
+def get_HK_quarter_future(code: str):
+    url = (
+        f"https://datacenter.eastmoney.com/securities/api/data/v1/get"
+        f"?reportName=RPT_HKF10_ORG_BUSSINESS&columns=SECUCODE,SECURITY_CODE,SECURITY_NAME_ABBR,ORG_CODE,SECURITY_INNER_CODE,REPORT_DATE,FUTURE_EXPECT&quoteColumns="
+        f"&filter=(SECUCODE=\"{code}\")&pageNumber=1&pageSize=1&sortTypes=-1&sortColumns=REPORT_DATE&source=F10"
+    )
+    res = requests.get(url).json()
+    if res['result']['data']:
+        result_text = f"业绩展望:\n\n" + res['result']['data'][0]['FUTURE_EXPECT']
+    else:
+        result_text = f"业绩展望:\n\n暂无"
+    return result_text
+
+
+def get_US_general(code: str):
+    general_info = {
+        "代码": "SECUCODE",
+        "名称": "SECURITY_NAME_ABBR",
+        "报告时间": "REPORT_DATE",
+        "总市值": "TOTAL_MARKET_CAP",
+        "每股净资产": "BVPS",
+        "毛利率": "SALE_GPR",
+        "净利率": "SALE_NPR",
+        "市盈率": "PE_TTM",
+    }
+    url = (
+        f"https://datacenter.eastmoney.com/securities/api/data/v1/get?"
+        f"reportName=RPT_USF10_DATA_MAININDICATOR&columns=SECUCODE,SECURITY_CODE,SECURITY_NAME_ABBR,REPORT_DATE,CURRENCY,PE_TTM,RATIO_EPS_TTM,DPS_USD,SALE_GPR,TURNOVER,HOLDER_PROFIT,ISSUED_COMMON_SHARES,PB,BVPS,DIVIDEND_RATE,SALE_NPR,TURNOVER_YOY,HOLDER_PROFIT_YOY,TOTAL_MARKET_CAP,ORG_TYPE,SECURITY_TYPE&quoteColumns=&"
+        f"filter=(SECUCODE=\"{code}\")&pageNumber=1&pageSize=200&sortTypes=-1&sortColumns=REPORT_DATE&source=INTLSECURITIES"
+    )
+    res = requests.get(url).json()['result']['data']
+    result_text = f"[美股](单位：美元)\n"
+    for t1_key, t1_content in general_info.items():
+        value = num_parse(res[0][t1_content], divided=10000, precision=2)
+        result_text += f"{t1_key + ':':{chn_space}<9}{value:{chn_space}<15}\n"
+    return result_text
+
+
+def get_US_bussiness(code: str):
+    bussiness_refer = {
+        "经营模块": "PRODUCT_NAME",
+        "营收金额（美元）": "MAIN_BUSINESS_INCOME",
+        "占比": "MBI_RATIO",
+    }
+    url = (
+        f"https://datacenter.eastmoney.com/securities/api/data/v1/get?"
+        f"reportName=RPT_USF10_INFO_PRODUCTSTRUCTURE&columns=SECUCODE,SECURITY_CODE,SECURITY_NAME_ABBR,ORG_CODE,REPORT_DATE,CURRENCY,PRODUCT_NAME,MAIN_BUSINESS_INCOME,MBI_RATIO,IS_TOTAL&quoteColumns="
+        f"&filter=(SECUCODE=\"{code}\")(IS_TOTAL=\"0\")&pageNumber=1&pageSize=200&sortTypes=&sortColumns=&source=SECURITIES"
+    )
+    bussiness_report = requests.get(url).json()['result']['data']
+    result_text = f"经营内容\n\n"
+    if len(bussiness_report) > 0:
+        for t1_key, t1_content in bussiness_refer.items():
+            result_text += f"{t1_key:{chn_space}^15}"
+        result_text += "\n"
+        last_date = bussiness_report[0]["REPORT_DATE"]
+        for part in bussiness_report:
+            if last_date != part["REPORT_DATE"]:
+                break
+            for t1_key, t1_content in bussiness_refer.items():
+                if t1_content in part:
+                    result_text += (
+                        f"{num_parse(part[t1_content], divided=100000000, precision=1):{chn_space}^15}"
+                    )
+                else:
+                    result_text += f"{'---':^15}"
+            result_text += "\n"
+    return result_text
+
+
+def get_US_quarter_report(code: str):
+    def get_report(url, key_refer):
+        res = requests.get(url)
+        result_text = ""
+        quarter_report = res.json()['result']['data']
+        report_range = len(quarter_report) if len(quarter_report) < 4 else 4
+        result_text += f"{'':{chn_space}^16}"
+        for q_index in range(report_range):
+            q_name = quarter_report[q_index]["REPORT_DATE"].split()[0]
+            result_text += f"{q_name:^24}"
+
+        for t1_key, t1_content in key_refer.items():
+            result_text += f"\n{t1_key}\n\n"
+            for t2_key, t2_content in t1_content.items():
+                result_text += f"{t2_key:{chn_space}^16}"
+                for q_index in range(report_range):
+                    value = num_parse(quarter_report[q_index][t2_content])
+                    result_text += f"{value:^24}"
+                result_text += "\n"
+        return result_text
+
+    result_text = ""
+    result_text += get_report((
+        f"https://datacenter.eastmoney.com/securities/api/data/v1/get?"
+        f"reportName=RPT_USF10_FN_GMAININDICATOR&columns=USF10_FN_GMAININDICATOR&quoteColumns=&"
+        f"filter=(SECUCODE=\"{code}\")"
+        f"&pageNumber=1&pageSize=4&sortTypes=-1&sortColumns=REPORT_DATE&source=SECURITIES"
+    ), {
+        "盈利能力": {
+            "收入": "OPERATE_INCOME",
+            "收入环比增长": "OPERATE_INCOME_YOY",
+            "毛利": "GROSS_PROFIT",
+            "毛利环比增长": "GROSS_PROFIT_YOY",
+            "归母净利润": "PARENT_HOLDER_NETPROFIT",
+            "归母净利润环比增长": "PARENT_HOLDER_NETPROFIT_YOY",
+            "基本每股收益": "BASIC_EPS",
+            "销售毛利率": "GROSS_PROFIT_RATIO",
+            "销售净利率": "NET_PROFIT_RATIO",
+        },
+        "投资回报": {
+            "净资产收益率": "ROE_AVG",
+            "总资产净利率": "ROA",
+        },
+        "资本结构" : {
+            "资产负债率": "DEBT_ASSET_RATIO",
+        }
+    })
+    return result_text
 
 
 def get_news(code: str):
     url = f"http://emweb.securities.eastmoney.com/PC_HSF10/NewsBulletin/PageAjax?code={code}"
     res = requests.get(url)
-    news = [x['title'] for x in res.json()['gsgg']]
+    news = [x["title"] for x in res.json()["gsgg"]]
     return news
 
 
@@ -133,7 +342,7 @@ def chr2full(text):
     for i in text:
         codes = ord(i)  # 将字符转为ASCII或UNICODE编码
         if codes <= 126:  # 若是半角字符
-            new_string += chr(codes+65248) # 则转为全角
+            new_string += chr(codes + 65248)  # 则转为全角
         else:
             new_string += i
     return new_string
@@ -167,7 +376,7 @@ def num_parse(num, divided: int = 1, precision: int = 4):
     return res
 
 
-def render_report(code: str):
+def render_A_stock(code: str):
     general_info = {
         "代码": "zxzb.SECUCODE",
         "名称": "zxzb.SECURITY_NAME_ABBR",
@@ -216,10 +425,8 @@ def render_report(code: str):
     bussiness_info, bussiness_report = get_bussiness(code)
     report_range = len(quarter_report) if len(quarter_report) < 4 else 4
 
-    divide = "-" * 70 + "\n"
-
     # 基本数据
-    result_text = ""
+    result_text = "[A股]\n"
     for key, content in general_info.items():
         index = content.split(".")
         if isinstance(general_report[index[0]], list):
@@ -243,7 +450,9 @@ def render_report(code: str):
                 break
             for t1_key, t1_content in bussiness_refer.items():
                 if t1_content in part:
-                    result_text += f"{num_parse(part[t1_content], divided=10000, precision=1):^15}"
+                    result_text += (
+                        f"{num_parse(part[t1_content], divided=10000, precision=1):^15}"
+                    )
                 else:
                     result_text += f"{'---':^15}"
             result_text += "\n"
@@ -269,11 +478,27 @@ def render_report(code: str):
     # 公告
     result_text += "公司公告:\n\n"
     news_all = get_news(code)
-    for news in news_all[:min(5, len(news_all))]:
+    for news in news_all[: min(10, len(news_all))]:
         result_text += f"{news}\n"
 
     text = result_text
     pic = text2img(text, font_path=font_path, max_size=(1000, 5000), word_size=14)
+    return pic
+
+
+def render_HK_stock(code: str):
+    result_text = get_HK_gerneral(code)
+    result_text += f"\n{divide}" + get_HK_quarter_report(code)
+    result_text += f"\n{divide}" + get_HK_quarter_future(code)
+    pic = text2img(result_text, font_path=font_path, max_size=(1000, 5000), word_size=14)
+    return pic
+
+
+def render_US_stock(code: str):
+    result_text = get_US_general(code)
+    result_text += f"\n{divide}" + get_US_bussiness(code)
+    result_text += f"\n{divide}" + get_US_quarter_report(code)
+    pic = text2img(result_text, font_path=font_path, max_size=(1000, 5000), word_size=14)
     return pic
 
 
@@ -286,7 +511,18 @@ def search_report(code: str):
         pass
 
 
+def render_report(code: str):
+    if any([x in code for x in ["SZ", "SH", "BJ"]]):
+        return render_A_stock(code)
+    elif any([x in code for x in ["HK"]]):
+        return render_HK_stock(code)
+    else:
+        return render_US_stock(code)
+
+
 if __name__ == "__main__":
-    res = render_report("SZ301061")
-    PIL.Image.open(io.BytesIO(res)).show()
-    # get_search("中顺")
+    # res = render_report("SZ301061")
+    # res = render_HK_stock("00700.HK")
+    # res = render_US_stock("MSFT.O")
+    # PIL.Image.open(io.BytesIO(res)).show()
+    print(get_search("微软"))

@@ -13,10 +13,10 @@ class AStock(MessageHandler):
         search_content = message.message.asDisplay()[2:].strip()
         search_list = get_search(search_content)
         if len(search_list) == 0:
-            return MessageChain.create([Plain("没有搜到对应A股上市公司")])
+            return MessageChain.create([Plain("没有搜到对应 A股/港股/美股 上市公司")])
         elif len(search_list) > 1:
             res_text = f"存在多个匹配，请精确搜索:\n" + f"\n".join(
-                [f"{x[0]} {x[1]}" for x in search_list]
+                [f"{x[2]} {x[1]}" for x in search_list]
             )
             return MessageChain.create([Plain(res_text)])
         else:
