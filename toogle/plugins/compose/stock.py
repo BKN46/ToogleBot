@@ -23,7 +23,7 @@ def get_bussiness(code: str):
     return bussiness_range, res.json()["zygcfx"]
 
 
-def get_search(text: str):
+def get_search(original_text: str):
     classify_map = {
         "沪A": "SH",
         "深A": "SZ",
@@ -31,7 +31,7 @@ def get_search(text: str):
         "港股": "HK",
         "美股": "US",
     }
-    text = text.replace('.', '')
+    text = original_text.replace('.', '')
     for k, v in classify_map.items():
         if text.startswith(v):
             text = text[2:]
@@ -60,11 +60,17 @@ def get_search(text: str):
             return classify_map[x["SecurityTypeName"]] + x["Code"]
 
     try:
-        search_list = [
-            (get_secucode(x), classify_map[x["SecurityTypeName"]] + x["Name"], classify_map[x["SecurityTypeName"]] + x["Code"])
-            for x in res.json()["QuotationCodeTable"]["Data"]
-            if x["SecurityTypeName"] in classify_map.keys()
-        ]
+        search_list = []
+        for x in res.json()["QuotationCodeTable"]["Data"]:
+            if x["SecurityTypeName"] in classify_map.keys():
+                line = (get_secucode(x), classify_map[x["SecurityTypeName"]] + x["Name"], classify_map[x["SecurityTypeName"]] + x["Code"])
+                if any([
+                    line[0] == original_text,
+                    x["Code"] == original_text,
+                    x["Name"] == original_text
+                ]):
+                    return [line]
+                search_list.append(line)
     except Exception as e:
         return []
 
@@ -244,23 +250,43 @@ def get_US_bussiness(code: str):
 def get_US_quarter_report(code: str):
     def get_report(url, key_refer):
         res = requests.get(url)
-        result_text = ""
         quarter_report = res.json()['result']['data']
-        report_range = len(quarter_report) if len(quarter_report) < 4 else 4
-        result_text += f"{'':{chn_space}^16}"
-        for q_index in range(report_range):
-            q_name = quarter_report[q_index]["REPORT_DATE"].split()[0]
-            result_text += f"{q_name:^24}"
+        return report_render(quarter_report, key_refer)
+
+    def report_render(data_list, key_refer, header=True):
+        report_range = len(data_list) if len(data_list) < 4 else 4
+        result_text = ""
+        if header:
+            result_text += f"{'':{chn_space}^16}"
+            for q_index in range(report_range):
+                q_name = data_list[q_index]["REPORT_DATE"].split()[0]
+                result_text += f"{q_name:^24}"
 
         for t1_key, t1_content in key_refer.items():
             result_text += f"\n{t1_key}\n\n"
             for t2_key, t2_content in t1_content.items():
                 result_text += f"{t2_key:{chn_space}^16}"
                 for q_index in range(report_range):
-                    value = num_parse(quarter_report[q_index][t2_content])
+                    value = num_parse(data_list[q_index].get(t2_content) or '---')
                     result_text += f"{value:^24}"
                 result_text += "\n"
         return result_text
+    
+    def get_us_report(url, key_refer):
+        res = requests.get(url).json()['result']['data']
+        report_dict = {}
+        for line in res:
+            report_date = line["REPORT_DATE"]
+            code = line["STD_ITEM_CODE"]
+            value = line["AMOUNT"]
+            if report_date not in report_dict.keys():
+                report_dict[report_date] = {
+                    "REPORT_DATE" : report_date
+                }
+            report_dict[report_date].update({
+                code: value
+            })
+        return report_render(list(report_dict.values()), key_refer, header=False)
 
     result_text = ""
     result_text += get_report((
@@ -287,6 +313,58 @@ def get_US_quarter_report(code: str):
         "资本结构" : {
             "资产负债率": "DEBT_ASSET_RATIO",
         }
+    })
+    result_text += f"\n{divide}"
+    result_text += get_us_report((
+        f"https://datacenter.eastmoney.com/securities/api/data/v1/get?"
+        f"reportName=RPT_USSK_FN_CASHFLOW&columns=SECUCODE,SECURITY_CODE,SECURITY_NAME_ABBR,REPORT,REPORT_DATE,STD_ITEM_CODE,AMOUNT&quoteColumns=&"
+        f"filter=(SECUCODE=\"{code}\")&pageNumber=&pageSize=&sortTypes=1,-1&sortColumns=STD_ITEM_CODE,REPORT_DATE&source=SECURITIES"
+    ),{
+        "现金流": {
+            "净利润": "001001",
+            "经营活动现金流净额": "003999",
+            "投资活动现金流净额": "005999",
+            "筹资活动现金流净额": "007999",
+            "现金及等价物变化": "011001",
+            "现金及等价物期末余额": "011003",
+        },
+    })
+    result_text += get_us_report((
+        f"https://datacenter.eastmoney.com/securities/api/data/v1/get?"
+        f"reportName=RPT_USF10_FN_INCOME&columns=SECUCODE%2CSECURITY_CODE%2CSECURITY_NAME_ABBR%2CREPORT%2CREPORT_DATE%2CSTD_ITEM_CODE%2CAMOUNT&quoteColumns=&"
+        f"filter=(SECUCODE=\"{code}\")&pageNumber=&pageSize=&sortTypes=1,-1&sortColumns=STD_ITEM_CODE,REPORT_DATE&source=SECURITIES"
+    ),{
+        "经营费用": {
+            "研发费用": "004007001",
+            "营销费用": "004007002",
+            "一般行政费用": "004007003",
+            "折旧与摊销": "004007004",
+            "其他营业费用": "004007006",
+            "营业费用": "004007999",
+        },
+    })
+    result_text += get_us_report((
+        f"https://datacenter.eastmoney.com/securities/api/data/v1/get?"
+        f"reportName=RPT_USF10_FN_BALANCE&columns=SECUCODE%2CSECURITY_CODE%2CSECURITY_NAME_ABBR%2CREPORT_DATE%2CREPORT_TYPE%2CREPORT%2CSTD_ITEM_CODE%2CAMOUNT&quoteColumns=&"
+        f"filter=(SECUCODE=\"{code}\")&pageNumber=&pageSize=&sortTypes=1,-1&sortColumns=STD_ITEM_CODE,REPORT_DATE&source=SECURITIES"
+    ),{
+        "流动资产": {
+            "现金及现金等价物": "004001001",
+            "短期投资": "004001003",
+            "应收账款": "004001004",
+            "流动资产合计": "004001999",
+        },
+        "非流动资产": {
+            "物业/厂房/设备": "004003001",
+            "无形资产": "004003003",
+            "商誉": "004003004",
+            "非流动资产合计": "004003999",
+        },
+        "负债": {
+            "流动负债合计": "004007999",
+            "非流动负债合计": "004009999",
+            "股东权益合计": "004013999",
+        },
     })
     return result_text
 
@@ -523,6 +601,6 @@ def render_report(code: str):
 if __name__ == "__main__":
     # res = render_report("SZ301061")
     # res = render_HK_stock("00700.HK")
-    # res = render_US_stock("MSFT.O")
-    # PIL.Image.open(io.BytesIO(res)).show()
-    print(get_search("微软"))
+    res = render_US_stock("MSFT.O")
+    PIL.Image.open(io.BytesIO(res)).show()
+    # print(get_search("微软"))
