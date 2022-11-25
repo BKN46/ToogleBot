@@ -119,7 +119,8 @@ async def plugin_run(
         await matcher.send(toogle2nb(res, message, event))
         signal.alarm(0)
     except (UrllibError, RequestsError):
-        await matcher.send(f"爬虫网络连接错误，请稍后尝试")
+        # await matcher.send(f"爬虫网络连接错误，请稍后尝试")
+        return
     except VisibleException as e:
         await matcher.send(f"{e.__str__()}")
     except Exception as e:
