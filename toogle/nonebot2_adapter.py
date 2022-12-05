@@ -199,9 +199,15 @@ def nb2toogle(message: MessageChain) -> ToogleChain:
         elif item.type == MessageType.IMAGE:
             message_list.append(
                 Image(
-                    id=item.data.get("id"),
+                    id=item.data.get("imageId"),
                     url=item.data.get("url"),
                     path=item.data.get("path"),
+                )
+            )
+        elif item.type == MessageType.AT:
+            message_list.append(
+                At(
+                    target=item.data.get("target"), # type: ignore
                 )
             )
         else:

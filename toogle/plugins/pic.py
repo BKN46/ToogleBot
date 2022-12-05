@@ -141,7 +141,7 @@ class LongTu(MessageHandler):
             pics = message.message.get(Image)
             for image in pics:
                 image_file_name = f"{image.id}".replace("{", "").replace("}", "")  # type: ignore
-                image.save(image_file_name) # type: ignore
+                image.save(IMAGES_PATH + image_file_name) # type: ignore
             return MessageChain.create([Plain(f"搞定, 存了{len(pics)}张龙图")])
 
 
@@ -187,5 +187,5 @@ class HistoryTu(MessageHandler):
                 image_file_name = f"{image.id}".replace("{", "").replace("}", "") # type: ignore
                 if at:
                     image_file_name = f"{at[0].target}|||{image_file_name}" # type: ignore
-                image.save(image_file_name) # type: ignore
+                image.save(IMAGES_PATH + image_file_name) # type: ignore
             return MessageChain.create([Plain(f"搞定, 存了{len(pics)}张黑历史")])
