@@ -1,4 +1,5 @@
 import requests
+from requests.exceptions import ReadTimeout
 
 from toogle.configs import config
 from toogle.message import Image, MessageChain, Plain
@@ -17,10 +18,12 @@ class GetOpenAIConversation(MessageHandler):
     readme = "OpenAI text-davinci-003 自然语言模型对话"
 
     async def ret(self, message: MessagePack) -> MessageChain:
-        message_content = message.message.asDisplay()[3:].strip()
+        message_content = message.message.asDisplay()[4:].strip()
         try:
             res = GetOpenAIConversation.get_completion(message_content)
             return MessageChain.plain(res)
+        except ReadTimeout as e:
+            return MessageChain.plain("请求OpenAI GPT模型超时，请稍后尝试")
         except Exception as e:
             return MessageChain.plain(f"出现错误: {repr(e)}")
 
