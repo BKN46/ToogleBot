@@ -130,3 +130,7 @@ class MessageChain:
     @staticmethod
     def create(message_list: List) -> "MessageChain":
         return MessageChain(message_list)
+    
+    @staticmethod
+    def plain(text: str) -> "MessageChain":
+        return MessageChain([Plain(text)])

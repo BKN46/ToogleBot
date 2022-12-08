@@ -17,6 +17,7 @@ config = {
 
 key_check = {
     "NovelAICookie": "NovelAI作图相关功能",
+    "OpenAISecret": "OpenAI相关功能",
     "DBHost": "数据库",
     "DBUser": "数据库",
     "DBPassword": "数据库",
