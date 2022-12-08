@@ -1,6 +1,7 @@
 import configparser
 
 import nonebot
+import time
 
 
 def ini_parse(data: str):
@@ -29,3 +30,28 @@ key_check = {
 for key in key_check.keys():
     if not config or key not in config:
         nonebot.logger.warning(f".env 中不包含 {key} 项，将导致无法正常使用{key_check[key]}")  # type: ignore
+
+
+class IntervalLimiter():
+    def __init__(self) -> None:
+        self.root = {}
+
+    def user_interval(self, function_name, id, interval = 30) -> bool:
+        id = str(id)
+        now_time_sec = int(time.time())
+        if function_name not in self.root.keys():
+            self.root.update({
+                function_name: {
+                    id: now_time_sec + interval
+                }
+            })
+            return True
+        else:
+            if id not in self.root[function_name] or self.root[function_name][id] < now_time_sec:
+                self.root[function_name].update({
+                    id: now_time_sec + interval
+                })
+                return True
+            return False
+
+interval_limiter = IntervalLimiter()

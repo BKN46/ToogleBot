@@ -22,6 +22,7 @@ class MessageHandler:
     readme = "这是一个BKN的聊天机器人组件"
     white_list = False
     thread_limit = False
+    interval = 0
 
     def __init__(self) -> None:
         pass

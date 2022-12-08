@@ -1,7 +1,7 @@
 import requests
 from requests.exceptions import ReadTimeout
 
-from toogle.configs import config
+from toogle.configs import config, interval_limiter
 from toogle.message import Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack
 from toogle.sql import DatetimeUtils, SQLConnection
@@ -16,6 +16,7 @@ class GetOpenAIConversation(MessageHandler):
     trigger = r"^.gpt\s"
     thread_limit = True
     readme = "OpenAI text-davinci-003 自然语言模型对话"
+    interval = 120
 
     async def ret(self, message: MessagePack) -> MessageChain:
         message_content = message.message.asDisplay()[4:].strip()

@@ -8,6 +8,7 @@ from functools import reduce
 from toogle.message import At, MessageChain, Plain, Quote
 from toogle.message_handler import MessageHandler, MessagePack
 from toogle.utils import create_path
+from toogle.configs import interval_limiter
 
 LOTTERY_PATH = "data/lottery/"
 create_path(LOTTERY_PATH)
@@ -17,6 +18,7 @@ class HelpMeSelect(MessageHandler):
     name = "随机选择"
     trigger = r"^[是|应该](.*还是.*)"
     readme = "随机选项"
+    interval = 30
 
     async def ret(self, message: MessagePack) -> MessageChain:
         match_str = re.match(self.trigger, message.message.asDisplay())
@@ -24,9 +26,7 @@ class HelpMeSelect(MessageHandler):
             proc_str = HelpMeSelect.str_prune(match_str.group(1))
             sel_list = proc_str.split("还是")
             common_prefix = HelpMeSelect.longestCommonPrefix(sel_list)
-            return MessageChain.create(
-                [Quote(), Plain(random.choice(sel_list)[len(common_prefix) :])]
-            )
+            return MessageChain.plain(random.choice(sel_list)[len(common_prefix) :])
         else:
             raise Exception("No match!")
 

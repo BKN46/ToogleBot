@@ -12,13 +12,14 @@ from nonebot.adapters.mirai2 import MessageChain, MessageSegment
 from nonebot.adapters.mirai2.event.base import GroupChatInfo, PrivateChatInfo
 from nonebot.adapters.mirai2.event.message import MessageEvent
 from nonebot.adapters.mirai2.message import MessageType
+
 # from nonebot.adapters import Event, Message
 from nonebot.matcher import Matcher
 from nonebot.params import EventMessage, RegexGroup, RegexMatched
 from requests.exceptions import HTTPError as RequestsError
 from urllib3.exceptions import HTTPError as UrllibError
 
-from toogle.configs import config
+from toogle.configs import config, interval_limiter
 from toogle.exceptions import VisibleException
 from toogle.message import At, Element, Group, Image, Member
 from toogle.message import MessageChain as ToogleChain
@@ -27,11 +28,12 @@ from toogle.message_handler import MessageHandler, MessagePack
 
 THREAD_SEM = Semaphore(1)
 warning = nonebot.logger.warning  # type: ignore
-if "traffic_control.py" in os.listdir('data'):
+if "traffic_control.py" in os.listdir("data"):
     from data.traffic_control import TRAFFIC_CTRL
 else:
     TRAFFIC_CTRL = {}
-    nonebot.logger.warning("Traffic time control is not available. please check `data/traffic_control.py`") # type: ignore
+    nonebot.logger.warning("Traffic time control is not available. please check `data/traffic_control.py`")  # type: ignore
+
 
 class PluginWrapper:
     def __init__(self, plugin: MessageHandler) -> None:
@@ -47,6 +49,11 @@ class PluginWrapper:
         message_pack = PluginWrapper.get_message_pack(matcher, event, message)
         if not message_pack:
             await matcher.send("不支持该种聊天方式！")
+            return
+        if self.plugin.interval and not interval_limiter.user_interval(
+            self.plugin.name, message_pack.member.id, interval=self.plugin.interval
+        ):
+            await matcher.send(f"[{self.plugin.name}]请求必须间隔[{self.plugin.interval}]秒")
             return
         if get_block(message_pack):
             return
@@ -71,6 +78,7 @@ class PluginWrapper:
             return None
         return MessagePack(nb2toogle(message), group, member)
 
+
 class LinearHandler:
     def __init__(self, plugins: Sequence[PluginWrapper]) -> None:
         self.plugins = plugins
@@ -79,7 +87,7 @@ class LinearHandler:
         self,
         matcher: Matcher,
         event: MessageEvent,
-        message: MessageChain = EventMessage()
+        message: MessageChain = EventMessage(),
     ) -> None:
         message_pack = PluginWrapper.get_message_pack(matcher, event, message)
         if not message_pack:
@@ -93,21 +101,21 @@ class LinearHandler:
                 await plugin_run(plugin.plugin, message_pack, matcher, event, message)
                 return
 
+
 async def plugin_run(
     plugin: MessageHandler,
     message_pack: MessagePack,
     matcher: Matcher,
     event: MessageEvent,
-    message: MessageChain
+    message: MessageChain,
 ):
     def handle_timeout(signum, frame):
         raise VisibleException(f"[To {message_pack.member.id}] {plugin.name}运行超时，请稍后重试")
 
     if plugin.thread_limit and not THREAD_SEM.acquire(timeout=1):
-        toogle_message = ToogleChain.create([
-            At(target=message_pack.member.id),
-            Plain(f"我知道你很急，但你别急")
-        ])
+        toogle_message = ToogleChain.create(
+            [At(target=message_pack.member.id), Plain(f"我知道你很急，但你别急")]
+        )
         res = toogle2nb(toogle_message, message, event)
         await matcher.send(res)
         return
@@ -125,13 +133,13 @@ async def plugin_run(
         await matcher.send(f"{e.__str__()}")
     except Exception as e:
         print(
-            f"{'*'*20}\n[{datetime.datetime.now().strftime('%Y-%m-%d, %H:%M:%S')}]"\
-            f"[{plugin.name}] {repr(e)}\n"\
-            f"[{message_pack.group.id}][{message_pack.member.id}]{message_pack.message.asDisplay()}\n"\
-            f"\n{'*'*20}\n{traceback.format_exc()}"
-            , file=open("err.log", "a")
+            f"{'*'*20}\n[{datetime.datetime.now().strftime('%Y-%m-%d, %H:%M:%S')}]"
+            f"[{plugin.name}] {repr(e)}\n"
+            f"[{message_pack.group.id}][{message_pack.member.id}]{message_pack.message.asDisplay()}\n"
+            f"\n{'*'*20}\n{traceback.format_exc()}",
+            file=open("err.log", "a"),
         )
-        nonebot.logger.error(f"[{plugin.name}] {repr(e)}") # type: ignore
+        nonebot.logger.error(f"[{plugin.name}] {repr(e)}")  # type: ignore
     finally:
         if plugin.thread_limit:
             THREAD_SEM.release()
@@ -144,13 +152,13 @@ def get_block(message: MessagePack):
 
 
 def get_traffic_time(plugin: MessageHandler, message: MessagePack) -> str:
-    tz = TRAFFIC_CTRL.get(plugin.name).get(str(message.group.id)) # type: ignore
-    tz = ", ".join([f"{x[0]}:00 - {x[1]}:00" for x in tz]) # type: ignore
-    return f'管理员设置，该功能在 {tz} 时段禁用'
+    tz = TRAFFIC_CTRL.get(plugin.name).get(str(message.group.id))  # type: ignore
+    tz = ", ".join([f"{x[0]}:00 - {x[1]}:00" for x in tz])  # type: ignore
+    return f"管理员设置，该功能在 {tz} 时段禁用"
 
 
 def is_traffic_free(plugin: MessageHandler, message: MessagePack) -> bool:
-    nonebot.logger.success(f"Triggered [{plugin.name}]") # type: ignore
+    nonebot.logger.success(f"Triggered [{plugin.name}]")  # type: ignore
     plugin_traffic = TRAFFIC_CTRL.get(plugin.name)
     group_id = str(message.group.id)
     if plugin_traffic and group_id in plugin_traffic.keys():
@@ -207,7 +215,7 @@ def nb2toogle(message: MessageChain) -> ToogleChain:
         elif item.type == MessageType.AT:
             message_list.append(
                 At(
-                    target=item.data.get("target"), # type: ignore
+                    target=item.data.get("target"),  # type: ignore
                 )
             )
         else:
