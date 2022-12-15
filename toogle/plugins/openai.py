@@ -16,7 +16,6 @@ class GetOpenAIConversation(MessageHandler):
     trigger = r"^.gpt\s"
     thread_limit = True
     readme = "OpenAI text-davinci-003 自然语言模型对话"
-    interval = 120
 
     async def ret(self, message: MessagePack) -> MessageChain:
         message_content = message.message.asDisplay()[4:].strip()

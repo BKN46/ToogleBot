@@ -9,7 +9,7 @@ req_site = {
     "NovelAI": {
         "hosts": "https://api.novelai.net",
         "headers": {
-            "authorization": config.get("NovelAICookie"),
+            "authorization": f"Bearer {config.get('NovelAISecret')}",
             "origin": "https://novelai.net",
             "referer": "https://novelai.net/",
             "sec-ch-ua": '''"Google Chrome";v="105", "Not)A;Brand";v="8", "Chromium";v="105"''',
