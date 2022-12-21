@@ -7,6 +7,7 @@ from matplotlib import pyplot as plt
 from toogle.message import Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack
 from toogle.utils import handle_TLE, set_timeout
+from toogle.plugins.compose.wolfram_alpha import get_wolfram_alpha_query
 
 pic_path = "data/math_plt.jpg"
 
@@ -180,6 +181,18 @@ class Calculator(MessageHandler):
             running_res = ""
             # running_res = repr(e)
         return running_res
+
+
+class WolframAlpha(MessageHandler):
+    name = "Wolfram Alpha"
+    trigger = r"\.wolfram"
+    thread_limit = True
+    readme = "Wolfram Alpha计算数学调用"
+
+    async def ret(self, message: MessagePack) -> MessageChain:
+        query = message.message.asDisplay()[8:].strip()
+        image_byte = await get_wolfram_alpha_query(query)
+        return MessageChain.create([Image(bytes=image_byte)])
 
 
 class FastPythagorean(MessageHandler):

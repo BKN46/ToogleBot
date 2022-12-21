@@ -3,7 +3,7 @@ import io
 import os
 import re
 import signal
-from typing import Tuple
+from typing import List, Tuple, Union
 
 import PIL.Image
 import PIL.ImageDraw
@@ -112,6 +112,55 @@ def text2img(
     )
     img_bytes = io.BytesIO()
     gen_image.save(img_bytes, format="PNG")
+    return img_bytes.getvalue()
+
+
+def list2img(
+    input_list: List[Union[str, bytes]],
+    font_path: str = "toogle/plugins/compose/Arial Unicode MS Font.ttf",
+    word_size: int = 20,
+    max_size: Tuple[int, int] = (500, 1000),
+    padding: Tuple[int, int] = (20, 20),
+    bg_color: Tuple[int, int, int] = (255, 255, 255),
+    font_color: Tuple[int, int, int] = (20, 20, 20),
+):
+    pic_list: List[PIL.Image.Image] = []
+    for item in input_list:
+        if isinstance(item, str):
+            pic_byte = text2img(
+                item,
+                font_path=font_path,
+                word_size=word_size,
+                max_size=max_size,
+                padding=padding,
+                bg_color=bg_color,
+                font_color=font_color,
+            )
+            pic = PIL.Image.open(io.BytesIO(pic_byte))
+            pic_list.append(pic)
+        elif isinstance(item, bytes):
+            pic = PIL.Image.open(io.BytesIO(item))
+            gen_image = PIL.Image.new(
+                "RGBA",
+                (pic.size[0] + 2 * padding[0], pic.size[1] + 2 * padding[1]),
+                bg_color,
+            )
+            gen_image.paste(pic, padding)
+            pic_list.append(gen_image)
+    total_width = max([x.size[0] for x in pic_list])
+    total_height = sum([x.size[1] for x in pic_list])
+    last_y=0
+
+    image = PIL.Image.new(
+        "RGBA",
+        (total_width, total_height),
+        bg_color,
+    )
+    for item in pic_list:
+        image.paste(item, (0, last_y))
+        last_y += item.size[1]
+    img_bytes = io.BytesIO()
+    image.save(img_bytes, format="PNG")
     return img_bytes.getvalue()
 
 
