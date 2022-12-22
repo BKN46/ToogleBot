@@ -25,6 +25,7 @@ key_check = {
     "DBTable": "数据库",
     "BLACK_LIST": "黑名单",
     "DISABLED_MODULE": "禁用功能",
+    "WT_DATAMINE_GIT": "战雷拆包数据库查询功能",
 }
 
 for key in key_check.keys():

@@ -1,10 +1,12 @@
 import re
 
-from toogle.message import Image as GImage
+from toogle.message import Image
 from toogle.message import Member, MessageChain, Plain, Quote
 from toogle.message_handler import MessageHandler, MessagePack
 from toogle.plugins.thunderskill.get_wt_data import get_line_cost
 from toogle.plugins.thunderskill.main import get_player_recent_data
+from toogle.plugins.thunderskill.datamine import search, missile_parse
+from toogle.utils import text2img
 
 
 class WTVehicleLine(MessageHandler):
@@ -34,3 +36,25 @@ class ThunderSkill(MessageHandler):
             return MessageChain.create([Plain(f"{search_id}：ID错误或无数据，或者TS挂了")])
         except Exception as e:
             return MessageChain.create([Plain(f"{search_id}：未知错误，可能TS挂了\n{repr(e)}")])
+
+
+class WTDatamine(MessageHandler):
+    name = "战雷拆包数据查询"
+    trigger = r"^\.wt"
+    thread_limit = True
+    readme = "战雷拆包数据查询"
+
+    async def ret(self, message: MessagePack) -> MessageChain:
+        query = message.message.asDisplay()[3:].strip()
+        query_list = search(query)
+        if isinstance(query_list, list):
+            return MessageChain.plain(f"请精确查询:\n" + "\n".join(query_list))
+        else:
+            res = missile_parse(query_list)
+            pic = text2img(
+                res,
+                word_size=13,
+                max_size=(500, 4000),
+                font_height_adjust=2,
+            )
+            return MessageChain.create([Image(bytes=pic)])

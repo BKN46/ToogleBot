@@ -91,11 +91,14 @@ def text2img(
     padding: Tuple[int, int] = (20, 20),
     bg_color: Tuple[int, int, int] = (255, 255, 255),
     font_color: Tuple[int, int, int] = (20, 20, 20),
+    font_height_adjust: int = 0,
 ) -> bytes:
     font = PIL.ImageFont.truetype(font_path, word_size)
     text = get_font_wrap(text, font, max_size[0] - 2 * padding[0])  # type: ignore
     text_width = max([font.getbbox(x)[2] for x in text.split('\n')])
-    text_height = sum([font.getbbox(x)[3] for x in text.split('\n')])  # type: ignore
+    # text_height = sum([font.getbbox(x)[3] for x in text.split('\n')])  # type: ignore
+    text_height = sum([font.getbbox(x)[3] + font_height_adjust for x in text.split("\n")])  # type: ignore
+    # text_height = (word_size + 3) * len(text.split("\n"))
 
     gen_image = PIL.Image.new(
         "RGBA",
