@@ -126,6 +126,7 @@ def list2img(
     padding: Tuple[int, int] = (20, 20),
     bg_color: Tuple[int, int, int] = (255, 255, 255),
     font_color: Tuple[int, int, int] = (20, 20, 20),
+    font_height_adjust: int = 0,
 ):
     pic_list: List[PIL.Image.Image] = []
     for item in input_list:
@@ -138,6 +139,7 @@ def list2img(
                 padding=padding,
                 bg_color=bg_color,
                 font_color=font_color,
+                font_height_adjust=font_height_adjust,
             )
             pic = PIL.Image.open(io.BytesIO(pic_byte))
             pic_list.append(pic)

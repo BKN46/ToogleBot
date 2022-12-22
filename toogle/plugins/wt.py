@@ -5,8 +5,8 @@ from toogle.message import Member, MessageChain, Plain, Quote
 from toogle.message_handler import MessageHandler, MessagePack
 from toogle.plugins.thunderskill.get_wt_data import get_line_cost
 from toogle.plugins.thunderskill.main import get_player_recent_data
-from toogle.plugins.thunderskill.datamine import search, missile_parse
-from toogle.utils import text2img
+from toogle.plugins.thunderskill.datamine import search, get_missile_detail
+from toogle.utils import text2img, list2img
 
 
 class WTVehicleLine(MessageHandler):
@@ -50,8 +50,8 @@ class WTDatamine(MessageHandler):
         if isinstance(query_list, list):
             return MessageChain.plain(f"请精确查询:\n" + "\n".join(query_list))
         else:
-            res = missile_parse(query_list)
-            pic = text2img(
+            res = get_missile_detail(query_list)
+            pic = list2img(
                 res,
                 word_size=13,
                 max_size=(500, 4000),

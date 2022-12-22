@@ -1,9 +1,14 @@
 import os
+import io
 import json
 
 from thefuzz import fuzz, process
+import PIL.Image
+import PIL.ImageDraw
+import PIL.ImageFont
 
 from toogle.configs import config
+
 
 git_dir = config.get('WT_DATAMINE_GIT', '')
 
@@ -124,7 +129,7 @@ def search(query):
     if len(exact_list) == 1:
         return git_dir + missile_path + exact_list[0]
 
-    query_list = [x for x in missiles if query in x]
+    query_list = [x for x in missiles if query in x.replace('_', '')]
     if len(query_list) == 1:
         return git_dir + missile_path + query_list[0]
     else:
@@ -135,7 +140,44 @@ def search(query):
         fuzz_filter = [v[0] for v in fuzz_filter if v[1] > 70]
         if len(fuzz_filter) == 1:
             return git_dir + missile_path + fuzz_filter[0]
-        return [x.replace('.blkx', '') for x in query_list + fuzz_filter]
+        return list(set([x.replace('.blkx', '') for x in query_list + fuzz_filter]))
+
+
+def missile_damage_module(file_path):
+    DATA = json.load(open(file_path, "r"))
+    shatters = DATA["rocket"]["damage"]["shatter"]["segment"]
+    size = (200, 200)
+    image = PIL.Image.new("RGBA", size, (255, 255, 255))
+    draw = PIL.ImageDraw.Draw(image)
+    for seg in shatters:
+        portion = seg.get("countPortion", 0)
+        angles = seg.get("angles", [0, 0])
+        radius = seg.get("radiusScale", 0)
+        penetration = seg.get("penetrationScale", 0)
+        damage = seg.get("damageScale", 0)
+        color = (
+            int(130 * (damage)),
+            100,
+            100,
+        )
+        pieslice_size = (
+            (int(size[0] * (1 - radius)), int(size[1] * (1 - radius))),
+            (int(size[0] * radius), int(size[1] * radius)),
+        )
+        if radius > 0:
+            draw.pieslice(pieslice_size, angles[0] - 90, angles[1] - 89, color)
+    draw.ellipse([0, 0, size[0], size[1]], outline=(50, 50, 50), width=2)
+    img_bytes = io.BytesIO()
+    image.save(img_bytes, format="PNG")
+    return img_bytes.getvalue()
+
+
+def get_missile_detail(file_path):
+    return [
+        missile_parse(file_path),
+        "弹片散射区域:",
+        missile_damage_module(file_path),
+    ]
 
 
 # print(json.dumps(res, indent=2, ensure_ascii=False))
