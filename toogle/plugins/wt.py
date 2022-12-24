@@ -6,6 +6,7 @@ from toogle.message_handler import MessageHandler, MessagePack
 from toogle.plugins.thunderskill.get_wt_data import get_line_cost
 from toogle.plugins.thunderskill.main import get_player_recent_data
 from toogle.plugins.thunderskill.datamine import search, get_missile_detail
+from toogle.plugins.thunderskill.get_winrate import draw_winrate_n
 from toogle.utils import text2img, list2img
 
 
@@ -40,7 +41,7 @@ class ThunderSkill(MessageHandler):
 
 class WTDatamine(MessageHandler):
     name = "战雷拆包数据查询"
-    trigger = r"^\.wt"
+    trigger = r"^\.wt\s"
     thread_limit = True
     readme = "战雷拆包数据查询"
 
@@ -58,3 +59,14 @@ class WTDatamine(MessageHandler):
                 font_height_adjust=2,
             )
             return MessageChain.create([Image(bytes=pic)])
+
+
+class WTWinRate(MessageHandler):
+    name = "战雷历史模式国家胜率查询"
+    trigger = r"^\.wtwr$"
+    thread_limit = True
+    readme = "战雷历史模式国家胜率查询"
+
+    async def ret(self, message: MessagePack) -> MessageChain:
+        pic = draw_winrate_n()
+        return MessageChain.create([Image(bytes=pic)])
