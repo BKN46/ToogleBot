@@ -71,6 +71,8 @@ def missile_parse(file_path):
             "预热时间": jdata("rocket.guidance.warmUpTime"),
             "发射窗口时间": jdata("rocket.guidance.workTime"),
             "锁定目标后解锁引导头": jdata("rocket.guidance.uncageBeforeLaunch"),
+            "发射后重新锁定": jdata("rocket.guidance.lockAfterLaunch"),
+            "重新锁定最大尝试时间": jdata("rocket.guidance.breakLockMaxTime"),
             "发射后进入制导时间": jdata("rocket.guidance.lockTimeOut"),
             "红外制导": {
                 "后向锁定距离": jdata("rocket.guidance.irSeeker.rangeBand0"),

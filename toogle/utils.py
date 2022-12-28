@@ -3,11 +3,13 @@ import io
 import os
 import re
 import signal
+import urllib.parse
 from typing import List, Tuple, Union
 
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
+import requests
 
 from toogle.configs import config
 
@@ -19,6 +21,26 @@ def read_base64_pic(jpeg_b64_str: str) -> bytes:
 
 def get_base64_encode(jpeg_btye: bytes) -> str:
     return base64.b64encode(jpeg_btye).decode("utf-8")
+
+
+class anti_cf_requests():
+    sa_api = 'https://api.scrapingant.com/v2/general'
+    scraping_ant_token = config.get("SCRIPING_ANT_TOKEN")
+
+    @staticmethod
+    def get(*args, **kwargs):
+        url = args[0]
+        qParams = {'url': url, 'x-api-key': anti_cf_requests.scraping_ant_token}
+        reqUrl = f'{anti_cf_requests.sa_api}?{urllib.parse.urlencode(qParams)}' 
+        return requests.get(reqUrl, **kwargs)
+
+    @staticmethod
+    def post(*args, content_type="application/json", **kwargs):
+        url = args[0]
+        qParams = {'url': url, 'x-api-key': anti_cf_requests.scraping_ant_token}
+        header = {"Ant-Content-Type": content_type}
+        reqUrl = f'{anti_cf_requests.sa_api}?{urllib.parse.urlencode(qParams)}' 
+        return requests.post(reqUrl, **kwargs, headers=header)
 
 
 def set_timeout(num, callback):
@@ -95,7 +117,7 @@ def text2img(
 ) -> bytes:
     font = PIL.ImageFont.truetype(font_path, word_size)
     text = get_font_wrap(text, font, max_size[0] - 2 * padding[0])  # type: ignore
-    text_width = max([font.getbbox(x)[2] for x in text.split('\n')])
+    text_width = max([font.getbbox(x)[2] for x in text.split("\n")])
     # text_height = sum([font.getbbox(x)[3] for x in text.split('\n')])  # type: ignore
     text_height = sum([font.getbbox(x)[3] + font_height_adjust for x in text.split("\n")])  # type: ignore
     # text_height = (word_size + 3) * len(text.split("\n"))
@@ -154,7 +176,7 @@ def list2img(
             pic_list.append(gen_image)
     total_width = max([x.size[0] for x in pic_list])
     total_height = sum([x.size[1] for x in pic_list])
-    last_y=0
+    last_y = 0
 
     image = PIL.Image.new(
         "RGBA",

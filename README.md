@@ -79,16 +79,16 @@ SUPERUSERS=["123456789"]      # 管理员QQ号
 
 TODO
 
-## 原始功能迁移
+## 功能
 
 - [ ] 基础功能
   - [x] Dice
-  - [ ] CmdPipe
   - [x] Markov
   - [x] CurrencyExchange
   - [x] GetHelp
   - [x] RunPython
   - [x] Mathematica
+  - [x] Wolfram Alpha
   - [x] HelpMeSelect
   - [x] Swear
   - [x] Calculator
@@ -115,4 +115,6 @@ TODO
 - [ ] 工具
   - [x] ThunderSkill
   - [x] WTVehicleLine
+  - [x] WTWinRate
+  - [x] WTDatamine
   - [ ] ChatStatic
