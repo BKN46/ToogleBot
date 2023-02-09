@@ -34,7 +34,11 @@ class Dice(MessageHandler):
                     [Plain(choices[min(len(choices), roll_res) - 1])]
                 )
             else:
-                res = f"{self.roll(dice_str)} ({', '.join([str(x) for x in self.roll_res])}) [avg≈{self.cal_roll_avg(dice_str)}]"
+                res = (
+                    f"{self.roll(dice_str)}"
+                    f" ({', '.join([str(x) for x in self.roll_res]) if len(self.roll_res) < 100 else 'too many dices'})"
+                    f" [avg≈{self.cal_roll_avg(dice_str)}]" if len(self.roll_res) < 100 else f""
+                )
                 return MessageChain.create([Plain(res)])
 
     # Roll dice
@@ -163,16 +167,7 @@ class Dice(MessageHandler):
                 return dichotomy(arr, mid, r)
             return 0
 
-        base, dice_res = dice_pdf(dice_str)
-        dice_x = [i + base for i in range(len(dice_res))]
-        plt_ylim = max(dice_res) * 1.2
-        plt.ylim(top=plt_ylim)
-
-        dice_cdf, tmp_c = [], 0
-        for i in dice_res:
-            tmp_c += i
-            dice_cdf.append(tmp_c)
-
+        # random
         random_res = [
             self.roll(
                 dice_str,
@@ -180,29 +175,49 @@ class Dice(MessageHandler):
             for _ in range(30000)
         ]
         random_y = []
+        dice_x = [i + min(random_res) for i in range(max(random_res) + 1)]
         for x in dice_x:
             random_y.append(random_res.count(x))
-        random_y = pdf_unify(random_y)
 
-        balanced_res = [x * (i + base) for i, x in enumerate(dice_res)]
-        resolve_avg = sum(balanced_res)
         random_avg = self.cal_roll_avg(dice_str)
+        plt_ylim = 1
 
-        plt.plot(dice_x, dice_res, label="Resolve PDF", zorder=4)
-        plt.plot(
-            dice_x, [x * plt_ylim for x in dice_cdf], label="Resolve CDF", zorder=3
-        )
+        # resolve
+        # base, dice_res = dice_pdf(dice_str)
+        # dice_x = [i + base for i in range(len(dice_res))]
+        # plt_ylim = max(dice_res) * 1.2
+
+        plt.ylim(top=plt_ylim)
+
+        def get_cdf(res):
+            tmp, tmp_c = [], 0
+            for i in res:
+                tmp_c += i
+                tmp.append(tmp_c)
+            return tmp
+
+        random_cdf = get_cdf(pdf_unify(random_y))
+        random_y = [x/max(random_y) for x in random_y]
+        # random_cdf = pdf_unify(random_cdf)
+        
+        # dice_cdf = get_cdf(dice_res)
+
+        # plt.plot(dice_x, dice_res, label="Resolve PDF", zorder=4)
+        # plt.plot(
+        #     dice_x, [x * plt_ylim for x in dice_cdf], label="Resolve CDF", zorder=3
+        # )
         plt.plot(dice_x, random_y, label="Random-30k", c="lightblue", zorder=1)
+        plt.plot(dice_x, random_cdf, label="Random-30k-CDF", zorder=2)
         # plt.vlines(random_avg, 0, plt_ylim, colors = "gray", linestyles = "dashed", label="avg.", zorder = 2)
-        plt.vlines(
-            resolve_avg,
-            0,
-            plt_ylim,
-            colors="gray",  # type: ignore
-            linestyles="dashed",
-            label="avg.",
-            zorder=2,
-        )
+        # plt.vlines(
+        #     resolve_avg,
+        #     0,
+        #     plt_ylim,
+        #     colors="gray",  # type: ignore
+        #     linestyles="dashed",
+        #     label="avg.",
+        #     zorder=2,
+        # )
 
         self.roll_res = []
         roll_res = self.roll(dice_str)
@@ -223,7 +238,11 @@ class Dice(MessageHandler):
         )
         plt.title(f"{dice_str}\n{roll_res} ({roll_detail})")
         plt.xlabel(
-            f"min: {base} | max: {len(dice_res)+base-1} | resolve avg.: {resolve_avg:.1f} | random avg.: {random_avg}"
+            f"min: {min(random_res)} | "
+            # f"max: {len(dice_res)+base-1} | "
+            f"max: {max(random_res)} | "
+            # f"resolve avg.: {resolve_avg:.1f} | "
+            f"random avg.: {random_avg}"
         )
         plt.legend()
 
