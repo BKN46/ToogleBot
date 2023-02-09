@@ -34,6 +34,12 @@ sizes = [
 ]
 
 
+def novel_ai_login(key):
+    data = {"key": key}
+    res = requests.post("https://api.novelai.net/user/login", json=data)
+    return res.json()['accessToken']
+
+
 def get_ai_generate(
     content_str, image_byte=None, site="NovelAI", model="safe-diffusion"
 ):
@@ -97,6 +103,6 @@ def get_base64_encode(jpeg_btye):
     return base64.b64encode(jpeg_btye).decode("utf-8")
 
 
-get_ai_generate("arcueid brunestud, race vehicle, ")
+# get_ai_generate("arcueid brunestud, race vehicle, ")
 # read_base64_pic()
 # print(get_balance())
