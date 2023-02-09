@@ -191,6 +191,122 @@ def list2img(
     return img_bytes.getvalue()
 
 
+def draw_rich_text(
+    text: str,
+    max_size: Tuple[int, int] = (500, 1000),
+    padding: Tuple[int, int] = (20, 20),
+    bg_color: Tuple[int, int, int] = (255, 255, 255),
+    font_color: Tuple[int, int, int] = (20, 20, 20),
+    word_size: int = 20,
+    font_path: str = "toogle/plugins/compose/Arial Unicode MS Font.ttf",
+    byte_mode: bool = True,
+    src_img: Union[None, PIL.Image.Image] = None,
+    position: Tuple[int, int] = (0, 0),
+):
+    font = PIL.ImageFont.truetype(font_path, word_size)
+    rich_content = r'(<(.*?)\s(.*?)>(.*?)<.*?/>)'
+    res = re.fullmatch(rich_content, text)
+    res = []
+    re_list = [x for x in re.finditer(rich_content, text)]
+    for i, x in enumerate(re_list):
+        if i == 0 and x.span()[0] > 0:
+            res.append((text[:x.span()[0]], {}))
+        elif x.span()[0] > 0:
+            res.append((text[re_list[i-1].span()[1]:x.span()[0]], {}))
+
+        rich_content = x.groups()
+        rich_header = rich_content[1]
+        rich_param = {
+            v.split("=")[0]: eval(v.split("=")[1][1:-1])
+            for v in
+            rich_content[2].split()
+        }
+        res.append((rich_content[3], rich_param))
+
+        if i == len(re_list) - 1 and x.span()[1] < len(text) - 1:
+            res.append((text[x.span()[1]:], {}))
+
+    box_width = max_size[0] - padding[0] * 2
+    lines = []
+
+    line_res = []
+    now_line = 0
+    for part in res:
+        if '\n' in part[0]:
+            part_lines = part[0].split('\n')
+            line_res[now_line].append((part_lines[0], part[1]))
+            line_res += [[(x, part[1])] for x in part_lines[1:]]
+            now_line += len(part_lines) - 1
+        elif now_line >= len(line_res):
+            line_res.append([(part[0], part[1])])
+        else:
+            line_res[now_line].append((part[0], part[1]))
+
+    for line in line_res:
+        tmp_box_width = box_width
+        lines.append([])
+        for part in line:
+            part_text = part[0]
+            line_width = font.getbbox(part_text)[2]  # type: ignore
+            same_line = True
+            while tmp_box_width < line_width:
+                same_line = False
+                split_pos = int(tmp_box_width / line_width * len(part_text)) - 1
+                while True:
+                    lw = font.getbbox(part_text[:split_pos])[2]  # type: ignore
+                    rw = font.getbbox(part_text[: split_pos + 1])[2]  # type: ignore
+                    if lw > tmp_box_width:
+                        split_pos -= 1
+                    elif rw < tmp_box_width:
+                        split_pos += 1
+                    else:
+                        break
+                if part_text[:split_pos]:
+                    lines[-1].append((part_text[:split_pos], part[1]))
+                tmp_box_width = box_width
+                part_text = part_text[split_pos:]
+                line_width = font.getbbox(part_text)[2]  # type: ignore
+            tmp_box_width -= line_width
+            if lines and same_line and part_text:
+                lines[-1].append((part_text, part[1]))
+            elif part_text:
+                lines.append([(part_text, part[1])])
+
+    total_width = box_width
+    total_height = font.getbbox("X")[3] * len(lines)
+    if src_img:
+        gen_image = src_img
+        padding = (0, 0)
+    else:
+        gen_image = PIL.Image.new(
+            "RGBA",
+            (total_width + padding[0] * 2, total_height + padding[1] * 2),
+            bg_color,
+        )
+    image_draw = PIL.ImageDraw.Draw(gen_image)
+
+    for y, line in enumerate(lines):
+        x = 0
+        y = y * font.getbbox("X")[3]
+        for part in line:
+            if 'fill' not in part[1]:
+                part[1]['fill'] = font_color
+            image_draw.text(
+                (padding[0] + position[0] + x, padding[1] + position[1] + y),
+                part[0],
+                font=font,
+                **part[1]
+            )
+            x += font.getbbox(part[0])[2]
+
+    if byte_mode:
+        img_bytes = io.BytesIO()
+        gen_image.save(img_bytes, format="PNG")
+        return img_bytes.getvalue()
+    else:
+        return gen_image
+
+
 if __name__ == "__main__":
     test_bytes = text2img("测试测试")
     img = PIL.Image.open(io.BytesIO(test_bytes))
