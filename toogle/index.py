@@ -1,6 +1,7 @@
 import importlib
 import inspect
 import os
+import time
 
 import nonebot
 
@@ -10,9 +11,11 @@ from toogle.nonebot2_adapter import LinearHandler, PluginWrapper
 
 plugin_list = os.listdir("toogle/plugins/")
 export_plugins = []
+start_time = time.time()
 for index, plugin_name in enumerate(plugin_list):
     if not plugin_name.endswith(".py"):
         continue
+    nonebot.logger.info(f"[{plugin_name}] ==>")  # type: ignore
     plugin_name = plugin_name.replace(".py", "")
     try:
         plugin_module = importlib.import_module(f"toogle.plugins.{plugin_name}")
@@ -27,7 +30,10 @@ for index, plugin_name in enumerate(plugin_list):
             issubclass(tmp, MessageHandler),
         ]):
             export_plugins.append(PluginWrapper(tmp))  # type: ignore
-            nonebot.logger.success(f"[{tmp.__name__}] imported ({index + 1}/{len(plugin_list)})")  # type: ignore
+            import_time = (time.time() - start_time) * 1000
+            nonebot.logger.success(f"[{tmp.__name__}] imported ({index + 1}/{len(plugin_list)}) ({import_time:.2f}ms)")  # type: ignore
+            start_time = time.time()
+    start_time = time.time()
 
 
 linear_handler = LinearHandler(export_plugins)

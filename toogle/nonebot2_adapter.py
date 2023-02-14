@@ -5,12 +5,12 @@ import signal
 import time
 import traceback
 from multiprocessing import Semaphore
-from typing import Any, Optional, Sequence, Tuple
+from typing import Any, Optional, Sequence, Tuple, Union
 
 import nonebot
 from nonebot.adapters.mirai2 import MessageChain, MessageSegment
-from nonebot.adapters.mirai2.event.base import GroupChatInfo, PrivateChatInfo
-from nonebot.adapters.mirai2.event.message import MessageEvent
+from nonebot.adapters.mirai2.event.base import GroupChatInfo, PrivateChatInfo, GroupInfo, UserPermission
+from nonebot.adapters.mirai2.event.message import MessageEvent, MessageSource, GroupMessage
 from nonebot.adapters.mirai2.message import MessageType
 
 # from nonebot.adapters import Event, Message
@@ -221,3 +221,49 @@ def nb2toogle(message: MessageChain) -> ToogleChain:
         else:
             message_list.append(Element())
     return ToogleChain(message_list)
+
+
+async def bot_send_group(target_id: int, message: Union[ToogleChain, MessageChain]):
+    bot = nonebot.get_bot()
+    source = MessageSource(id=target_id, time=datetime.datetime.now())
+    permission = UserPermission.OWNER
+    group = GroupInfo(
+        id=target_id,
+        name="",
+        permission=permission,
+    )
+    sender = GroupChatInfo(
+        id=100000,
+        memberName="None",
+        group=group,
+        specialTitle="",
+        permission=permission,
+        joinTimestamp=0,
+        lastSpeakTimestamp=0,
+        muteTimeRemaining=0,
+    )
+    event = GroupMessage(
+        self_id=int(bot.self_id),
+        type="GroupMessage",
+        source=source,
+        sender=sender,
+        messageChain=MessageChain(""),
+    )
+    if isinstance(message, ToogleChain):
+        nb_message = toogle2nb(message, MessageChain(""), event)
+    else:
+        nb_message = message
+    # await bot.send(
+    #     event=event,
+    #     message=nb_message,
+    # )
+    await bot.send_group_message(
+        group=target_id,
+        message_chain=nb_message,
+    )
+
+
+async def bot_get_all_group():
+    bot = nonebot.get_bot()
+    res = await bot.call_api(api="groupList")
+    return res

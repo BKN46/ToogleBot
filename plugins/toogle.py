@@ -19,7 +19,6 @@ from toogle.nonebot2_adapter import PluginWrapper
 
 echo = on_regex("^22222$")
 
-
 async def handle_echo(foo: Tuple[Any, ...] = RegexGroup()):
     await echo.send("22222")
 

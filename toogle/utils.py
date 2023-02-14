@@ -5,6 +5,7 @@ import re
 import signal
 import urllib.parse
 from typing import List, Tuple, Union
+from xmlrpc.client import Boolean
 
 import PIL.Image
 import PIL.ImageDraw
@@ -305,6 +306,20 @@ def draw_rich_text(
         return img_bytes.getvalue()
     else:
         return gen_image
+
+
+def is_admin(id: int) -> Boolean:
+    for i in config.get("ADMIN_LIST", []):
+        if id == int(i):
+            return True
+    return False
+
+
+def get_main_groups() -> List[int]:
+    return [
+        int(x) for x in
+        config.get("GROUP_LIST", [])
+    ]
 
 
 if __name__ == "__main__":
