@@ -8,6 +8,7 @@ from multiprocessing import Semaphore
 from typing import Any, Optional, Sequence, Tuple, Union
 
 import nonebot
+from nonebot.adapters import Event
 from nonebot.adapters.mirai2 import MessageChain, MessageSegment
 from nonebot.adapters.mirai2.event.base import GroupChatInfo, PrivateChatInfo, GroupInfo, UserPermission
 from nonebot.adapters.mirai2.event.message import MessageEvent, MessageSource, GroupMessage
@@ -223,6 +224,10 @@ def nb2toogle(message: MessageChain) -> ToogleChain:
     return ToogleChain(message_list)
 
 
+async def admin_user_checker(event: Event) -> bool:
+    return event.get_user_id() in config.get("ADMIN_LIST", [])
+
+
 async def bot_send_group(target_id: int, message: Union[ToogleChain, MessageChain]):
     bot = nonebot.get_bot()
     source = MessageSource(id=target_id, time=datetime.datetime.now())
@@ -253,17 +258,27 @@ async def bot_send_group(target_id: int, message: Union[ToogleChain, MessageChai
         nb_message = toogle2nb(message, MessageChain(""), event)
     else:
         nb_message = message
-    # await bot.send(
-    #     event=event,
-    #     message=nb_message,
-    # )
-    await bot.send_group_message(
-        group=target_id,
-        message_chain=nb_message,
+    await bot.send(
+        event=event,
+        message=nb_message,
     )
+    # await bot.send_group_message(
+    #     group=target_id,
+    #     message_chain=nb_message,
+    # )
 
 
 async def bot_get_all_group():
     bot = nonebot.get_bot()
-    res = await bot.call_api(api="groupList")
+    try:
+        res = await bot.call_api(api="groupList", sessionKey=config.get("VERIFY_KEY", ""))
+    except Exception as e:
+        nonebot.logger.error(repr(e)) # type: ignore
+        return []
+    return res
+
+
+async def bot_exec(api, **data):
+    bot = nonebot.get_bot()
+    res = await bot.call_api(api=api, sessionKey=config.get("VERIFY_KEY", ""), **data)
     return res
