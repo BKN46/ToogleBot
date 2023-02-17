@@ -63,7 +63,7 @@ class WTDatamine(MessageHandler):
 
 class WTWinRate(MessageHandler):
     name = "战雷历史模式国家胜率查询"
-    trigger = r"^\.wtwr$"
+    trigger = r"^(\.wtwr|战雷胜率)$"
     thread_limit = True
     readme = "战雷历史模式国家胜率查询"
 
