@@ -192,6 +192,30 @@ def list2img(
     return img_bytes.getvalue()
 
 
+def color_gradient(
+    c1: Tuple[int, int, int],
+    c2: Tuple[int, int, int],
+    v: float,
+    mid_c: Tuple[int, int, int] = (255, 255, 255),
+) -> Tuple[int, int, int]:
+    if v < 0:
+        return c1
+    elif v > 1:
+        return c2
+    elif v <= 0.5:
+        return (
+            int(c1[0] + (mid_c[0] - c1[0]) * v * 2),
+            int(c1[1] + (mid_c[1] - c1[1]) * v * 2),
+            int(c1[2] + (mid_c[2] - c1[2]) * v * 2),
+        )
+    else:
+        return (
+            int(c2[0] + (mid_c[0] - c2[0]) * (1 - v) * 2),
+            int(c2[1] + (mid_c[1] - c2[1]) * (1 - v) * 2),
+            int(c2[2] + (mid_c[2] - c2[2]) * (1 - v) * 2),
+        )
+
+
 def draw_rich_text(
     text: str,
     max_size: Tuple[int, int] = (500, 1000),
