@@ -29,7 +29,8 @@ def get_winrate_v():
     wt_winrate_v = "wt_winrate_v"
 
     res = requests.get(metajson_url, proxies=proxies) # type: ignore
-    date_date = json.loads(res.text)[-1]['date']
+    sort_date = sorted(json.loads(res.text), key=lambda x:x['date'], reverse=True)
+    date_date = sort_date[0]['date']
     data_url = data_path + f"{date_date}.csv"
     file_name = wt_winrate_v + "_" + date_date
     wr_list = [x for x in os.listdir(save_path) if x.startswith(wt_winrate_v)]
@@ -45,7 +46,8 @@ def get_winrate_v():
 def get_winrate_n():
     wt_winrate_n = "wt_winrate_n"
     res = requests.get(metajson_url, proxies=proxies) # type: ignore
-    date_date = json.loads(res.text)[-1]['date']
+    sort_date = sorted(json.loads(res.text), key=lambda x:x['date'], reverse=True)
+    date_date = sort_date[0]['date']
     file_name = wt_winrate_n + "_" + date_date
     wr_list = [x for x in os.listdir(save_path) if x.startswith(wt_winrate_n)]
     if file_name not in wr_list:
