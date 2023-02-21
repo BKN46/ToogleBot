@@ -10,6 +10,7 @@ from toogle.message import Image, Member, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack, get_user_name
 from toogle.plugins.compose.waifu_battle import Dice
 from toogle.sql import DatetimeUtils, SQLConnection
+from toogle.utils import draw_pic_text, text2img
 
 
 class GetRandomAnimeFemale(MessageHandler):
@@ -41,10 +42,12 @@ class GetRandomAnimeFemale(MessageHandler):
                     try:
                         res, req_url = Waifu.get_designated_search(s, feat_list[1:])
                         if is_debug:
+                            pic = PIL.Image.open(Image.buffered_url_pic(res[0]).path or '')
+                            text = f"\n随机结果是:\n{res[1]}"
+                            pic_bytes = draw_pic_text(pic, text, pic_size=(270, 300),max_size=(800, 300))
                             return MessageChain.create(
                                 [
-                                    Image.buffered_url_pic(res[0]),
-                                    Plain(f"\n随机结果是:\n" + res[1]),
+                                    Image(bytes=pic_bytes),
                                     Plain(f"\n本次随机池: {req_url}"),
                                 ]
                             )
@@ -56,29 +59,23 @@ class GetRandomAnimeFemale(MessageHandler):
                 others = SQLConnection.search("qq_waifu", {"waifuId": res[2]})
 
                 if others:
-                    m_res = MessageChain.create(
-                        [
-                            Image.buffered_url_pic(res[0]),
-                            Plain(f"\n{get_user_name(message)}你的随机结果是:\n" + res[1]),
-                            Plain(f"\n\n但是已经被{others[0][0]}抢先下手了"),
-                        ]
-                    )
+                    m_text = f"\n{get_user_name(message)}你的{schn}是:\n{res[1]}\n\n但是已经被{others[0][0]}抢先下手了"
                     SQLConnection.update_user(
                         message.member.id, f"last_luck='{DatetimeUtils.get_now_time()}'"
                     )
                 else:
-                    m_res = MessageChain.create(
-                        [
-                            Image.buffered_url_pic(res[0]),
-                            Plain(f"\n{get_user_name(message)}你的{schn}是:\n" + res[1]),
-                            Plain(f"\n输入【锁定{schn}】即可锁定{schn}"),
-                        ]
-                    )
+                    m_text = f"\n{get_user_name(message)}你的{schn}是:\n{res[1]}\n输入【锁定{schn}】即可锁定{schn}"
                     SQLConnection.update_user(
                         message.member.id,
                         f"last_luck='{DatetimeUtils.get_now_time()}', waifu='{res[2]}'",
                     )
-                return m_res
+                pic = PIL.Image.open(Image.buffered_url_pic(res[0]).path or '')
+                text = f"\n随机结果是:\n{res[1]}"
+                pic_bytes = draw_pic_text(pic, text, pic_size=(270, 300),max_size=(800, 300))
+                return MessageChain.create([
+                    Image(bytes=pic_bytes),
+                    # Plain(m_text)
+                ])
             else:
                 return MessageChain.create([Plain(f"每天运势/随机{schn}/NTR只能一次")])
 
@@ -180,7 +177,15 @@ class GetRandomAnimeFemale(MessageHandler):
             )
 
         elif message_text in ["可选对象属性"]:
-            return MessageChain.create([Plain(Waifu.get_keyword_explain())])
+            text = Waifu.get_keyword_explain()
+            return MessageChain.create([
+                Image(bytes=text2img(
+                    text,
+                    word_size=15,
+                    max_size=(500,2000),
+                    font_height_adjust=6,
+                ))
+            ])
 
         elif message_text.startswith("对象排行"):
             waifu_list = self.get_waifu_list()

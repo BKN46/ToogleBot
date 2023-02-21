@@ -332,6 +332,60 @@ def draw_rich_text(
         return gen_image
 
 
+def pic_max_resize(
+    img: PIL.Image.Image,
+    max_width: int,
+    max_height: int
+):
+    if img.size[0] >= img.size[1]:
+        return img.resize(
+            (max_width, int(img.size[1] * max_width / img.size[0])),
+            PIL.Image.ANTIALIAS,
+        )
+    else:
+        return img.resize(
+            (int(img.size[0] * max_height / img.size[1]), max_height),
+            PIL.Image.ANTIALIAS,
+        )
+
+
+def draw_pic_text(
+    pic: PIL.Image.Image,
+    text: str,
+    font_path: str = "toogle/plugins/compose/Arial Unicode MS Font.ttf",
+    word_size: int = 17,
+    pic_size: Tuple[int, int] = (300, 460),
+    max_size: Tuple[int, int] = (1000, 500),
+    padding: Tuple[int, int] = (20, 20),
+    bg_color: Tuple[int, int, int] = (255, 255, 255),
+    font_color: Tuple[int, int, int] = (20, 20, 20),
+):
+    pic = pic_max_resize(pic, pic_size[0] - padding[0], pic_size[1] - 2 * padding[1])
+    pic_size = pic.size
+    text_bytes = text2img(
+        text,
+        font_path=font_path,
+        word_size=word_size,
+        max_size=(max_size[0] - pic_size[0] - padding[0], int(max_size[1] * 1.5)),
+        padding=padding,
+        bg_color=bg_color,
+        font_color=font_color,
+        font_height_adjust=6,
+    )
+    text_pic = PIL.Image.open(io.BytesIO(text_bytes))
+    text_pic_size = text_pic.size
+    gen_image = PIL.Image.new(
+        "RGBA",
+        (max_size[0], max(max_size[1], text_pic_size[1])),
+        bg_color,
+    )
+    gen_image.paste(pic, (padding[0], padding[1]))
+    gen_image.paste(text_pic, (pic_size[0] + padding[0], 0))
+    img_bytes = io.BytesIO()
+    gen_image.save(img_bytes, format="PNG")
+    return img_bytes.getvalue()
+
+
 def is_admin(id: int) -> Boolean:
     for i in config.get("ADMIN_LIST", []):
         if id == int(i):
