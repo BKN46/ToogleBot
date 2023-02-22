@@ -1,3 +1,4 @@
+import io
 import os
 from typing import List, Optional, Sequence
 
@@ -63,11 +64,16 @@ class Image(Element):
         url: Optional[str] = None,
         bytes: Optional[bytes] = None,
         base64: Optional[str] = None,
+        image: Optional[PIL.Image.Image] = None,
     ) -> None:
         self.id = id
         self.base64 = base64
         if bytes:
             self.base64 = get_base64_encode(bytes)
+        if image:
+            img_bytes = io.BytesIO()
+            image.save(img_bytes, format="PNG")
+            self.base64 = get_base64_encode(img_bytes.getvalue())
         self.path = path
         self.url = url
 

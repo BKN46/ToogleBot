@@ -3,7 +3,9 @@ import math
 import os
 import random
 import re
+import io
 from posixpath import split
+from typing import Tuple
 
 import bs4
 import PIL.Image
@@ -610,12 +612,12 @@ def max_resize(img, max_width=PIC_SIZE[0], max_height=PIC_SIZE[1]):
     if img.size[0] >= img.size[1]:
         return img.resize(
             (max_width, int(img.size[1] * max_width / img.size[0])),
-            PIL.Image.ANTIALIAS,
+            PIL.Image.Resampling.LANCZOS,
         )
     else:
         return img.resize(
             (int(img.size[0] * max_height / img.size[1]), max_height),
-            PIL.Image.ANTIALIAS,
+            PIL.Image.Resampling.LANCZOS,
         )
 
 
@@ -682,6 +684,124 @@ def ranking_compose(waifu_data_list, highlight=0):
     return SAVE_PATH
 
 
+def get_font_wrap(text: str, font: PIL.ImageFont.ImageFont, box_width: int):
+    res = []
+    for line in text.split("\n"):
+        line_width = font.getbbox(line)[2]  # type: ignore
+        while box_width < line_width:
+            split_pos = int(box_width / line_width * len(line)) - 1
+            while True:
+                lw = font.getbbox(line[:split_pos])[2]  # type: ignore
+                rw = font.getbbox(line[: split_pos + 1])[2]  # type: ignore
+                if lw > box_width:
+                    split_pos -= 1
+                elif rw < box_width:
+                    split_pos += 1
+                else:
+                    break
+            res.append(line[:split_pos])
+            line = line[split_pos:]
+            line_width = font.getbbox(line)[2]  # type: ignore
+        res.append(line)
+    return "\n".join(res)
+
+
+def text_on_image(
+    image: PIL.Image.Image,
+    text: str,
+    font_path: str = FONT_TYPE,
+    word_size: int = 20,
+    max_size: Tuple[int, int] = (500, 1000),
+    pos: Tuple[int, int] = (20, 20),
+    bg_color: Tuple[int, int, int] = (255, 255, 255),
+    font_color: Tuple[int, int, int] = (20, 20, 20),
+    font_height_adjust: int = 0,
+) -> PIL.Image.Image:
+    font = PIL.ImageFont.truetype(font_path, word_size)
+    text = get_font_wrap(text, font, max_size[0])  # type: ignore
+    text_width = max([font.getbbox(x)[2] for x in text.split("\n")])
+    # text_height = sum([font.getbbox(x)[3] for x in text.split('\n')])  # type: ignore
+    text_height = sum([font.getbbox(x)[3] + font_height_adjust for x in text.split("\n")])  # type: ignore
+    # text_height = (word_size + 3) * len(text.split("\n"))
+
+    draw = PIL.ImageDraw.Draw(image)
+
+    draw.text(
+        (pos[0], pos[1]),
+        text,
+        font_color,
+        font=font,
+    )
+    return image
+
+
+def waifu_card(
+    pic_url: str,
+    name: str,
+    src: str,
+    waifu_type: str,
+    text: str,
+    bg_color = (248, 255, 240),
+    max_size = (1000, 400),
+):
+    padding = (20, 20)
+    pic = max_resize(
+        buffered_url_pic(pic_url),
+        max_width=int(max_size[0] * 0.3 - padding[0]),
+        max_height=int(max_size[1] - 2 * padding[1]),
+    )
+    pic_size = pic.size
+    gen_image = PIL.Image.new(
+        "RGBA",
+        (max_size[0], max_size[1]),
+        bg_color,
+    )
+    image_draw = PIL.ImageDraw.Draw(gen_image)
+
+    font1 = PIL.ImageFont.truetype(FONT_TYPE, 60)
+    font2 = PIL.ImageFont.truetype(FONT_TYPE, 20)
+    font3 = PIL.ImageFont.truetype(FONT_TYPE, 40)
+    image_draw.text(
+        (max_size[0] - padding[0] - font1.getbbox(name)[2], padding[1]),
+        name,
+        (96, 221, 250),
+        font=font1,
+    )
+    image_draw.text(
+        (max_size[0] - padding[0] - font2.getbbox(src)[2], padding[1] + 65),
+        src,
+        (250, 239, 131),
+        font=font2,
+    )
+    waifu_type = waifu_type.upper()
+    image_draw.text(
+        (max_size[0] - padding[0] - font3.getbbox(waifu_type)[2], max_size[1] - padding[1] - font3.getbbox(waifu_type)[3]),
+        waifu_type,
+        (255, 96, 85),
+        font=font3,
+    )
+    image_draw.rectangle(
+        (0, 0, padding[0], max_size[1]),
+        fill=bg_color
+    )
+
+    gen_image.paste(pic, (padding[0], padding[1]))
+    text_on_image(
+        gen_image,
+        text,
+        word_size=23,
+        max_size=(max_size[0] - pic_size[0] - padding[0] * 3, int(max_size[1] * 1.5)),
+        pos=(pic_size[0] + padding[0] * 2, padding[1]),
+        bg_color=bg_color,
+        font_color=(10, 10, 10),
+        font_height_adjust=6,
+    )
+
+    img_bytes = io.BytesIO()
+    gen_image.save(img_bytes, format="PNG")
+    return img_bytes.getvalue()
+
+
 if __name__ == "__main__":
     # print(get_random_anime_character("f"))
     # print(get_anime_character("102632")[1])
@@ -690,5 +810,16 @@ if __name__ == "__main__":
     # print(bgm_character_search("エアリス"))
     # print(get_anime_character_popularity(acdb_id="15442")[0])
     # print(get_keyword_explain())
-    print(get_designated_search("f", ["红发", "轻小说"])[1])
+    # print(get_designated_search("f", ["红发", "轻小说"])[1])
     # calc_confirm()
+
+    data, url = get_designated_search("f", ["红发", "轻小说"])
+    pic_url, text, profile_id, raw = data
+    pic = waifu_card(
+        pic_url, # type: ignore
+        raw['姓名'],
+        raw['来源'],
+        raw['类型'],
+        text
+    )
+    open('data/test.png', 'wb').write(pic)

@@ -41,10 +41,18 @@ class GetRandomAnimeFemale(MessageHandler):
                 if len(feat_list) > 1 and len(feat_list[1]) > 0:
                     try:
                         res, req_url = Waifu.get_designated_search(s, feat_list[1:])
+                        res_pic_url, res_text, res_id, res_raw = res
                         if is_debug:
                             pic = PIL.Image.open(Image.buffered_url_pic(res[0]).path or '')
                             text = f"\n随机结果是:\n{res[1]}"
-                            pic_bytes = draw_pic_text(pic, text, pic_size=(270, 300),max_size=(800, 300))
+                            # pic_bytes = draw_pic_text(pic, text, pic_size=(270, 300),max_size=(800, 300))
+                            pic_bytes = Waifu.waifu_card(
+                                res_pic_url, # type: ignore
+                                res_raw['姓名'],
+                                res_raw['来源'],
+                                res_raw['类型'],
+                                res_text
+                            )
                             return MessageChain.create(
                                 [
                                     Image(bytes=pic_bytes),
@@ -55,23 +63,30 @@ class GetRandomAnimeFemale(MessageHandler):
                         return MessageChain.create([Plain(f"参数错误: {e}")])
                 else:
                     res = Waifu.get_random_anime_character(s)
+                    res_pic_url, res_text, res_id, res_raw = res
 
                 others = SQLConnection.search("qq_waifu", {"waifuId": res[2]})
 
                 if others:
-                    m_text = f"\n{get_user_name(message)}你的{schn}是:\n{res[1]}\n\n但是已经被{others[0][0]}抢先下手了"
+                    text = f"\n{get_user_name(message)}你的{schn}是:\n{res[1]}\n\n但是已经被{others[0][0]}抢先下手了"
                     SQLConnection.update_user(
                         message.member.id, f"last_luck='{DatetimeUtils.get_now_time()}'"
                     )
                 else:
-                    m_text = f"\n{get_user_name(message)}你的{schn}是:\n{res[1]}\n输入【锁定{schn}】即可锁定{schn}"
+                    text = f"\n{get_user_name(message)}你的{schn}是:\n{res[1]}\n输入【锁定{schn}】即可锁定{schn}"
                     SQLConnection.update_user(
                         message.member.id,
                         f"last_luck='{DatetimeUtils.get_now_time()}', waifu='{res[2]}'",
                     )
                 pic = PIL.Image.open(Image.buffered_url_pic(res[0]).path or '')
-                text = f"\n随机结果是:\n{res[1]}"
-                pic_bytes = draw_pic_text(pic, text, pic_size=(270, 300),max_size=(800, 300))
+                # pic_bytes = draw_pic_text(pic, text, pic_size=(270, 300),max_size=(800, 300))
+                pic_bytes = Waifu.waifu_card(
+                    res_pic_url, # type: ignore
+                    res_raw['姓名'],
+                    res_raw['来源'],
+                    res_raw['类型'],
+                    text
+                )
                 return MessageChain.create([
                     Image(bytes=pic_bytes),
                     # Plain(m_text)
@@ -106,11 +121,19 @@ class GetRandomAnimeFemale(MessageHandler):
                     acdb_id=user[5] # type: ignore
                 )
                 extra_str = f"\n\n该{schn}还未锁定，输入【锁定{schn}】即可保存老婆"
+            # pic = PIL.Image.open(Image.buffered_url_pic(res_pic).path or '')
+            text = f"\n{get_user_name(message)}你的{schn}是:\n{res_str}{extra_str}"
+            # pic_bytes = draw_pic_text(pic, text, pic_size=(350, 400),max_size=(800, 400))
+            pic_bytes = Waifu.waifu_card(
+                res_pic, # type: ignore
+                res_data['name'], # type: ignore
+                res_data['src'], # type: ignore
+                res_data['type'], # type: ignore
+                text
+            )
             m_res = MessageChain.create(
                 [
-                    Image.buffered_url_pic(res_pic),
-                    Plain(f"\n{get_user_name(message)}你的{schn}是:\n" + res_str),
-                    Plain(extra_str),
+                    Image(bytes=pic_bytes)
                 ]
             )
             # req_url = f"https://www.animecharactersdatabase.com/characters.php?id={user[5]}"
