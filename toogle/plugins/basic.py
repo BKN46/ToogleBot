@@ -211,6 +211,8 @@ class Lottery(MessageHandler):
 
         elif message_content.startswith("参与抽奖"):
             lottery_name = message_content[4:].strip()
+            if not lottery_name:
+                return MessageChain.create([Plain(f"请填写要参与的抽奖名称！")])
             if lottery_name not in lottery_list:
                 return MessageChain.create([Plain(f"[{lottery_name}]抽奖不存在")])
             lottery_path = f"{LOTTERY_PATH}{lottery_name}.pickle"

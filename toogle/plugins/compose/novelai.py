@@ -52,19 +52,21 @@ def get_ai_generate(
 
     size = random.choice(sizes)
     payload = {
-        "input": content_str,
+        "input": "masterpiece, best quality, " + content_str,
         "model": model,
         "parameters": {
             "height": size[1],
             "n_samples": 1,
             "noise": 0.2,
-            "sampler": "k_euler_ancestral",
+            "sampler": "nai_smea",
             "scale": 12,
             "seed": random.randint(0, 2**32 - 1),
             "steps": 28,
             "strength": 0.7,
             "uc": "nsfw, lowres, bad anatomy, text, error, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
             "ucPreset": 0,
+            "qualityToggle": True,
+            "autoSmea": True,
             "width": size[0],
         },
     }

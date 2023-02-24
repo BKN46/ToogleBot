@@ -42,7 +42,7 @@ class GetOpenAIConversation(MessageHandler):
             "logprobs": None,
             "stop": "You: ",
         }
-        res = requests.post(url + path, headers=header, json=body, timeout=10)
+        res = requests.post(url + path, headers=header, json=body, timeout=15)
         try:
             return res.json()["choices"][0]["text"].strip()
         except Exception as e:
