@@ -1,4 +1,8 @@
+import datetime
+import traceback
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+import nonebot
 
 from toogle.nonebot2_adapter import bot_send_group
 
@@ -26,6 +30,18 @@ class ScheduleModule:
     async def ret(self):
         pass
 
+    async def ret_wrapper(self, **kwargs):
+        try:
+            await self.ret()
+            nonebot.logger.success(f"[Schedule][{self.name}] done") # type: ignore
+        except Exception as e:
+            print(
+                f"{'*'*20}\n[{datetime.datetime.now().strftime('%Y-%m-%d, %H:%M:%S')}]"
+                f"[{self.name}] {repr(e)}\n"
+                f"\n{'*'*20}\n{traceback.format_exc()}",
+                file=open("schedule_err.log", "a"),
+            )
+
     def regist(self):
         time_dict = {
             x: self.__getattribute__(x) for x in [
@@ -40,11 +56,15 @@ class ScheduleModule:
             ] if self.__getattribute__(x) >= 0
         }
         scheduler.add_job(
-            self.ret,
+            self.ret_wrapper,
             'cron',
+            kwargs={'name': self.name},
             **time_dict
         )
 
 
 def schedular_start():
+    jobs = scheduler.get_jobs()
+    for job in jobs:
+        nonebot.logger.success(f"[Schedule][{job.kwargs.get('name')}] trigger: {job.trigger}") # type: ignore
     scheduler.start()

@@ -25,6 +25,7 @@ for index, plugin_name in enumerate(plugin_list):
         continue
     for x in dir(plugin_module):
         tmp = getattr(plugin_module, x)
+        # Normal plugin
         if inspect.isclass(tmp) and all([
             tmp.__name__ != 'MessageHandler',
             tmp.__name__ not in config.get('DISABLED_MODULE', []),
@@ -34,12 +35,15 @@ for index, plugin_name in enumerate(plugin_list):
             import_time = (time.time() - start_time) * 1000
             nonebot.logger.success(f"[{tmp.__name__}] imported ({index + 1}/{len(plugin_list)}) ({import_time:.2f}ms)")  # type: ignore
             start_time = time.time()
+
+        # Scheduled job
         if inspect.isclass(tmp) and all([
             tmp.__name__ != 'ScheduleModule',
             tmp.__name__ not in config.get('DISABLED_MODULE', []),
             issubclass(tmp, ScheduleModule),
         ]):
-            tmp().regist()
+            schedule_module = tmp()
+            schedule_module.regist()
             import_time = (time.time() - start_time) * 1000
             nonebot.logger.success(f"[Schedule][{tmp.__name__}] imported ({index + 1}/{len(plugin_list)}) ({import_time:.2f}ms)")  # type: ignore
             start_time = time.time()
