@@ -15,12 +15,13 @@ class GetOpenAIConversation(MessageHandler):
     name = "OpenAI对话"
     trigger = r"^.gpt\s"
     thread_limit = True
-    readme = "OpenAI text-davinci-003 自然语言模型对话"
+    readme = "OpenAI gpt-3.5-turbo 模型对话"
 
     async def ret(self, message: MessagePack) -> MessageChain:
         message_content = message.message.asDisplay()[4:].strip()
         try:
-            res = GetOpenAIConversation.get_completion(message_content)
+            # res = GetOpenAIConversation.get_completion(message_content)
+            res = GetOpenAIConversation.get_chat(message_content)
             return MessageChain.plain(res)
         except ReadTimeout as e:
             return MessageChain.plain("请求OpenAI GPT模型超时，请稍后尝试")
@@ -45,5 +46,18 @@ class GetOpenAIConversation(MessageHandler):
         res = requests.post(url + path, headers=header, json=body, timeout=15)
         try:
             return res.json()["choices"][0]["text"].strip()
+        except Exception as e:
+            return res.text
+
+    @staticmethod
+    def get_chat(text: str) -> str:
+        path = "/chat/completions"
+        body = {
+            "model": "gpt-3.5-turbo",
+            "messages": [{"role": "user", "content": text}]
+        }
+        res = requests.post(url + path, headers=header, json=body, timeout=15)
+        try:
+            return res.json()["choices"][0]["message"]["content"].strip()
         except Exception as e:
             return res.text
