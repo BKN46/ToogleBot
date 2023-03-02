@@ -12,6 +12,7 @@ from toogle.utils import create_path
 try:
     from toogle.plugins.dnd.search_5e import search_magic
     from toogle.plugins.dnd.search_chm import search_chm
+    from toogle.plugins.dnd.DPRcalculator import get_dpr, draw_dpr
 except Exception as e:
     raise ErrException('导入DND组件出现问题，请确data/dnd5e_data存在')
 
@@ -79,6 +80,29 @@ class CustomDiceTable(MessageHandler):
             return MessageChain.create([Plain("创建骰表成功")])
         return MessageChain.create([Plain("?")])
 
+
+class DPRCalculator(MessageHandler):
+    name = "DND5E DPR计算器"
+    trigger = r"^DPR\n"
+    white_list = False
+    readme = "DND5E DPR计算器，每行输入[名称,攻击加值,伤害]，格式例如:\n\nDPR\nbard,7,2d8+10\nrogue,kh+5,1d8+6d6+5"
+
+    async def ret(self, message: MessagePack) -> MessageChain:
+        msg_list = message.message.asDisplay().split('\n')[1:]
+        dpr_list = []
+        for index, msg in enumerate(msg_list):
+            msg = msg.replace('，', ',')
+            msg = msg.split(',')
+            if len(msg) == 2:
+                n, atk, dmg = str(index + 1), msg[0], msg[1]
+            elif len(msg) == 3:
+                n, atk, dmg = msg[0], msg[1], msg[2]
+            else:
+                return MessageChain.plain('错误参数，请参考readme')
+            dpr_list.append((n, get_dpr(atk, dmg)))
+        pic = draw_dpr(dpr_list)
+
+        return MessageChain.create([Image(bytes=pic)])
 
 class Search5ECHM(MessageHandler):
     trigger = r"^dnd5e"
