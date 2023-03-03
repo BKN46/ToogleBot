@@ -19,7 +19,7 @@ class Dice(MessageHandler):
 
     async def ret(self, message: MessagePack) -> MessageChain:
         self.roll_res = []
-        org_str = message.message.asDisplay()
+        org_str = message.message.asDisplay().lower()
         dice_str = org_str[1:]
         if "#" in message.message.asDisplay():
             return MessageChain.create([self.get_insertion_dice(org_str)])
@@ -49,10 +49,12 @@ class Dice(MessageHandler):
     # Roll dice
     def rd(self, maxium: int, do_save=False, low_reroll=0) -> int:
         res = random.randint(1, maxium)
-        if low_reroll and res <= low_reroll:
-            res = random.randint(1, maxium)
         if do_save:
             self.roll_res.append(res)
+        if low_reroll and res <= low_reroll:
+            res = random.randint(1, maxium)
+            if do_save:
+                self.roll_res.append(res)
         return res
 
     # Parse single dice
@@ -111,8 +113,8 @@ class Dice(MessageHandler):
 
     # Parse whole dice phrase
     def roll(self, dice_str: str) -> int:
-        while re.match(r"\d*d\d+(kh|kl|)", dice_str):
-            dice_str = re.sub(r"(\d*)d(\d+)(kh|kl|r|)(\d+)", self.psd, dice_str)
+        while re.match(r"(\d*|)d(\d+)(kh|kl|r|)(\d+)", dice_str):
+            dice_str = re.sub(r"(\d*|)d(\d+)(kh|kl|r|)(\d+)", self.psd, dice_str)
         return int(eval(dice_str))
 
     def cal_roll_avg(self, dice_str: str, times=1000):
