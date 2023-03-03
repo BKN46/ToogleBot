@@ -47,7 +47,7 @@ class Dice(MessageHandler):
                 return MessageChain.create([Plain(res)])
 
     # Roll dice
-    def rd(self, maxium: int, do_save=False, low_reroll=0) -> int:
+    def rd(self, maxium: int, do_save=False, low_reroll=0, min=0, cs=0) -> int:
         res = random.randint(1, maxium)
         if do_save:
             self.roll_res.append(res)
@@ -55,6 +55,10 @@ class Dice(MessageHandler):
             res = random.randint(1, maxium)
             if do_save:
                 self.roll_res.append(res)
+        if res < min:
+            res = min
+        if cs:
+            res = 1 if res >= cs else 0
         return res
 
     # Parse single dice

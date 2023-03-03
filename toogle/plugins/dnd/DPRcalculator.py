@@ -24,12 +24,16 @@ def get_avg_damage(dice_str: str) -> Tuple[int, int]:
         if type(dice_str) == re.Match:
             dice_str = dice_str.group()
         num, maxium = dice_str.split("d")
-        res = (1 + int(maxium)) / 2 * int(num)
+        if 'r' in maxium:
+            maxium, low_reroll = maxium.split('r')
+            res = int(num) * ((low_reroll / maxium) * (maxium + 1) / 2 + (1 - low_reroll / maxium) * (low_reroll + 1 + maxium) / 2)
+        else:
+            res = (1 + int(maxium)) / 2 * int(num)
         dices.append(res)
         return str(res)
 
-    while re.match(r"\d*d\d+", dice_str):
-        dice_str = re.sub(r"(\d*)d(\d+)", rd, dice_str)
+    while re.match(r"\d*d\d+(r|)(\d*)", dice_str):
+        dice_str = re.sub(r"(\d*)d(\d+)(r|)(\d*)", rd, dice_str)
 
     res = eval(dice_str)
     return res, res+sum(dices)
@@ -80,7 +84,8 @@ if __name__ == "__main__":
     import PIL.Image
     dpr_list = [
         ('kensei', get_dpr('5', '2d8+4d6+3')),
-        ('hex', get_dpr('5', '2d8+6'))
+        ('hex', get_dpr('5', '2d8+6')),
+        ('great weapon', get_dpr('5', 'd12r2'))
     ]
     img = draw_dpr(dpr_list)
     PIL.Image.open(img).show()
