@@ -15,7 +15,13 @@ pic_path = "data/dice_tmp.jpg"
 class Dice(MessageHandler):
     name = "骰子"
     trigger = r"(^(\.|。|\.r|。r|/r)(`|)(\d|d|D))|(#.*[d|D|/].*#)"
-    readme = "骰娘，.1d20kh或者.1d20kl来指定优劣势，支持如.1d6+1d20+3这样的简单组合运算。使用`来查看概率分布"
+    readme = (
+        f"骰娘，可以使用 .d20 .1d20 .rd20 /r d20等方式触发\n"
+        f"支持如.1d6+1d20+3这样的简单组合运算\n"
+        f"使用.1d20kh或者.1d20kl来指定优劣势，支持类似.3d20kh2来制定取复数优劣势\n"
+        f"使用.2d6r2来指定低于点数可重骰\n"
+        f"使用.`1d20来查看概率分布"
+    )
 
     async def ret(self, message: MessagePack) -> MessageChain:
         self.roll_res = []

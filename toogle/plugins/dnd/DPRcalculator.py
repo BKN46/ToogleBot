@@ -25,7 +25,7 @@ def get_avg_damage(dice_str: str) -> Tuple[int, int]:
             dice_str = dice_str.group()
         num, maxium = dice_str.split("d")
         if 'r' in maxium:
-            maxium, low_reroll = maxium.split('r')
+            maxium, low_reroll = int(maxium.split('r')[0]), int(maxium.split('r')[1])
             res = int(num) * ((low_reroll / maxium) * (maxium + 1) / 2 + (1 - low_reroll / maxium) * (low_reroll + 1 + maxium) / 2)
         else:
             res = (1 + int(maxium)) / 2 * int(num)

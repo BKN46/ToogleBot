@@ -85,7 +85,7 @@ class DPRCalculator(MessageHandler):
     name = "DND5E DPR计算器"
     trigger = r"^DPR\n"
     white_list = False
-    readme = "DND5E DPR计算器，每行输入[名称,攻击加值,伤害]，格式例如:\n\nDPR\nbard,7,2d8+10\nrogue,kh+5,1d8+6d6+5"
+    readme = "DND5E DPR计算器，每行输入[名称,攻击加值,伤害]，格式例如:\n\nDPR\nbard,7,2d8+10\nrogue,kh+5,1d8+6d6+5\ngreat weapon,2,4d12r2+40"
 
     async def ret(self, message: MessagePack) -> MessageChain:
         msg_list = message.message.asDisplay().split('\n')[1:]
