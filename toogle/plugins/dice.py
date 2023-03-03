@@ -1,6 +1,8 @@
+import math
 import random
 import re
 
+import numpy as np
 from matplotlib import pyplot as plt
 from scipy.signal import fftconvolve
 
@@ -9,9 +11,10 @@ from toogle.message_handler import MessageHandler, MessagePack
 
 pic_path = "data/dice_tmp.jpg"
 
+
 class Dice(MessageHandler):
     name = "骰子"
-    trigger = r"(^(\.|。|\.r|。r)(`|)(\d|d))|(#.*[d|/].*#)"
+    trigger = r"(^(\.|。|\.r|。r|/r)(`|)(\d|d))|(#.*[d|/].*#)"
     readme = "骰娘，.1d20kh或者.1d20kl来指定优劣势，支持如.1d6+1d20+3这样的简单组合运算。使用`来查看概率分布"
 
     async def ret(self, message: MessagePack) -> MessageChain:
@@ -37,13 +40,17 @@ class Dice(MessageHandler):
                 res = (
                     f"{self.roll(dice_str)}"
                     f" ({', '.join([str(x) for x in self.roll_res]) if len(self.roll_res) < 100 else 'too many dices'})"
-                    f" [avg≈{self.cal_roll_avg(dice_str)}]" if len(self.roll_res) < 100 else f""
+                    f" [avg≈{self.cal_roll_avg(dice_str)}]"
+                    if len(self.roll_res) < 100
+                    else f""
                 )
                 return MessageChain.create([Plain(res)])
 
     # Roll dice
-    def rd(self, maxium: int, do_save=False) -> int:
+    def rd(self, maxium: int, do_save=False, low_reroll=0) -> int:
         res = random.randint(1, maxium)
+        if low_reroll and res <= low_reroll:
+            res = random.randint(1, maxium)
         if do_save:
             self.roll_res.append(res)
         return res
@@ -53,48 +60,59 @@ class Dice(MessageHandler):
         if type(dice_str) == re.Match:
             dice_str = dice_str.group()
         num, sides = dice_str.split("d")
-        if dice_str.endswith("kh") or dice_str.endswith("kl"):
-            kh = True if sides.endswith("kh") else False
-            sides = int(sides[:-2])
-            if sides >= 10000:
-                raise Exception("Exceed maximum dice sides")
+        if "kl" in sides or "kh" in sides:
+            kh = True if "kh" in sides else False
             if num == "" or num == "1":
                 num = 2
             elif int(num) > 10000:
                 raise Exception("Exceed maximum dice num")
             if kh:
-                return str(
-                    max(
-                        [
-                            Dice.rd(self, int(sides), do_save=True)
-                            for _ in range(int(num))
-                        ]
-                    )
-                )
+                sides, k_num = int(sides.split("kh")[0]), sides.split("kh")[1]
             else:
-                return str(
-                    min(
+                sides, k_num = int(sides.split("kl")[0]), sides.split("kl")[1]
+            if not k_num:
+                k_num = 1
+            else:
+                k_num = min(int(k_num), int(num))
+            if sides >= 10000:
+                raise Exception("Exceed maximum dice sides")
+            return str(
+                sum(
+                    sorted(
                         [
                             Dice.rd(self, int(sides), do_save=True)
                             for _ in range(int(num))
-                        ]
-                    )
+                        ],
+                        reverse=kh,
+                    )[:k_num]
                 )
+            )
         else:
             if num == "":
                 num = 1
             elif int(num) > 10000:
                 raise Exception("Exceed maximum dice num")
+            if "r" in sides:
+                sides, low_reroll = int(sides.split("r")[0]), int(
+                    sides.split("r")[1] or 0
+                )
+            else:
+                low_reroll = 0
             if int(sides) > 10000:
                 raise Exception("Exceed maximum dice sides")
             return str(
-                sum([Dice.rd(self, int(sides), do_save=True) for _ in range(int(num))])
+                sum(
+                    [
+                        Dice.rd(self, int(sides), do_save=True, low_reroll=low_reroll)
+                        for _ in range(int(num))
+                    ]
+                )
             )
 
     # Parse whole dice phrase
     def roll(self, dice_str: str) -> int:
         while re.match(r"\d*d\d+(kh|kl|)", dice_str):
-            dice_str = re.sub(r"(\d*)d(\d+)(kh|kl|)", self.psd, dice_str)
+            dice_str = re.sub(r"(\d*)d(\d+)(kh|kl|r|)(\d+)", self.psd, dice_str)
         return int(eval(dice_str))
 
     def cal_roll_avg(self, dice_str: str, times=1000):
@@ -176,6 +194,17 @@ class Dice(MessageHandler):
         ]
         random_y = []
         dice_x = [i + min(random_res) for i in range(max(random_res) + 1)]
+
+        plt.xlim(min(random_res), max(random_res))
+        plt.xticks(
+            np.arange(
+                min(random_res),
+                max(random_res),
+                math.ceil((max(random_res) - min(random_res)) / 20),
+            )
+        )
+
+        plt.xlabel("Dice result")
         for x in dice_x:
             random_y.append(random_res.count(x))
 
@@ -188,6 +217,9 @@ class Dice(MessageHandler):
         # plt_ylim = max(dice_res) * 1.2
 
         plt.ylim(top=plt_ylim)
+        plt.yticks(np.arange(0, 1, 0.05))
+        plt.ylabel("CDF Probability")
+        plt.grid(True)
 
         def get_cdf(res):
             tmp, tmp_c = [], 0
@@ -197,17 +229,22 @@ class Dice(MessageHandler):
             return tmp
 
         random_cdf = get_cdf(pdf_unify(random_y))
-        random_y = [x/max(random_y) for x in random_y]
+        random_y = [x / len(random_res) for x in random_y]
         # random_cdf = pdf_unify(random_cdf)
-        
+
         # dice_cdf = get_cdf(dice_res)
 
         # plt.plot(dice_x, dice_res, label="Resolve PDF", zorder=4)
         # plt.plot(
         #     dice_x, [x * plt_ylim for x in dice_cdf], label="Resolve CDF", zorder=3
         # )
-        plt.plot(dice_x, random_y, label="Random-30k", c="lightblue", zorder=1)
         plt.plot(dice_x, random_cdf, label="Random-30k-CDF", zorder=2)
+        plt.legend(loc="upper left")
+        ax2 = plt.twinx()
+        ax2.plot(dice_x, random_y, label="Random-30k", c="lightblue", zorder=1)
+        ax2.set_ylabel("Random Probability")
+        ax2.set_ylim(top=max(random_y))
+        ax2.set_yticks(np.arange(0, max(random_y), round(max(random_y) / 20, 3)))
         # plt.vlines(random_avg, 0, plt_ylim, colors = "gray", linestyles = "dashed", label="avg.", zorder = 2)
         # plt.vlines(
         #     resolve_avg,
@@ -225,11 +262,12 @@ class Dice(MessageHandler):
             roll_res,
             0,
             plt_ylim,
-            colors="mistyrose",  # type: ignore
+            colors="red",  # type: ignore
             linestyles="dashed",
             label="Roll point",
             zorder=2,
         )
+        plt.legend(loc="upper right")
 
         roll_detail = (
             ", ".join([str(x) for x in self.roll_res])
@@ -244,7 +282,6 @@ class Dice(MessageHandler):
             # f"resolve avg.: {resolve_avg:.1f} | "
             f"random avg.: {random_avg}"
         )
-        plt.legend()
 
         plt.savefig(pic_path)
         plt.close()
