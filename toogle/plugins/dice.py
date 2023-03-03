@@ -14,7 +14,7 @@ pic_path = "data/dice_tmp.jpg"
 
 class Dice(MessageHandler):
     name = "骰子"
-    trigger = r"(^(\.|。|\.r|。r|/r)(`|)(\d|d))|(#.*[d|/].*#)"
+    trigger = r"(^(\.|。|\.r|。r|/r)(`|)(\d|d|D))|(#.*[d|D|/].*#)"
     readme = "骰娘，.1d20kh或者.1d20kl来指定优劣势，支持如.1d6+1d20+3这样的简单组合运算。使用`来查看概率分布"
 
     async def ret(self, message: MessagePack) -> MessageChain:
@@ -113,8 +113,8 @@ class Dice(MessageHandler):
 
     # Parse whole dice phrase
     def roll(self, dice_str: str) -> int:
-        while re.match(r"(\d*|)d(\d+)(kh|kl|r|)(\d+)", dice_str):
-            dice_str = re.sub(r"(\d*|)d(\d+)(kh|kl|r|)(\d+)", self.psd, dice_str)
+        while re.match(r"\d*d(\d+)(kh|kl|r|)(\d*)", dice_str):
+            dice_str = re.sub(r"\d*d(\d+)(kh|kl|r|)(\d*)", self.psd, dice_str)
         return int(eval(dice_str))
 
     def cal_roll_avg(self, dice_str: str, times=1000):
