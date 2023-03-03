@@ -26,7 +26,8 @@ class GetOpenAIConversation(MessageHandler):
         except ReadTimeout as e:
             return MessageChain.plain("请求OpenAI GPT模型超时，请稍后尝试")
         except Exception as e:
-            return MessageChain.plain(f"出现错误: {repr(e)}")
+            # return MessageChain.plain(f"出现错误: {repr(e)}")
+            return MessageChain.plain(f"OpenAI GPT模型服务可能出错，请稍后尝试")
 
     @staticmethod
     def get_completion(text: str) -> str:

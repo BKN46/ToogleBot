@@ -106,6 +106,7 @@ class LongTu(MessageHandler):
     trigger = r"^(随机龙图|所有龙图|删龙图|存龙图|指定龙图)"
     thread_limit = True
     readme = "存龙图"
+    interval = 30
 
     async def ret(self, message: MessagePack) -> MessageChain:
         IMAGES_PATH = "data/long_img/"  # 图片集地址
