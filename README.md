@@ -81,40 +81,43 @@ TODO
 
 ## 功能
 
-- [ ] 基础功能
-  - [x] Dice
-  - [x] Markov
-  - [x] CurrencyExchange
-  - [x] GetHelp
-  - [x] RunPython
-  - [x] Mathematica
-  - [x] Wolfram Alpha
-  - [x] HelpMeSelect
-  - [x] Swear
-  - [x] Calculator
-  - [x] NowTime
-  - [x] GetRemake
-  - [x] Lottery
+- [x] 基础功能
+  - [x] Dice 带有期望计算的多功能骰子
+  - [ ] Markov 基于马尔可夫的对话机器人
+  - [x] CurrencyExchange 货币转换
+  - [x] GetHelp 帮助
+  - [x] RunPython Python运行时
+  - [x] Mathematica 数学画图
+  - [x] Wolfram Alpha 高等数学计算
+  - [x] HelpMeSelect 解决选择困难症
+  - [x] Swear 说藏话
+  - [x] Calculator 科学计算器
+  - [x] NowTime 世界时间
+  - [x] GetRemake 基于世界银行统计数据的科学Remake
+  - [x] Lottery 抽奖功能
+- [X] AI相关
+  - [x] ChatGPT OpenAI GPT接口调用
+  - [x] GetAICompose NovelAI AI画图
 - [x] DND功能
-  - [x] Search5EMagic
-  - [x] Search5ECHM
-  - [x] FastPythagorean
-  - [x] UnitConversion
-  - [x] FastFallCal
-  - [x] CustomDiceTable
+  - [x] Search5EMagic 快速搜索DND5E魔法
+  - [x] Search5ECHM 快速搜索DND5E天麒不全书
+  - [x] FastPythagorean 快速计算勾股定理
+  - [x] UnitConversion 单位转换
+  - [x] FastFallCal 快速计算掉落时间
+  - [x] CustomDiceTable 自定义骰表
+  - [x] DPRCalculator DND5E每轮伤害期望计算器
 - [x] 图片相关
-  - [x] GetSetu
-  - [x] GetQutu
-  - [x] GetLuck
-  - [x] GetRandomAnimeFemale
-  - [x] LongTu
-  - [x] GetAICompose
-  - [x] HistoryTu
+  - [x] GetSetu 获取setu
+  - [x] GetQutu 获取趣图
+  - [x] GetLuck 获取每日运势
+  - [x] GetRandomAnimeFemale 获取随机动漫角色
+  - [x] LongTu 获取龙图
+  - [x] HistoryTu 记录黑历史
 - [ ] 定时
-  - [ ] SetScheduler
+  - [ ] SetScheduler 定时运行
 - [ ] 工具
-  - [x] ThunderSkill
-  - [x] WTVehicleLine
-  - [x] WTWinRate
-  - [x] WTDatamine
-  - [ ] ChatStatic
+  - [x] ThunderSkill 战雷TS快速战绩查询
+  - [x] WTVehicleLine 战雷开线需求查询
+  - [x] WTWinRate 战雷当前胜率查询
+  - [x] WTDatamine 战雷数据挖掘
+  - [ ] ChatStatic 聊天统计信息
