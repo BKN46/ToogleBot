@@ -10,6 +10,10 @@ api_key = config.get("OpenAISecret")
 header = {"Authorization": f"Bearer {api_key}"}
 url = "https://api.openai.com/v1"
 
+proxies = {
+    'http': config.get('REQUEST_PROXY_HTTP', ''),
+    'https': config.get('REQUEST_PROXY_HTTPS', ''),
+}
 
 class GetOpenAIConversation(MessageHandler):
     name = "OpenAI对话"
@@ -44,7 +48,7 @@ class GetOpenAIConversation(MessageHandler):
             "logprobs": None,
             "stop": "You: ",
         }
-        res = requests.post(url + path, headers=header, json=body, timeout=15)
+        res = requests.post(url + path, headers=header, json=body, timeout=15, proxies=proxies)
         try:
             return res.json()["choices"][0]["text"].strip()
         except Exception as e:
@@ -57,7 +61,7 @@ class GetOpenAIConversation(MessageHandler):
             "model": "gpt-3.5-turbo",
             "messages": [{"role": "user", "content": text}]
         }
-        res = requests.post(url + path, headers=header, json=body, timeout=15)
+        res = requests.post(url + path, headers=header, json=body, timeout=15, proxies=proxies)
         try:
             return res.json()["choices"][0]["message"]["content"].strip()
         except Exception as e:
