@@ -22,9 +22,11 @@ class DailyNews(ScheduleModule):
 
 
 class ScheduleTest(ScheduleModule):
-    name="测试用"
+    name="测试定时任务"
+    hour=0
+    minute=0
     second=0
 
     async def ret(self):
-        print(str(datetime.datetime.now().strftime('%Y-%m-%d, %H:%M:%S')), file=open('test.log', 'w'))
-
+        pass
+        # message = MessageChain.plain("测试定时任务")

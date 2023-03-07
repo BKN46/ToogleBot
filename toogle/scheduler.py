@@ -6,7 +6,7 @@ import nonebot
 
 from toogle.nonebot2_adapter import bot_send_group
 
-scheduler = AsyncIOScheduler()
+native_scheduler = AsyncIOScheduler()
 
 # scheduler.add_job(send_daily_news, "cron", minute=0, hour=9, args=[app])
 # scheduler.add_job(app.sendGroupMessage, "cron", **timer_data, args=[group, message])
@@ -42,7 +42,7 @@ class ScheduleModule:
                 file=open("schedule_err.log", "a"),
             )
 
-    def regist(self):
+    def regist(self, scheduler):
         time_dict = {
             x: self.__getattribute__(x) for x in [
                 'year',
@@ -61,10 +61,11 @@ class ScheduleModule:
             kwargs={'name': self.name},
             **time_dict
         )
+        nonebot.logger.success(f"[Schedule][{self.name}] registed!") # type: ignore
 
 
 def schedular_start():
-    jobs = scheduler.get_jobs()
+    jobs = native_scheduler.get_jobs()
     for job in jobs:
         nonebot.logger.success(f"[Schedule][{job.kwargs.get('name')}] trigger: {job.trigger}") # type: ignore
-    scheduler.start()
+    native_scheduler.start()
