@@ -22,6 +22,7 @@ class GetOpenAIConversation(MessageHandler):
     trigger = r"^.gpt\s"
     thread_limit = True
     readme = "OpenAI gpt-3.5-turbo 模型对话"
+    interval = 120
 
     async def ret(self, message: MessagePack) -> MessageChain:
         message_content = message.message.asDisplay()[4:].strip()
