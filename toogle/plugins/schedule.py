@@ -21,6 +21,18 @@ class DailyNews(ScheduleModule):
             await bot_send_group(int(group), message)
 
 
+class HealthyTips(ScheduleModule):
+    name="提肛喝水小助手"
+    hour="10-21"
+    minute=0
+    second=0
+
+    async def ret(self):
+        message = MessageChain.plain("提肛！喝水！拉伸！")
+        for group in config.get('HEALTHCARE_GROUP_LIST', []):
+            await bot_send_group(int(group), message)
+
+
 class ScheduleTest(ScheduleModule):
     name="测试定时任务"
     hour=0

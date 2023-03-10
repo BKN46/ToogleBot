@@ -29,6 +29,7 @@ key_check = {
     "SCRIPING_ANT_TOKEN": "涉及Cloudflare反反爬功能",
     "REQUEST_PROXY_HTTP": "部分需翻墙功能",
     "REQUEST_PROXY_HTTPS": "部分需翻墙功能",
+    "HEALTHCARE_GROUP_LIST": "提肛喝水小助手",
 }
 
 for key in key_check.keys():
