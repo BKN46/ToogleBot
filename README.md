@@ -113,8 +113,10 @@ TODO
   - [x] GetRandomAnimeFemale 获取随机动漫角色
   - [x] LongTu 获取龙图
   - [x] HistoryTu 记录黑历史
-- [ ] 定时
-  - [ ] SetScheduler 定时运行
+- [x] 定时
+  - [x] SetScheduler 定时运行
+  - [x] DailyNews 每日新闻推送
+  - [x] HealthCare 提肛喝水小助手
 - [ ] 工具
   - [x] ThunderSkill 战雷TS快速战绩查询
   - [x] WTVehicleLine 战雷开线需求查询
