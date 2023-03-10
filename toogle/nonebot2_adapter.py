@@ -133,14 +133,15 @@ async def plugin_run(
     except VisibleException as e:
         await matcher.send(f"{e.__str__()}")
     except Exception as e:
-        print(
-            f"{'*'*20}\n[{datetime.datetime.now().strftime('%Y-%m-%d, %H:%M:%S')}]"
-            f"[{plugin.name}] {repr(e)}\n"
-            f"[{message_pack.group.id}][{message_pack.member.id}]{message_pack.message.asDisplay()}\n"
-            f"\n{'*'*20}\n{traceback.format_exc()}",
-            file=open("err.log", "a"),
-        )
-        nonebot.logger.error(f"[{plugin.name}] {repr(e)}")  # type: ignore
+        if '误触发' not in repr(e):
+            print(
+                f"{'*'*20}\n[{datetime.datetime.now().strftime('%Y-%m-%d, %H:%M:%S')}]"
+                f"[{plugin.name}] {repr(e)}\n"
+                f"[{message_pack.group.id}][{message_pack.member.id}]{message_pack.message.asDisplay()}\n"
+                f"\n{'*'*20}\n{traceback.format_exc()}",
+                file=open("err.log", "a"),
+            )
+            nonebot.logger.error(f"[{plugin.name}] {repr(e)}")  # type: ignore
     finally:
         if plugin.thread_limit:
             THREAD_SEM.release()

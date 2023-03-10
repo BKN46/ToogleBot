@@ -53,7 +53,7 @@ class ScheduleModule:
                 'hour',
                 'minute',
                 'second',
-            ] if self.__getattribute__(x) >= 0
+            ] if isinstance(self.__getattribute__(x), str) or self.__getattribute__(x) >= 0
         }
         scheduler.add_job(
             self.ret_wrapper,

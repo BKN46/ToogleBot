@@ -33,12 +33,9 @@ class HealthyTips(ScheduleModule):
             await bot_send_group(int(group), message)
 
 
-class ScheduleTest(ScheduleModule):
-    name="测试定时任务"
-    hour=0
-    minute=0
-    second=0
+# class ScheduleTest(ScheduleModule):
+#     name="测试定时任务"
+#     second=0
 
-    async def ret(self):
-        pass
-        # message = MessageChain.plain("测试定时任务")
+#     async def ret(self):
+#         pass
