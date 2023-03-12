@@ -13,6 +13,11 @@ from toogle.configs import interval_limiter
 LOTTERY_PATH = "data/lottery/"
 create_path(LOTTERY_PATH)
 
+try:
+    SWEAR_DATA = open('data/swear.txt', 'r').readlines()
+except Exception as e:
+    SWEAR_DATA = []
+
 
 class HelpMeSelect(MessageHandler):
     name = "随机选择"
@@ -159,10 +164,14 @@ class Swear(MessageHandler):
     trigger = r"^骂我$"
     white_list = False
     thread_limit = False
+    interval = 30
     readme = "找喷"
 
     async def ret(self, message: MessagePack) -> MessageChain:
-        return MessageChain.create([Plain("因为这个功能还在开发中，所以我只能先说一句你妈死了。")])
+        if SWEAR_DATA:
+            return MessageChain.plain(random.choice(SWEAR_DATA).strip())
+        else:
+            return MessageChain.plain("因为藏话数据库没有加载，所以我只能先说一句你妈死了。")
 
 
 class Lottery(MessageHandler):
