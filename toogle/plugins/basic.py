@@ -164,7 +164,7 @@ class Swear(MessageHandler):
     trigger = r"^骂我$"
     white_list = False
     thread_limit = False
-    interval = 30
+    interval = 300
     readme = "找喷"
 
     async def ret(self, message: MessagePack) -> MessageChain:
