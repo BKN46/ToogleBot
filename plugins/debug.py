@@ -1,5 +1,7 @@
 import json
+import random
 import re
+import time
 from typing import Any, Tuple
 from datetime import datetime
 
@@ -23,6 +25,7 @@ async def handle_broadcast(
     content = foo[0]
     for group_id in get_main_groups():
         await bot_send_group(group_id, MessageChain.plain(content))
+        time.sleep(random.random() * 4 + 1)
     await broadcast_matcher.send("Done")
 
 broadcast_matcher.append_handler(handle_broadcast)
