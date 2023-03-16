@@ -26,6 +26,7 @@ from toogle.message import At, Element, Group, Image, Member
 from toogle.message import MessageChain as ToogleChain
 from toogle.message import Plain, Quote
 from toogle.message_handler import MessageHandler, MessagePack
+from toogle.utils import is_admin
 
 THREAD_SEM = Semaphore(1)
 warning = nonebot.logger.warning  # type: ignore
@@ -53,7 +54,7 @@ class PluginWrapper:
             return
         if self.plugin.interval and not interval_limiter.user_interval(
             self.plugin.name, message_pack.member.id, interval=self.plugin.interval
-        ):
+        ) and not is_admin(message_pack.member.id):
             await matcher.send(f"[{self.plugin.name}]请求必须间隔[{self.plugin.interval}]秒")
             return
         if get_block(message_pack):
