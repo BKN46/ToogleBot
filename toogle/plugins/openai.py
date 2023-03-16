@@ -1,4 +1,5 @@
 import json
+import re
 import requests
 import time
 from requests.exceptions import ReadTimeout
@@ -17,18 +18,40 @@ proxies = {
     'https': config.get('REQUEST_PROXY_HTTPS', ''),
 }
 
+default_settings = {
+    "JK": "你是一名日本女高中生，请使用调皮可爱的语气回答",
+    "雌小鬼": "你是一名年龄较小的可爱女生，请使用带着尖酸的语气、阴阳怪气地回答，尽量在回答中包含对提问者的否定",
+    "辣妹": "请使用日本高中辣妹的语气回答",
+    "病娇": "你是一名心理病态的女生，对提问者有着无条件狂热的好感，并表现出丧失理智、妒忌与控制欲",
+    "傲娇": "你是一名可爱的女生，对提问者有好感，但一直尝试通过否定提问者来博取关注",
+    "DM": "你是一局龙与地下城游戏的主持人",
+}
+
 class GetOpenAIConversation(MessageHandler):
     name = "OpenAI对话"
-    trigger = r"^.gpt\s"
+    trigger = r"^\.gpt(\[.*?\]|)\s(.*)"
     thread_limit = True
-    readme = "OpenAI gpt-3.5-turbo 模型对话"
+    readme = "OpenAI gpt-3.5-turbo 模型对话，使用例：\n.gpt 你好\n.gpt[JK] 你好"
     interval = 120
 
     async def ret(self, message: MessagePack) -> MessageChain:
-        message_content = message.message.asDisplay()[4:].strip()
+        match_group = re.match(self.trigger, message.message.asDisplay())
+        if not match_group:
+            raise Exception("误触发")
+        setting = match_group.group(1)
+        message_content = match_group.group(2)
+
+        if setting:
+            setting = setting[1:-1]
+            if setting not in default_settings:
+                return MessageChain.plain(f"预设场景不存在[{setting}]，请使用以下场景：{'、'.join(default_settings.keys())}")
+
         try:
             # res = GetOpenAIConversation.get_completion(message_content)
-            res = GetOpenAIConversation.get_chat_stream(message_content)
+            res = GetOpenAIConversation.get_chat_stream(
+                message_content,
+                settings=default_settings.get(setting, '')
+            )
             return MessageChain.plain(res)
         except ReadTimeout as e:
             return MessageChain.plain("请求OpenAI GPT模型超时，请稍后尝试")
@@ -71,13 +94,16 @@ class GetOpenAIConversation(MessageHandler):
             return res.text
 
     @staticmethod
-    def get_chat_stream(text: str, max_time=10) -> str:
+    def get_chat_stream(text: str, max_time=10, settings: str = "") -> str:
         path = "/chat/completions"
         body = {
             "model": "gpt-3.5-turbo",
             "messages": [{"role": "user", "content": text}],
             "stream": True,
         }
+        if settings:
+            body['messages'] = [{"role": "system", "content": settings}] + body['messages']
+
         res = requests.post(url + path, headers=header, json=body, proxies=proxies, stream=True, timeout=5)
         res_text = ''
         start_time = time.time()
