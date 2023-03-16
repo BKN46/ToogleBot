@@ -44,7 +44,7 @@ class GetOpenAIConversation(MessageHandler):
         if setting:
             setting = setting[1:-1]
             if setting not in default_settings:
-                return MessageChain.plain(f"预设场景不存在[{setting}]，请使用以下场景：{'、'.join(default_settings.keys())}")
+                return MessageChain.plain(f"预设[{setting}]场景不存在，请使用以下场景：{'、'.join(default_settings.keys())}")
 
         try:
             # res = GetOpenAIConversation.get_completion(message_content)
