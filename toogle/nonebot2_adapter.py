@@ -59,7 +59,7 @@ class PluginWrapper:
             return
         if get_block(message_pack):
             return
-        if not is_traffic_free(self.plugin, message_pack) or is_admin(message_pack.member.id):
+        if not is_traffic_free(self.plugin, message_pack) and not is_admin(message_pack.member.id):
             await matcher.send(get_traffic_time(self.plugin, message_pack))
             return
         await plugin_run(self.plugin, message_pack, matcher, event, message)
