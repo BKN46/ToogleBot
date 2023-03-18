@@ -23,19 +23,20 @@ default_settings = {
     "雌小鬼": "你是一名年龄较小的可爱女生，请使用带着尖酸的语气、阴阳怪气地回答，尽量在回答中包含对提问者的否定",
     "辣妹": "请使用日本高中辣妹的语气回答",
     "病娇": "你是一名心理病态的女生，对提问者有着无条件狂热的好感，并表现出丧失理智、妒忌与控制欲",
-    "傲娇": "你是一名可爱的女生，对提问者有好感，但是尽量在回答中包含娇羞的否定语气",
+    "傲娇": "你是一名可爱的女生，对提问者有好感，但是请在回答中包含娇羞的否定语气",
     "DM": "你是一局龙与地下城游戏的主持人",
-    "大黄狗": "你是一只金毛巡回犬，在回答中时不时的插入“汪汪”这样的拟声词，或是类似“[兴奋的摇摇尾巴]”这样的动作词",
-    "OP": "你是一名狂热原神玩家，无论提问内容为何，请在回答中尽量表现出对原神的赞美与对其他游戏的不屑",
-    "孙笑川": "无论提问如何，请在回答中尽量多的使用emoji来表达意思，并表现出尖酸刻薄阴阳怪气",
+    "大黄狗": "你是一只金毛巡回犬，在回答中不断插入“汪汪”这样的拟声词，或是类似“[兴奋的摇摇尾巴]”这样的动作词",
+    "OP": "你是一名狂热原神玩家，无论提问内容为何，都在回答中尽量表现出对原神的赞美与对其他游戏的不屑",
+    "孙笑川": "你是孙笑川，无论提问如何，请在回答中尽量多的使用包含中文谐音的emoji来表达意思，并表现出尖酸刻薄阴阳怪气",
 }
 
 class GetOpenAIConversation(MessageHandler):
     name = "OpenAI对话"
     trigger = r"^\.gpt(\[.*?\]|)\s(.*)"
     thread_limit = True
-    readme = "OpenAI gpt-3.5-turbo 模型对话，使用例：\n.gpt 你好\n.gpt[JK] 你好"
-    interval = 120
+    readme = "OpenAI GPT-4 模型对话，使用例：\n.gpt 你好\n.gpt[JK] 你好"
+    interval = 300
+    message_length_limit = 200
 
     async def ret(self, message: MessagePack) -> MessageChain:
         match_group = re.match(self.trigger, message.message.asDisplay())
@@ -48,6 +49,9 @@ class GetOpenAIConversation(MessageHandler):
             setting = setting[1:-1]
             if setting not in default_settings:
                 return MessageChain.plain(f"预设[{setting}]场景不存在，请使用以下场景：{'、'.join(default_settings.keys())}")
+
+        if len(message_content) > self.message_length_limit:
+            return MessageChain.plain(f"请求字数超限：{len(message_content)} > {self.message_length_limit}")
 
         try:
             # res = GetOpenAIConversation.get_completion(message_content)
@@ -84,10 +88,10 @@ class GetOpenAIConversation(MessageHandler):
             return res.text
 
     @staticmethod
-    def get_chat(text: str) -> str:
+    def get_chat(text: str, model="gpt-4") -> str:
         path = "/chat/completions"
         body = {
-            "model": "gpt-3.5-turbo",
+            "model": model,
             "messages": [{"role": "user", "content": text}]
         }
         res = requests.post(url + path, headers=header, json=body, timeout=15, proxies=proxies)
@@ -97,10 +101,10 @@ class GetOpenAIConversation(MessageHandler):
             return res.text
 
     @staticmethod
-    def get_chat_stream(text: str, max_time=10, settings: str = "") -> str:
+    def get_chat_stream(text: str, max_time=10, settings: str = "", model="gpt-4") -> str:
         path = "/chat/completions"
         body = {
-            "model": "gpt-3.5-turbo",
+            "model": model,
             "messages": [{"role": "user", "content": text}],
             "stream": True,
         }
