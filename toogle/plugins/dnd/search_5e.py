@@ -5,7 +5,6 @@ import random
 
 from thefuzz import fuzz, process
 
-from toogle.plugins.dnd.langconv import Converter
 
 DATA_PATH = "data/dnd5e/spells/"
 DATA_INDEX = json.loads(open(DATA_PATH + "index.json", "r").read())
@@ -45,46 +44,64 @@ def get_in_list(name):
 
 
 def magic_stringify(data):
+    def get_from_data(*args, default=""):
+        tmp = data
+        try:
+            for arg in args:
+                tmp = tmp[arg]
+            return tmp
+        except Exception as e:
+            return default
+
     try:
-        desc = "\n".join(data["entries"])
+        desc = []
+        for x in get_from_data("entries", default=[]):
+            if isinstance(x, str):
+                desc.append(x)
+            elif isinstance(x, list):
+                desc.append('\n'.join(x))
+            elif isinstance(x, dict):
+                desc.append('\n'.join(x['items']))
+        desc = "\n".join(desc)
         duration = (
-            f"{data['duration'][0]['duration']['amount']} {data['duration'][0]['duration']['type']}"
-            if data["duration"][0]["type"] != "instant"
+            f"{get_from_data('duration',0,'duration','amount')} {get_from_data('duration',0,'duration','type')}"
+            if get_from_data('duration',0,'type') != "instant"
             else "立即"
         )
         m_range = (
-            f"{data['range']['distance']['amount']} {data['range']['distance']['type']}"
-            if data["range"]["distance"]["type"] != "self"
+            f"{get_from_data('range','distance','amount')} {get_from_data('range','distance','type')}"
+            if get_from_data("range","distance","type") != "self"
             else "自身"
         )
         upper_desc = (
-            "\n升环效果: " + "\n".join(data["entriesHigherLevel"][0]["entries"])
+            "\n升环效果: " + "\n".join(get_from_data("entriesHigherLevel",0,"entries", default=[]))
             if "entriesHigherLevel" in data
             else ""
         )
         return (
-            f"{data['name']} {data['ENG_name'] if 'ENG_name' in data else ''} ({data['source']} p.{data['page']})\n"
-            f"{data['level']}环 {SCHOOL_MAP[data['school']]}系 "
-            f"成分: {'V' if 'v' in data['components'] and data['components']['v'] else ''} {'S' if 's' in data['components'] and data['components']['s'] else ''} {'M (' + data['components']['m'] + ')' if 'm' in data['components'] and data['components']['m'] else ''}\n"
-            f"施法时间: {data['time'][0]['number']} {data['time'][0]['unit']} | "
+            f"{get_from_data('name')} {get_from_data('ENG_name')} ({get_from_data('source')} p.{get_from_data('page')})\n"
+            f"{get_from_data('level')}环 {SCHOOL_MAP[get_from_data('school')]}系 "
+            f"成分: {'V' if 'v' in get_from_data('components') and get_from_data('components','v') else ''}"
+            f"{'S' if 's' in get_from_data('components') and get_from_data('components','s') else ''}"
+            f"{'M (' + get_from_data('components','m') + ')' if 'm' in get_from_data('components') and get_from_data('components','m') else ''}\n"
+            f"施法时间: {get_from_data('time',0,'number')} {get_from_data('time',0,'unit')} | "
             f"持续时间: {duration} | "
             f"射程: {m_range}\n"
             f"描述: {desc}"
             f"{upper_desc}"
         )
-    except Exception:
+    except Exception as e:
+        # raise e
         return json.dumps(data, indent=2, ensure_ascii=False)
 
 
 def search_magic(search_han):
-    search_hant = Converter("zh-hant").convert(search_han)
     res = get_in_list(search_han)
     if res:
         return magic_stringify(res)
-    res = get_in_list(search_hant)
     if res:
         return magic_stringify(res)
-    res = process.extract(search_hant, DATA_FLATEN, limit=10)
+    res = process.extract(search_han, DATA_FLATEN, limit=10)
     res = "\n".join(
         [f"{x[0]['name']} | {x[0]['level']}环 {x[0]['source']}" for x in res]
     )
@@ -99,4 +116,4 @@ def random_magic():
 
 
 if __name__ == "__main__":
-    print(search_magic("治愈真言"))
+    print(search_magic("wish"))
