@@ -101,7 +101,7 @@ class GetOpenAIConversation(MessageHandler):
             return res.text
 
     @staticmethod
-    def get_chat_stream(text: str, max_time=10, settings: str = "", model="gpt-4") -> str:
+    def get_chat_stream(text: str, max_time=20, settings: str = "", model="gpt-4") -> str:
         path = "/chat/completions"
         body = {
             "model": model,
