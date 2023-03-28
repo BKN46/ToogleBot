@@ -58,7 +58,7 @@ def get_ai_generate(
             "height": size[1],
             "n_samples": 1,
             "noise": 0.2,
-            "sampler": "nai_smea",
+            "sampler": "k_dpmpp_2m",
             "scale": 12,
             "seed": random.randint(0, 2**32 - 1),
             "steps": 28,
