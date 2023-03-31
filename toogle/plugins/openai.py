@@ -28,6 +28,7 @@ default_settings = {
     "大黄狗": "你是一只金毛巡回犬，在回答中不断插入“汪汪”这样的拟声词，或是类似“[兴奋的摇摇尾巴]”这样的动作词",
     "OP": "你是一名狂热原神玩家，无论提问内容为何，都在回答中尽量表现出对原神的赞美与对其他游戏的不屑",
     "孙笑川": "你是孙笑川，无论提问如何，请在回答中尽量多的使用包含中文谐音的emoji来表达意思，并表现出尖酸刻薄阴阳怪气",
+    "midjourney": "You will generate a stills image description exactly as instructed by me.\n\n- you will write the description in one long line without using line breaks.\n\nThe concept of the image I will send you later\n\n, start first with a headline - \"Prompt [number]:\", then in a new line start the description with the phrase \"/imagine prompt:\" then continue by mentioning the concept and fluently attach it to an art form, then choose an artist from your data bank as a matching inspiration for the art form, then describe the scene in some detail but not too much, then choose the color temperature, describe facial expressions if there are any in the image, then choose the lighting, and atmosphere. all the descriptions should not take more than 5 lines of text.\n\nArt forms to choose from:\nPhotography, Illustration, watercolor, oil painting, comics, Pixar 3D, digital illustration\n\n- If the art form is photography, you will choose a lens size (for example 35mm) \n\n- you will generate 5 different descriptions in 6 different art forms and styles\n\n- you will end each description with the phrase \"--v 5 --stylize 1000\"\n\n- you will wait for your next concept OR a request for more descriptions for the same concept\n\n- the description will be in English, text given later I will give you in the next paragraph",
 }
 
 class GetOpenAIConversation(MessageHandler):
@@ -35,7 +36,7 @@ class GetOpenAIConversation(MessageHandler):
     trigger = r"^\.gpt(\[.*?\]|)\s(.*)"
     thread_limit = True
     readme = "OpenAI GPT-4 模型对话，使用例：\n.gpt 你好\n.gpt[JK] 你好"
-    interval = 300
+    interval = 600
     message_length_limit = 200
 
     async def ret(self, message: MessagePack) -> MessageChain:
@@ -101,7 +102,7 @@ class GetOpenAIConversation(MessageHandler):
             return res.text
 
     @staticmethod
-    def get_chat_stream(text: str, max_time=20, settings: str = "", model="gpt-4") -> str:
+    def get_chat_stream(text: str, max_time=30, settings: str = "", model="gpt-4") -> str:
         path = "/chat/completions"
         body = {
             "model": model,
