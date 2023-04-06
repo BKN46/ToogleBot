@@ -1,8 +1,10 @@
 import base64
+import datetime
 import io
 import os
 import re
 import signal
+import traceback
 import urllib.parse
 from typing import List, Tuple, Union
 from xmlrpc.client import Boolean
@@ -11,6 +13,8 @@ import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
 import requests
+
+import nonebot
 
 from toogle.configs import config
 
@@ -398,6 +402,17 @@ def get_main_groups() -> List[int]:
         int(x) for x in
         config.get("GROUP_LIST", [])
     ]
+
+
+def print_err(e, plugin, message_pack):
+    print(
+        f"{'*'*20}\n[{datetime.datetime.now().strftime('%Y-%m-%d, %H:%M:%S')}]"
+        f"[{plugin.name}] {repr(e)}\n"
+        f"[{message_pack.group.id}][{message_pack.member.id}]{message_pack.message.asDisplay()}\n"
+        f"\n{'*'*20}\n{traceback.format_exc()}",
+        file=open("err.log", "a"),
+    )
+    nonebot.logger.error(f"[{plugin.name}] {repr(e)}")  # type: ignore
 
 
 if __name__ == "__main__":

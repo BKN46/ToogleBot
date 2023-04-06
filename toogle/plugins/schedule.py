@@ -4,7 +4,7 @@ from toogle.message import Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack
 from toogle.scheduler import ScheduleModule
 from toogle.plugins.compose.daily_news import download_daily
-from toogle.nonebot2_adapter import bot_send_group
+from toogle.nonebot2_adapter import bot_send_message
 from toogle.configs import config
 
 
@@ -18,7 +18,7 @@ class DailyNews(ScheduleModule):
         pic_path = download_daily()
         message = MessageChain.create([Image(path=pic_path)])
         for group in config.get('MAIN_GROUP', []):
-            await bot_send_group(int(group), message)
+            await bot_send_message(int(group), message)
 
 
 class HealthyTips(ScheduleModule):
@@ -30,7 +30,7 @@ class HealthyTips(ScheduleModule):
     async def ret(self):
         message = MessageChain.plain("提肛！喝水！拉伸！")
         for group in config.get('HEALTHCARE_GROUP_LIST', []):
-            await bot_send_group(int(group), message)
+            await bot_send_message(int(group), message)
 
 
 # class ScheduleTest(ScheduleModule):

@@ -1,7 +1,10 @@
+import asyncio
 import datetime
 import os
+import queue
 import re
 import signal
+import threading
 import time
 import traceback
 from multiprocessing import Semaphore
@@ -11,7 +14,7 @@ import nonebot
 from nonebot.adapters import Event
 from nonebot.adapters.mirai2 import MessageChain, MessageSegment
 from nonebot.adapters.mirai2.event.base import GroupChatInfo, PrivateChatInfo, GroupInfo, UserPermission
-from nonebot.adapters.mirai2.event.message import MessageEvent, MessageSource, GroupMessage
+from nonebot.adapters.mirai2.event.message import MessageEvent, MessageSource, GroupMessage, FriendMessage
 from nonebot.adapters.mirai2.message import MessageType
 
 # from nonebot.adapters import Event, Message
@@ -26,9 +29,9 @@ from toogle.message import At, Element, Group, Image, Member
 from toogle.message import MessageChain as ToogleChain
 from toogle.message import Plain, Quote
 from toogle.message_handler import MessageHandler, MessagePack
-from toogle.utils import is_admin
+from toogle.utils import is_admin, print_err
 
-THREAD_SEM = Semaphore(1)
+# THREAD_SEM = Semaphore(1)
 warning = nonebot.logger.warning  # type: ignore
 if "traffic_control.py" in os.listdir("data"):
     from data.traffic_control import TRAFFIC_CTRL
@@ -36,6 +39,7 @@ else:
     TRAFFIC_CTRL = {}
     nonebot.logger.warning("Traffic time control is not available. please check `data/traffic_control.py`")  # type: ignore
 
+WORK_QUEUE:"queue.Queue[Tuple[MessageHandler, MessagePack]]" = queue.Queue()
 
 class PluginWrapper:
     def __init__(self, plugin: MessageHandler) -> None:
@@ -114,12 +118,8 @@ async def plugin_run(
     def handle_timeout(signum, frame):
         raise VisibleException(f"[To {message_pack.member.id}] {plugin.name}运行超时，请稍后重试")
 
-    if plugin.thread_limit and not THREAD_SEM.acquire(timeout=1):
-        toogle_message = ToogleChain.create(
-            [At(target=message_pack.member.id), Plain(f"我知道你很急，但你别急")]
-        )
-        res = toogle2nb(toogle_message, message, event)
-        await matcher.send(res)
+    if plugin.thread_limit:
+        thread_put_job(plugin, message_pack)
         return
 
     try:
@@ -135,17 +135,7 @@ async def plugin_run(
         await matcher.send(f"{e.__str__()}")
     except Exception as e:
         if '误触发' not in repr(e):
-            print(
-                f"{'*'*20}\n[{datetime.datetime.now().strftime('%Y-%m-%d, %H:%M:%S')}]"
-                f"[{plugin.name}] {repr(e)}\n"
-                f"[{message_pack.group.id}][{message_pack.member.id}]{message_pack.message.asDisplay()}\n"
-                f"\n{'*'*20}\n{traceback.format_exc()}",
-                file=open("err.log", "a"),
-            )
-            nonebot.logger.error(f"[{plugin.name}] {repr(e)}")  # type: ignore
-    finally:
-        if plugin.thread_limit:
-            THREAD_SEM.release()
+            print_err(e, plugin, message_pack)
 
 
 def get_block(message: MessagePack):
@@ -230,32 +220,46 @@ async def admin_user_checker(event: Event) -> bool:
     return event.get_user_id() in config.get("ADMIN_LIST", [])
 
 
-async def bot_send_group(target_id: int, message: Union[ToogleChain, MessageChain]):
+async def bot_send_message(target_id: int, message: Union[ToogleChain, MessageChain], friend=False):
     bot = nonebot.get_bot()
     source = MessageSource(id=target_id, time=datetime.datetime.now())
     permission = UserPermission.OWNER
-    group = GroupInfo(
-        id=target_id,
-        name="",
-        permission=permission,
-    )
-    sender = GroupChatInfo(
-        id=100000,
-        memberName="None",
-        group=group,
-        specialTitle="",
-        permission=permission,
-        joinTimestamp=0,
-        lastSpeakTimestamp=0,
-        muteTimeRemaining=0,
-    )
-    event = GroupMessage(
-        self_id=int(bot.self_id),
-        type="GroupMessage",
-        source=source,
-        sender=sender,
-        messageChain=MessageChain(""),
-    )
+    if friend:
+        sender = PrivateChatInfo(
+            nickname="None",
+            remark="None",
+            id=target_id,
+        )
+        event = FriendMessage(
+            self_id=int(bot.self_id),
+            type="FriendMessage",
+            source=source,
+            sender=sender,
+            messageChain=MessageChain(""),
+        )
+    else:
+        group = GroupInfo(
+            id=target_id,
+            name="",
+            permission=permission,
+        )
+        sender = GroupChatInfo(
+            id=100000,
+            memberName="None",
+            group=group,
+            specialTitle="",
+            permission=permission,
+            joinTimestamp=0,
+            lastSpeakTimestamp=0,
+            muteTimeRemaining=0,
+        )
+        event = GroupMessage(
+            self_id=int(bot.self_id),
+            type="GroupMessage",
+            source=source,
+            sender=sender,
+            messageChain=MessageChain(""),
+        )
     if isinstance(message, ToogleChain):
         nb_message = toogle2nb(message, MessageChain(""), event)
     else:
@@ -264,10 +268,6 @@ async def bot_send_group(target_id: int, message: Union[ToogleChain, MessageChai
         event=event,
         message=nb_message,
     )
-    # await bot.send_group_message(
-    #     group=target_id,
-    #     message_chain=nb_message,
-    # )
 
 
 async def bot_get_all_group():
@@ -284,3 +284,40 @@ async def bot_exec(api, **data):
     bot = nonebot.get_bot()
     res = await bot.call_api(api=api, sessionKey=config.get("VERIFY_KEY", ""), **data)
     return res
+
+
+def thread_put_job(handler: MessageHandler, message_pack: "MessagePack"):
+    WORK_QUEUE.put((handler, message_pack))
+
+
+async def thread_worker(index):
+    while True:
+        try:
+            plugin, message_pack = WORK_QUEUE.get(timeout=30)
+        except queue.Empty:
+            continue
+        try:
+            res = await plugin.ret(message_pack)
+            if message_pack.group.id:
+                await bot_send_message(message_pack.group.id, res)
+            else:
+                await bot_send_message(message_pack.member.id, res, friend=True)
+            nonebot.logger.success(f"{plugin.name} in worker {index} running complete.") # type: ignore
+        except Exception as e:
+            print_err(e, plugin, message_pack)
+
+
+# def sync_worker(index):
+#     loop = asyncio.new_event_loop()
+#     asyncio.set_event_loop(loop)
+#     loop.run_until_complete(thread_worker(index))
+#     loop.close()
+
+
+def worker_start(thread_num=5):
+    thread_pool = [threading.Thread(target=asyncio.run, args=[thread_worker(i)]) for i in range(thread_num)]
+    for x in thread_pool:
+        x.start()
+
+
+worker_start()

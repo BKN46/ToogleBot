@@ -4,7 +4,7 @@ import traceback
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import nonebot
 
-from toogle.nonebot2_adapter import bot_send_group
+from toogle.nonebot2_adapter import bot_send_message
 
 native_scheduler = AsyncIOScheduler()
 

@@ -14,7 +14,7 @@ from nonebot.adapters.mirai2.event.message import MessageSource
 
 from toogle.configs import config
 from toogle.message import MessageChain
-from toogle.nonebot2_adapter import bot_get_all_group, bot_send_group, bot_exec, PluginWrapper, admin_user_checker
+from toogle.nonebot2_adapter import bot_get_all_group, bot_send_message, bot_exec, PluginWrapper, admin_user_checker
 from toogle.utils import get_main_groups, is_admin
 
 broadcast_matcher = on_regex("^broadcast (.*)$", rule=admin_user_checker)
@@ -24,7 +24,7 @@ async def handle_broadcast(
 ):
     content = foo[0]
     for group_id in get_main_groups():
-        await bot_send_group(group_id, MessageChain.plain(content))
+        await bot_send_message(group_id, MessageChain.plain(content))
         time.sleep(random.random() * 4 + 1)
     await broadcast_matcher.send("Done")
 
