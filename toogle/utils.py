@@ -62,11 +62,10 @@ class TimeoutWrapper:
         self.ret = self.func(*args, **kwargs)
 
     def run(self, *args, **kwargs):
-        process = multiprocessing.Process(target=self.run_wrapepr, args=args, kwargs=kwargs)
-        process.start()
-        process.join(timeout=self.timeout)
-        if process.is_alive():
-            process.terminate()
+        thread = threading.Thread(target=self.run_wrapepr, args=args, kwargs=kwargs)
+        thread.start()
+        thread.join(timeout=self.timeout)
+        if thread.is_alive():
             raise RuntimeError("Timeout")
         return self.ret
         
