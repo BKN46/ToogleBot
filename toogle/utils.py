@@ -1,4 +1,5 @@
 import base64
+import ctypes
 import datetime
 import io
 import multiprocessing
@@ -66,6 +67,7 @@ class TimeoutWrapper:
         thread.start()
         thread.join(timeout=self.timeout)
         if thread.is_alive():
+            ctypes.pythonapi.PyThreadState_SetAsyncExc(thread.ident, ctypes.py_object(SystemExit))
             raise RuntimeError("Timeout")
         return self.ret
         
