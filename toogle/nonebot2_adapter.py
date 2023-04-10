@@ -59,7 +59,10 @@ class PluginWrapper:
         if self.plugin.interval and not interval_limiter.user_interval(
             self.plugin.name, message_pack.member.id, interval=self.plugin.interval
         ) and not is_admin(message_pack.member.id):
-            await matcher.send(f"[{self.plugin.name}]请求必须间隔[{self.plugin.interval}]秒")
+            await matcher.send(
+                f"[{self.plugin.name}]请求必须间隔[{self.plugin.interval}]秒",
+                quote=message_pack.id
+            )
             return
         if get_block(message_pack):
             return
@@ -82,7 +85,24 @@ class PluginWrapper:
             member = Member(event.sender.id, event.sender.nickname)
         else:
             return None
-        return MessagePack(nb2toogle(message), group, member)
+
+        if event.quote:
+            quote = Quote(
+                event.quote.id,
+                event.quote.sender_id,
+                event.quote.target_id,
+                event.quote.group_id,
+                nb2toogle(event.quote.origin),
+            )
+        else:
+            quote = None
+
+        if event.source:
+            source_id = event.source.id
+        else:
+            source_id = 0
+
+        return MessagePack(source_id, nb2toogle(message), group, member, quote)
 
 
 class LinearHandler:
@@ -126,7 +146,7 @@ async def plugin_run(
         signal.signal(signal.SIGALRM, handle_timeout)
         signal.alarm(60)
         res = await plugin.ret(message_pack)
-        await matcher.send(toogle2nb(res, message, event))
+        await matcher.send(toogle2nb(res), quote=res.get_quote())
         signal.alarm(0)
     except (UrllibError, RequestsError):
         # await matcher.send(f"爬虫网络连接错误，请稍后尝试")
@@ -163,29 +183,24 @@ def is_traffic_free(plugin: MessageHandler, message: MessagePack) -> bool:
 
 
 def toogle2nb(
-    message: ToogleChain, origin: MessageChain, event: MessageEvent
+    message: ToogleChain
 ) -> MessageChain:
     message_list = []
     for item in message.root:
         if isinstance(item, Plain):
             message_list.append(MessageSegment.plain(item.text))
         elif isinstance(item, Quote):
-            pass
-            # message_list.append(
-            #     MessageSegment.quote(
-            #         event.source.id,  # type: ignore
-            #         event.sender.group.id,
-            #         event.sender.id,
-            #         event.sender.group.id,
-            #         origin,
-            #     )
-            # )
+            message_list.append(
+                MessageSegment.quote(
+                    item.id,  # type: ignore
+                    item.group_id,
+                    item.sender_id,
+                    item.target_id,
+                    toogle2nb(item.message),
+                )
+            )
         elif isinstance(item, Image):
             message_list.append(MessageSegment.image(base64=item.getBase64()))
-            # if item.path:
-            #     message_list.append(MessageSegment.image(path=item.path))
-            # elif item.url:
-            #     message_list.append(MessageSegment.image(url=item.url))
         elif isinstance(item, At):
             message_list.append(MessageSegment.at(item.target))
 
@@ -261,12 +276,15 @@ async def bot_send_message(target_id: int, message: Union[ToogleChain, MessageCh
             messageChain=MessageChain(""),
         )
     if isinstance(message, ToogleChain):
-        nb_message = toogle2nb(message, MessageChain(""), event)
+        quote = message.get_quote()
+        nb_message = toogle2nb(message)
     else:
+        quote = None
         nb_message = message
     await bot.send(
         event=event,
         message=nb_message,
+        quote = quote,
     )
 
 
@@ -305,13 +323,6 @@ async def thread_worker(index):
             nonebot.logger.success(f"{plugin.name} in worker {index} running complete.") # type: ignore
         except Exception as e:
             print_err(e, plugin, message_pack)
-
-
-# def sync_worker(index):
-#     loop = asyncio.new_event_loop()
-#     asyncio.set_event_loop(loop)
-#     loop.run_until_complete(thread_worker(index))
-#     loop.close()
 
 
 def worker_start(thread_num=5):

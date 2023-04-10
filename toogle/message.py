@@ -28,11 +28,15 @@ class Member:
 
 
 class Quote(Element):
-    def __init__(self) -> None:
-        pass
+    def __init__(self, id: int, sender_id: int, target_id: int, group_id: int, message: 'MessageChain') -> None:
+        self.id = id
+        self.sender_id = sender_id
+        self.target_id = target_id
+        self.group_id = group_id
+        self.message = message
 
     def asDisplay(self) -> str:
-        return f"[Quote origin]"
+        return f"\n[Quote origin #{self.id} '{self.message.asDisplay()}' from {self.sender_id} in {self.group_id}]\n"
 
 
 class At(Element):
@@ -132,6 +136,10 @@ class MessageChain:
 
     def get(self, t):
         return [item for item in self.root if isinstance(item, t)]
+
+    def get_quote(self) -> Optional[int]:
+        quotes = self.get(Quote)
+        return quotes[0].id if quotes else None # type:ignore
 
     @staticmethod
     def create(message_list: List) -> "MessageChain":

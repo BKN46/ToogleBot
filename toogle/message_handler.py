@@ -1,19 +1,32 @@
 import re
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Union
 
-from toogle.message import Group, Member, MessageChain, Plain
+from toogle.message import Group, Member, MessageChain, Plain, Quote
 
 
 class MessagePack:
     def __init__(
         self,
+        id: int,
         message: MessageChain,
         group: Group,
         member: Member,
+        qoute: Optional[Quote],
     ) -> None:
+        self.id = id
         self.message = message
         self.group = group
         self.member = member
+        self.qoute = qoute
+
+    def as_quote(self):
+        return Quote(
+            id=self.id,
+            sender_id=self.member.id,
+            target_id=self.group.id,
+            group_id=self.group.id,
+            message=self.message,
+        )
 
 
 class MessageHandler:

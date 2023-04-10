@@ -141,5 +141,6 @@ dmypy.json
 # Big Yellow Dog
 data/
 test.py
+debug.py
 
 # End of https://www.toptal.com/developers/gitignore/api/python

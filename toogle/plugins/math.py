@@ -124,7 +124,7 @@ class Calculator(MessageHandler):
     async def ret(self, message: MessagePack) -> MessageChain:
         text = message.message.asDisplay()
         running_res: str = Calculator.get_exec(Calculator.func_preproc(text[:-1]))
-        return MessageChain.create([Plain(running_res)])
+        return MessageChain.create([message.as_quote(), Plain(running_res)])
 
     @staticmethod
     def func_preproc(func_str):
@@ -204,7 +204,7 @@ class FastPythagorean(MessageHandler):
     async def ret(self, message: MessagePack) -> MessageChain:
         n = message.message.asDisplay()[2:].strip().split()
         res = math.sqrt(float(n[0]) ** 2 + float(n[1]) ** 2)
-        return MessageChain.create([Plain(f"长{n[0]} 高{n[1]} 斜边为{res:.3f}")])
+        return MessageChain.create([message.as_quote(), Plain(f"长{n[0]} 高{n[1]} 斜边为{res:.3f}")])
 
 
 class FastFallCal(MessageHandler):
