@@ -1,9 +1,12 @@
 import base64
 import datetime
 import io
+import multiprocessing
 import os
 import re
 import signal
+import threading
+import time
 import traceback
 import urllib.parse
 from typing import List, Tuple, Union
@@ -17,6 +20,7 @@ import requests
 import nonebot
 
 from toogle.configs import config
+from toogle.exceptions import VisibleException
 
 
 def read_base64_pic(jpeg_b64_str: str) -> bytes:
@@ -48,28 +52,41 @@ class anti_cf_requests():
         return requests.post(reqUrl, **kwargs, headers=header)
 
 
+class TimeoutWrapper:
+    def __init__(self, func, timeout: int) -> None:
+        self.func = func
+        self.ret = None
+        self.timeout = timeout
+
+    def run_wrapepr(self, *args, **kwargs):
+        self.ret = self.func(*args, **kwargs)
+
+    def run(self, *args, **kwargs):
+        process = multiprocessing.Process(target=self.run_wrapepr, args=args, kwargs=kwargs)
+        process.start()
+        process.join(timeout=self.timeout)
+        if process.is_alive():
+            process.terminate()
+            raise RuntimeError("Timeout")
+        return self.ret
+        
+
 def set_timeout(num, callback):
     def wrap(func):
-        def handle(signum, frame):
-            raise RuntimeError("运行超时!")
-
         def to_do(*args, **kwargs):
             try:
-                signal.signal(signal.SIGALRM, handle)  # 设置信号和回调函数
-                signal.alarm(num)  # 设置 num 秒的闹钟
-                r = func(*args, **kwargs)
-                signal.alarm(0)  # 关闭闹钟
-                return r
+                wrapper = TimeoutWrapper(func, num)
+                wrapper.run(*args, **kwargs)
+                return wrapper.ret
             except RuntimeError as e:
                 callback()
-
         return to_do
 
     return wrap
 
 
 def handle_TLE():
-    raise Exception("运行超时!")
+    raise VisibleException("运行超时!")
 
 
 def filter_emoji(desstr, restr=""):

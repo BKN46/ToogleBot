@@ -39,7 +39,9 @@ else:
     TRAFFIC_CTRL = {}
     nonebot.logger.warning("Traffic time control is not available. please check `data/traffic_control.py`")  # type: ignore
 
-WORK_QUEUE:"queue.Queue[Tuple[MessageHandler, MessagePack]]" = queue.Queue()
+WORK_QUEUE:"queue.Queue[Tuple[MessageHandler, MessagePack, bool]]" = queue.Queue()
+THREAD_NUM = 10
+THREAD_POOL: list[threading.Thread] = []
 
 class PluginWrapper:
     def __init__(self, plugin: MessageHandler) -> None:
@@ -135,27 +137,7 @@ async def plugin_run(
     event: MessageEvent,
     message: MessageChain,
 ):
-    def handle_timeout(signum, frame):
-        raise VisibleException(f"[To {message_pack.member.id}] {plugin.name}运行超时，请稍后重试")
-
-    if plugin.thread_limit:
-        thread_put_job(plugin, message_pack)
-        return
-
-    try:
-        signal.signal(signal.SIGALRM, handle_timeout)
-        signal.alarm(60)
-        res = await plugin.ret(message_pack)
-        await matcher.send(toogle2nb(res), quote=res.get_quote())
-        signal.alarm(0)
-    except (UrllibError, RequestsError):
-        # await matcher.send(f"爬虫网络连接错误，请稍后尝试")
-        return
-    except VisibleException as e:
-        await matcher.send(f"{e.__str__()}")
-    except Exception as e:
-        if '误触发' not in repr(e):
-            print_err(e, plugin, message_pack)
+    thread_put_job(plugin, message_pack)
 
 
 def get_block(message: MessagePack):
@@ -235,8 +217,18 @@ async def admin_user_checker(event: Event) -> bool:
     return event.get_user_id() in config.get("ADMIN_LIST", [])
 
 
-async def bot_send_message(target_id: int, message: Union[ToogleChain, MessageChain], friend=False):
+async def bot_send_message(target: Union[int, MessagePack], message: Union[ToogleChain, MessageChain, str], friend=False):
     bot = nonebot.get_bot()
+
+    if isinstance(target, MessagePack):
+        if target.group.id:
+            target_id = target.group.id
+        else:
+            target_id = target.member.id
+            friend = True
+    else:
+        target_id = target
+
     source = MessageSource(id=target_id, time=datetime.datetime.now())
     permission = UserPermission.OWNER
     if friend:
@@ -278,6 +270,9 @@ async def bot_send_message(target_id: int, message: Union[ToogleChain, MessageCh
     if isinstance(message, ToogleChain):
         quote = message.get_quote()
         nb_message = toogle2nb(message)
+    elif isinstance(message, str):
+        quote = None
+        nb_message = toogle2nb(ToogleChain.plain(message))
     else:
         quote = None
         nb_message = message
@@ -305,30 +300,42 @@ async def bot_exec(api, **data):
 
 
 def thread_put_job(handler: MessageHandler, message_pack: "MessagePack"):
-    WORK_QUEUE.put((handler, message_pack))
+    WORK_QUEUE.put((handler, message_pack, False))
 
 
 async def thread_worker(index):
     while True:
         try:
-            plugin, message_pack = WORK_QUEUE.get(timeout=30)
+            plugin, message_pack, kill = WORK_QUEUE.get(timeout=30)
+            if kill:
+                break
         except queue.Empty:
             continue
+
         try:
             res = await plugin.ret(message_pack)
-            if message_pack.group.id:
-                await bot_send_message(message_pack.group.id, res)
-            else:
-                await bot_send_message(message_pack.member.id, res, friend=True)
-            nonebot.logger.success(f"{plugin.name} in worker {index} running complete.") # type: ignore
+            await bot_send_message(message_pack, res)
+            # nonebot.logger.success(f"{plugin.name} in worker {index} running complete.") # type: ignore
+        except (UrllibError, RequestsError):
+            await bot_send_message(message_pack, f"爬虫网络连接错误，请稍后尝试")
+        except VisibleException as e:
+            await bot_send_message(message_pack, f"{e.__str__()}")
         except Exception as e:
-            print_err(e, plugin, message_pack)
+            if '误触发' not in repr(e):
+                print_err(e, plugin, message_pack)
 
-
-def worker_start(thread_num=5):
-    thread_pool = [threading.Thread(target=asyncio.run, args=[thread_worker(i)]) for i in range(thread_num)]
-    for x in thread_pool:
+def worker_start(thread_num=THREAD_NUM):
+    THREAD_POOL.clear()
+    for i in range(thread_num):
+        THREAD_POOL.append(threading.Thread(target=asyncio.run, args=[thread_worker(i)]))
+    for x in THREAD_POOL:
         x.start()
 
+def worker_shutdown(thread_num=THREAD_NUM):
+    for i in range(thread_num * 2):
+        WORK_QUEUE.put((None, None, True)) # type: ignore
+    for x in THREAD_POOL:
+        x.join()
+    nonebot.logger.success("All worker thread shutdown.") # type: ignore
 
 worker_start()
