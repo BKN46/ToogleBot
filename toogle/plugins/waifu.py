@@ -9,6 +9,7 @@ import toogle.plugins.compose.waifu as Waifu
 from toogle.message import Image, Member, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack, get_user_name
 from toogle.plugins.compose.waifu_battle import Dice
+from toogle.plugins.compose.waifu_card import get_waifu_card
 from toogle.sql import DatetimeUtils, SQLConnection
 from toogle.utils import draw_pic_text, text2img
 
@@ -43,18 +44,19 @@ class GetRandomAnimeFemale(MessageHandler):
                         res, req_url = Waifu.get_designated_search(s, feat_list[1:])
                         res_pic_url, res_text, res_id, res_raw = res
                         if is_debug:
-                            pic = PIL.Image.open(Image.buffered_url_pic(res[0]).path or '')
                             text = f"\n随机结果是:\n{res[1]}"
-                            # pic_bytes = draw_pic_text(pic, text, pic_size=(270, 300),max_size=(800, 300))
-                            pic_bytes = Waifu.waifu_card(
-                                res_pic_url, # type: ignore
+                            pic_bytes = get_waifu_card(
+                                get_user_name(message),
                                 res_raw['姓名'],
+                                res_pic_url or '',
                                 res_raw['来源'],
                                 res_raw['类型'],
-                                res_text
+                                res_text,
+                                res_raw['CV'],
                             )
                             return MessageChain.create(
                                 [
+                                    message.as_quote(),
                                     Image(bytes=pic_bytes),
                                     Plain(f"\n本次随机池: {req_url}"),
                                 ]
@@ -72,27 +74,40 @@ class GetRandomAnimeFemale(MessageHandler):
                     SQLConnection.update_user(
                         message.member.id, f"last_luck='{DatetimeUtils.get_now_time()}'"
                     )
+                    pic_bytes = get_waifu_card(
+                        get_user_name(message),
+                        res_raw['姓名'],
+                        res_pic_url or '',
+                        res_raw['来源'],
+                        res_raw['类型'],
+                        res_text,
+                        res_raw['CV'],
+                        is_repeat=str(others[0][0]),
+                    )
                 else:
                     text = f"\n{get_user_name(message)}你的{schn}是:\n{res[1]}\n输入【锁定{schn}】即可锁定{schn}"
                     SQLConnection.update_user(
                         message.member.id,
                         f"last_luck='{DatetimeUtils.get_now_time()}', waifu='{res[2]}'",
                     )
-                pic = PIL.Image.open(Image.buffered_url_pic(res[0]).path or '')
-                # pic_bytes = draw_pic_text(pic, text, pic_size=(270, 300),max_size=(800, 300))
-                pic_bytes = Waifu.waifu_card(
-                    res_pic_url, # type: ignore
-                    res_raw['姓名'],
-                    res_raw['来源'],
-                    res_raw['类型'],
-                    text
-                )
+                    pic_bytes = get_waifu_card(
+                        get_user_name(message),
+                        res_raw['姓名'],
+                        res_pic_url or '',
+                        res_raw['来源'],
+                        res_raw['类型'],
+                        res_text,
+                        res_raw['CV'],
+                    )
                 return MessageChain.create([
+                    message.as_quote(),
                     Image(bytes=pic_bytes),
-                    # Plain(m_text)
                 ])
             else:
-                return MessageChain.create([Plain(f"每天运势/随机{schn}/NTR只能一次")])
+                return MessageChain.create([
+                    message.as_quote(),
+                    Plain(f"每天运势/随机{schn}/NTR只能一次")
+                ])
 
         elif message_text in ["我的老婆", "我的老公"]:
             my_waifu = SQLConnection.search("qq_waifu", {"id": str(message.member.id)})
@@ -101,12 +116,13 @@ class GetRandomAnimeFemale(MessageHandler):
                 return MessageChain.create(
                     [Plain(f"{get_user_name(message)}你还没有{schn}\n输入【随机老婆】来抽一个")]
                 )
-            if my_waifu and len(json.loads(my_waifu[0][3])) > 0:
-                res_data = json.loads(my_waifu[0][3])
+            res_data = json.loads(my_waifu[0][3])
+            if my_waifu and len(res_data) > 0 and 'CV' in res_data:
                 res_str, res_pic = (
                     Waifu.parse_popularity_data(res_data),
                     res_data["pic"],
                 )
+                is_new = False
             elif my_waifu:
                 res_str, res_pic, res_data = Waifu.get_anime_character_popularity(
                     acdb_id=my_waifu[0][1]
@@ -116,23 +132,30 @@ class GetRandomAnimeFemale(MessageHandler):
                     {"otherDict": json.dumps(res_data, ensure_ascii=False)},
                     {"id": str(message.member.id)},
                 )
+                is_new = False
             else:
                 res_str, res_pic, res_data = Waifu.get_anime_character_popularity(
                     acdb_id=user[5] # type: ignore
                 )
                 extra_str = f"\n\n该{schn}还未锁定，输入【锁定{schn}】即可保存老婆"
+                is_new = True
             # pic = PIL.Image.open(Image.buffered_url_pic(res_pic).path or '')
             text = f"\n{get_user_name(message)}你的{schn}是:\n{res_str}{extra_str}"
-            # pic_bytes = draw_pic_text(pic, text, pic_size=(350, 400),max_size=(800, 400))
-            pic_bytes = Waifu.waifu_card(
-                res_pic, # type: ignore
+            pic_bytes = get_waifu_card(
+                get_user_name(message),
                 res_data['name'], # type: ignore
+                res_pic, # type: ignore
                 res_data['src'], # type: ignore
                 res_data['type'], # type: ignore
-                text
+                '\n'.join([x for x in res_str.split('\n')][4:]),
+                res_data['CV'], # type: ignore
+                is_new=is_new,
+                waifu_score=res_data['score'], # type: ignore
+                waifu_rank=res_data['rank'], # type: ignore
             )
             m_res = MessageChain.create(
-                [
+                [   
+                    message.as_quote(),
                     Image(bytes=pic_bytes)
                 ]
             )

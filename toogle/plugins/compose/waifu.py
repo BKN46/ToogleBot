@@ -37,6 +37,7 @@ PARAM_KEYWORD = {
     "棕瞳": ["eye_color", 4, 1],
     "绿瞳": ["eye_color", 5, 2],
     "灰瞳": ["eye_color", 6, 2],
+    "橙瞳": ["eye_color", 7, 2],
     "紫瞳": ["eye_color", 8, 3],
     "红瞳": ["eye_color", 9, 2],
     "白瞳": ["eye_color", 10, 2],
@@ -70,6 +71,7 @@ PARAM_KEYWORD = {
     "其他来源": ["mt", 9, 3],
     "轻小说": ["mt", 13, 5],
     "western": ["mt", 14, 3],
+    "手游": ["mt", 25, 4],
     "女仆装": ["clothing", 1, 2],
     "校服": ["clothing", 2, 2],
     "泳装": ["clothing", 4, 2],
@@ -502,6 +504,7 @@ def get_anime_character_popularity(acdb_id=None, sexual="f"):
     res_data = {
         "name": acdb_raw["姓名"],
         "en_name": acdb_raw["en_name"],
+        "CV": acdb_raw["CV"],
         "pic": acdb_pic,
         "src": acdb_src["title"] if acdb_src["title"] else acdb_src["title_en"],
         "type": acdb_raw["类型"],
