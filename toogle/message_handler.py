@@ -11,13 +11,13 @@ class MessagePack:
         message: MessageChain,
         group: Group,
         member: Member,
-        qoute: Optional[Quote],
+        quote: Optional[Quote],
     ) -> None:
         self.id = id
         self.message = message
         self.group = group
         self.member = member
-        self.qoute = qoute
+        self.quote = quote
 
     def as_quote(self):
         return Quote(
