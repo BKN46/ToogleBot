@@ -19,10 +19,6 @@ config = {
 key_check = {
     "NovelAISecret": "NovelAI作图相关功能",
     "OpenAISecret": "OpenAI相关功能",
-    "DBHost": "数据库",
-    "DBUser": "数据库",
-    "DBPassword": "数据库",
-    "DBTable": "数据库",
     "BLACK_LIST": "黑名单",
     "DISABLED_MODULE": "禁用功能",
     "WT_DATAMINE_GIT": "战雷拆包数据库查询功能",

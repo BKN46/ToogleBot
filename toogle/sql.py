@@ -1,9 +1,8 @@
 import datetime
 from typing import Dict
 
-import MySQLdb
+import sqlite3
 
-from toogle.configs import config
 from toogle.utils import filter_emoji
 
 
@@ -18,14 +17,12 @@ class DatetimeUtils:
 
     @staticmethod
     def is_today(date):
-        return datetime.datetime.today().date() == date.date()
+        return datetime.datetime.today().date() == datetime.datetime.fromisoformat(date).date()
 
 
 def db_connect(func):
     def a_func(*args, **kwargs):
-        db = MySQLdb.connect(
-            config['DBHost'], config['DBUser'], config['DBPassword'], config['DBTable'], charset="utf8"
-        )
+        db = sqlite3.connect('data/toogle.db')
         cursor = db.cursor()
         res = func(*args, db=db, cursor=cursor, **kwargs)
         db.close()

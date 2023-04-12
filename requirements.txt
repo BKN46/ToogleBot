@@ -30,8 +30,7 @@ MarkupSafe==2.1.1
 matplotlib==3.6.2
 multidict==6.0.2
 mypy-extensions==0.4.3
-mysqlclient==2.1.1
-nb-cli==0.6.7
+snb-cli==0.6.7
 nonebot-adapter-mirai2==0.0.22
 nonebot-plugin-apscheduler==0.2.0
 nonebot2==2.0.0rc1

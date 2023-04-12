@@ -122,7 +122,7 @@ class GetRandomAnimeFemale(MessageHandler):
                 return MessageChain.create(
                     [Plain(f"{get_user_name(message)}你还没有{schn}\n输入【随机老婆】来抽一个")]
                 )
-            res_data = json.loads(my_waifu[0][3])
+            res_data = json.loads(my_waifu[0][3].replace("\\\"", "\""))
             if my_waifu and len(res_data) > 0 and 'CV' in res_data:
                 res_str, res_pic = (
                     Waifu.parse_popularity_data(res_data),
