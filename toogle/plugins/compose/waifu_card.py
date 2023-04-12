@@ -53,6 +53,43 @@ def add_noise(im: PIL.Image.Image):
     return im
 
 
+def add_circle_texture(im: PIL.Image.Image):
+    new_img = PIL.Image.new("RGBA", im.size, (0, 0, 0, 0))
+    img_draw = PIL.ImageDraw.Draw(new_img, 'RGBA')
+    x_space, length = 50, 50
+    for x in range(- x_space // 2, new_img.size[0] + x_space, x_space):
+        for y in range(- length // 2, new_img.size[1] + length, length):
+            # img_draw.arc([(x, y), (x, y + length)], 30, -30, fill=(230, 230, 230, 255))
+            img_draw.ellipse([(x - x_space, y - length), (x + x_space, y + length)], (230, 230, 230, 0), outline=(30, 30, 30, 50))
+    im.paste(new_img, (0, 0), new_img)
+    return im
+
+
+def generate_shine(src_img: PIL.Image.Image):
+    img = PIL.Image.new("RGBA", (src_img.size[0] * 2, src_img.size[1] * 2), (0,0,0,0))
+    img_draw = PIL.ImageDraw.Draw(img)
+    colors = [
+        (254,1,254),
+        (0,245,246),
+        (89,255,182),
+        (255,253,101),
+    ] * 2
+    rotation = 45
+    width, height = img.size
+    single_color_height = (height // len(colors))
+    for y in range(0, height):
+        color_index = y // single_color_height
+        first_color = colors[color_index]
+        second_color = colors[(color_index + 1) % len(colors)]
+        def color_select(index):
+            return round(first_color[index] + (second_color[index] - first_color[index]) / single_color_height * (y % single_color_height))
+        bg_r, bg_g, bg_b = color_select(0), color_select(1), color_select(2)
+        img_draw.line([(0, y),(width, y)],fill = (bg_r,bg_g,bg_b))
+    img = img.rotate(rotation, expand=True)
+    src_img.paste(img, (-img.size[0] // 3, -img.size[1] // 3), img)
+    return src_img
+
+
 TYPE_COLOR_MAP = {
     "game": (243, 245, 114),
     "h-game": (222, 255, 78),
@@ -86,6 +123,8 @@ def get_waifu_card(
     waifu_score: float = 0,
     waifu_rank: str = '',
     is_repeat: str = '',
+    is_shine: bool = False,
+    no_center_box: bool = False,
 ):
     CARD_SIZE = (630, 880)
     PADDING = 20
@@ -95,24 +134,34 @@ def get_waifu_card(
     if ',' in cv:
         cv = cv.split(',')[1].strip()
 
-    gen_image = circle_corner(PIL.Image.new(
+    gen_image = PIL.Image.new(
         "RGBA",
         CARD_SIZE,
         (30, 30, 30),
-    ), 30, 255)
+    )
+    if is_shine:
+        gen_image = generate_shine(gen_image)
+    gen_image = circle_corner(gen_image, 30, 255)
 
-    center_box = circle_corner(add_noise(PIL.Image.new(
-        "RGBA",
-        (CARD_SIZE[0] - PADDING * 2, CARD_SIZE[1] - PADDING * 2),
-        TYPE_COLOR_MAP.get(src_type.lower(), (3, 169, 244)),
-    )), 10, 255)
+    if no_center_box:
+        center_box = PIL.Image.new(
+            "RGBA",
+            (CARD_SIZE[0] - PADDING * 2, CARD_SIZE[1] - PADDING * 2),
+            (0, 0, 0, 0),
+        )
+    else:
+        center_box = circle_corner(add_noise(PIL.Image.new(
+            "RGBA",
+            (CARD_SIZE[0] - PADDING * 2, CARD_SIZE[1] - PADDING * 2),
+            TYPE_COLOR_MAP.get(src_type.lower(), (3, 169, 244)),
+        )), 10, 255)
     image_draw = PIL.ImageDraw.Draw(center_box)
 
     # ======== name ========
     name_slot = circle_corner(PIL.Image.new(
         "RGBA",
         (CARD_SIZE[0] - PADDING * 4, 40),
-        (230, 230, 230),
+        (230, 230, 230, 200),
     ), 20, int(255 * 1), border=2)
     center_box.paste(
         name_slot,
@@ -151,7 +200,7 @@ def get_waifu_card(
     src_slot = circle_corner(PIL.Image.new(
         "RGBA",
         (CARD_SIZE[0] - PADDING * 4, 40),
-        (230, 230, 230),
+        (230, 230, 230, 200),
     ), 20, int(255 * 1), border=2)
     center_box.paste(
         src_slot,
@@ -167,11 +216,13 @@ def get_waifu_card(
     )
 
     # ======== desc ========
-    desc_slot = circle_corner(PIL.Image.new(
+    desc_slot = PIL.Image.new(
         "RGBA",
         (CARD_SIZE[0] - PADDING * 4 - 40, int(CARD_SIZE[1] * 0.3)),
         (230, 230, 230),
-    ), 0, int(255 * 1), border=2)
+    )
+    desc_slot = add_circle_texture(desc_slot)
+    desc_slot = circle_corner(desc_slot, 0, int(255 * 1), border=2)
 
     desc = '\n'.join([x for x in desc.split('\n') if not any(
         x.startswith(y) for y in ['CV', '姓名', '来源', '类型', 'score', 'rank']
@@ -220,8 +271,8 @@ def get_waifu_card(
         rank_slot = circle_corner(PIL.Image.new(
             "RGBA",
             (130, 30),
-            (230, 230, 230),
-        ), 5, int(255 * 1), border=3)
+            (30, 30, 30),
+        ), 15, int(255 * 1), border=0)
         rank_slot_pos = (CARD_SIZE[0] - PADDING * 2 - 140, PADDING + int(CARD_SIZE[1] * 0.8) + 55)
         center_box.paste(
             rank_slot,
@@ -230,7 +281,7 @@ def get_waifu_card(
         )
 
         image_draw.text(
-            (rank_slot_pos[0] + 10, rank_slot_pos[1] + 5),
+            (rank_slot_pos[0] + 10, rank_slot_pos[1] + 2),
             f"{waifu_rank} [{waifu_score:.1f}]",
             font=font2,
             fill=RANK_COLOR.get(waifu_rank, (80, 80, 80))

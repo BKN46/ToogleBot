@@ -90,6 +90,10 @@ class GetRandomAnimeFemale(MessageHandler):
                         message.member.id,
                         f"last_luck='{DatetimeUtils.get_now_time()}', waifu='{res[2]}'",
                     )
+
+                    is_shine = random.random() < 0.05
+                    is_no_center_box = random.random() < 0.1
+
                     pic_bytes = get_waifu_card(
                         get_user_name(message),
                         res_raw['姓名'],
@@ -98,6 +102,8 @@ class GetRandomAnimeFemale(MessageHandler):
                         res_raw['类型'],
                         res_text,
                         res_raw['CV'],
+                        is_shine=is_shine,
+                        no_center_box=is_no_center_box and is_shine,
                     )
                 return MessageChain.create([
                     message.as_quote(),
