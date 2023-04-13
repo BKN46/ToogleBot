@@ -20,6 +20,7 @@ key_check = {
     "NovelAISecret": "NovelAI作图相关功能",
     "OpenAISecret": "OpenAI相关功能",
     "BLACK_LIST": "黑名单",
+    "GROUP_LIST": "每日新闻",
     "DISABLED_MODULE": "禁用功能",
     "WT_DATAMINE_GIT": "战雷拆包数据库查询功能",
     "SCRIPING_ANT_TOKEN": "涉及Cloudflare反反爬功能",

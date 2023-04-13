@@ -6,6 +6,7 @@ from toogle.scheduler import ScheduleModule
 from toogle.plugins.compose.daily_news import download_daily
 from toogle.nonebot2_adapter import bot_send_message
 from toogle.configs import config
+from toogle.utils import get_main_groups
 
 
 class DailyNews(ScheduleModule):
@@ -17,7 +18,7 @@ class DailyNews(ScheduleModule):
     async def ret(self):
         pic_path = download_daily()
         message = MessageChain.create([Image(path=pic_path)])
-        for group in config.get('MAIN_GROUP', []):
+        for group in get_main_groups():
             await bot_send_message(int(group), message)
 
 
