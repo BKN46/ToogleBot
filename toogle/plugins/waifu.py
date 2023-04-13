@@ -69,7 +69,7 @@ class GetRandomAnimeFemale(MessageHandler):
 
                 others = SQLConnection.search("qq_waifu", {"waifuId": res[2]})
 
-                if others:
+                if others and not str(others[0][0]) == str(message.member.id):
                     text = f"\n{get_user_name(message)}你的{schn}是:\n{res[1]}\n\n但是已经被{others[0][0]}抢先下手了"
                     SQLConnection.update_user(
                         message.member.id, f"last_luck='{DatetimeUtils.get_now_time()}'"
@@ -92,7 +92,19 @@ class GetRandomAnimeFemale(MessageHandler):
                     )
 
                     is_shine = random.random() < 0.05
-                    is_no_center_box = random.random() < 0.1
+                    no_center_box = random.random() < 0.1 and is_shine
+
+                    SQLConnection.update(
+                        "qq_user",
+                        {
+                            "waifu": json.dumps({
+                                "id": res[2],
+                                "is_shine": is_shine,
+                                "no_center_box": no_center_box,
+                            }, ensure_ascii=False)
+                        },
+                        {"id": str(message.member.id),},
+                    )
 
                     pic_bytes = get_waifu_card(
                         get_user_name(message),
@@ -103,7 +115,7 @@ class GetRandomAnimeFemale(MessageHandler):
                         res_text,
                         res_raw['CV'],
                         is_shine=is_shine,
-                        no_center_box=is_no_center_box and is_shine,
+                        no_center_box=no_center_box,
                     )
                 return MessageChain.create([
                     message.as_quote(),
@@ -116,9 +128,9 @@ class GetRandomAnimeFemale(MessageHandler):
                 ])
 
         elif message_text in ["我的老婆", "我的老公"]:
+            waifu_id, waifu_is_shine, waifu_no_center_box = self.get_tmp_waifu(user)
             my_waifu = SQLConnection.search("qq_waifu", {"id": str(message.member.id)})
-            extra_str = ""
-            if not user[5] and not my_waifu: # type: ignore
+            if not waifu_id and not my_waifu: # type: ignore
                 return MessageChain.create(
                     [Plain(f"{get_user_name(message)}你还没有{schn}\n输入【随机老婆】来抽一个")]
                 )
@@ -128,11 +140,17 @@ class GetRandomAnimeFemale(MessageHandler):
                     Waifu.parse_popularity_data(res_data),
                     res_data["pic"],
                 )
+                waifu_is_shine, waifu_no_center_box = res_data.get('is_shine', False), res_data.get('no_center_box', False)
                 is_new = False
             elif my_waifu:
                 res_str, res_pic, res_data = Waifu.get_anime_character_popularity(
                     acdb_id=my_waifu[0][1]
                 )
+                res_data.update({ # type: ignore
+                    "def": random.choice(self.def_dice_list),
+                    "is_shine": waifu_is_shine,
+                    "no_center_box": waifu_no_center_box,
+                })
                 SQLConnection.update(
                     "qq_waifu",
                     {"otherDict": json.dumps(res_data, ensure_ascii=False)},
@@ -141,12 +159,10 @@ class GetRandomAnimeFemale(MessageHandler):
                 is_new = False
             else:
                 res_str, res_pic, res_data = Waifu.get_anime_character_popularity(
-                    acdb_id=user[5] # type: ignore
+                    acdb_id=waifu_id
                 )
-                extra_str = f"\n\n该{schn}还未锁定，输入【锁定{schn}】即可保存老婆"
                 is_new = True
-            # pic = PIL.Image.open(Image.buffered_url_pic(res_pic).path or '')
-            text = f"\n{get_user_name(message)}你的{schn}是:\n{res_str}{extra_str}"
+
             pic_bytes = get_waifu_card(
                 get_user_name(message),
                 res_data['name'], # type: ignore
@@ -158,6 +174,8 @@ class GetRandomAnimeFemale(MessageHandler):
                 is_new=is_new,
                 waifu_score=res_data['score'], # type: ignore
                 waifu_rank=res_data['rank'], # type: ignore
+                is_shine=waifu_is_shine,
+                no_center_box=waifu_no_center_box,
             )
             m_res = MessageChain.create(
                 [   
@@ -170,10 +188,11 @@ class GetRandomAnimeFemale(MessageHandler):
             return m_res
 
         elif message_text in ["锁定老婆", "锁定老公"]:
-            if not user[5]: # type: ignore
+            waifu_id, waifu_is_shine, waifu_no_center_box = self.get_tmp_waifu(user)
+            if not waifu_id:
                 return MessageChain.create([Plain(f"{get_user_name(message)}你还没有对象")])
             my_waifu = SQLConnection.search("qq_waifu", {"id": str(message.member.id)})
-            others = SQLConnection.search("qq_waifu", {"waifuId": user[5]}) # type: ignore
+            others = SQLConnection.search("qq_waifu", {"waifuId": waifu_id})
             if others and others[0][0] != str(message.member.id):
                 return MessageChain.create(
                     [
@@ -181,12 +200,16 @@ class GetRandomAnimeFemale(MessageHandler):
                     ]
                 )
             if len(my_waifu) > 0:
-                if my_waifu[0][1] != user[5]: # type: ignore
-                    res = Waifu.get_anime_character(user[5]) # type: ignore
+                if my_waifu[0][1] != waifu_id:
+                    res = Waifu.get_anime_character(waifu_id)
                     res_str, res_pic, res_data = Waifu.get_anime_character_popularity(
-                        acdb_id=user[5] # type: ignore
+                        acdb_id=waifu_id
                     )
-                    res_data.update({"def": random.choice(self.def_dice_list)}) # type: ignore
+                    res_data.update({ # type: ignore
+                        "def": random.choice(self.def_dice_list),
+                        "is_shine": waifu_is_shine,
+                        "no_center_box": waifu_no_center_box,
+                    })
                     SQLConnection.update(
                         "qq_waifu",
                         {
@@ -199,19 +222,17 @@ class GetRandomAnimeFemale(MessageHandler):
                     )
                 else:
                     waifu_data = json.loads(my_waifu[0][2])
-                    return MessageChain.create(
-                        [
-                            Plain(
-                                f"{get_user_name(message)}你的{schn}{waifu_data['姓名']}已经锁定上了"
-                            ),
-                        ]
-                    )
+                    return MessageChain.plain(f"{get_user_name(message)}你的{schn}{waifu_data['姓名']}已经锁定上了")
             else:
-                res = Waifu.get_anime_character(user[5]) # type: ignore
+                res = Waifu.get_anime_character(waifu_id)
                 res_str, res_pic, res_data = Waifu.get_anime_character_popularity(
-                    acdb_id=user[5] # type: ignore
+                    acdb_id=waifu_id
                 )
-                res_data.update({"def": random.choice(self.def_dice_list)}) # type: ignore
+                res_data.update({ # type: ignore
+                    "def": random.choice(self.def_dice_list),
+                    "is_shine": waifu_is_shine,
+                    "no_center_box": waifu_no_center_box,
+                })
                 SQLConnection.insert(
                     "qq_waifu",
                     {
@@ -345,165 +366,18 @@ class GetRandomAnimeFemale(MessageHandler):
                 )
             return MessageChain.create([Plain(info + f"NTR成功!")])
 
-        '''
-        elif message_text.startswith("换妻"):
-            content = message_text.strip().split()[-1]
-            if message_text == "换妻":
-                return MessageChain.create(
-                    [
-                        Plain(f"与对方商量好，再输入【换妻 对方QQ号】，对方输入【换妻 接受】与【确认】后，即可交换双方锁定对象。"),
-                    ]
-                )
-
-            elif content == "接受":
-                my_message = SQLConnection.search(
-                    "qq_user", {"id": str(message.member.id)}
-                )[0][6]
-                try:
-                    my_message = json.loads(my_message)
-                    my_message = [
-                        x for x in my_message if x["type"] == "waifu_exchange"
-                    ]
-                    other_message = [
-                        x for x in my_message if x["type"] != "waifu_exchange"
-                    ]
-                except Exception:
-                    my_message = []
-                if not my_message:
-                    return MessageChain.create([Plain(f"好像暂时没有人想要和你换妻")])
-
-                src_waifu = self.get_waifu(message.member.id) or {}
-                tgt_waifu = self.get_waifu(my_message[0]["src"]) or {}
-
-                confirm_message = (
-                    f"将以 {src_waifu['other_dict']['name']} 替换 {my_message[0]['src']} 的 {tgt_waifu['other_dict']['name']}"
-                    f"\n如接受请输入【确认】，否则取消"
-                )
-
-                await message.base.app.sendGroupMessage(
-                    message.group, MessageChain.create([Plain(f"{confirm_message}")])
-                )
-
-                @Waiter.create_using_function([GroupMessage])
-                def waiter(
-                    event: GroupMessage,
-                    waiter_group: Group,
-                    waiter_member: Member,
-                    waiter_message: MessageChain,
-                ):
-                    if all(
-                        [
-                            waiter_member.id == message.member.id,
-                            waiter_group.id == message.group.id,
-                        ]
-                    ):
-                        return True, waiter_message.asDisplay()
-                    return False, ""
-
-                expire_counter = 10
-                while True:
-                    replace_text = await message.base.inc.wait(waiter)
-                    if replace_text[0] and replace_text[1] == "确认":
-                        # SQLConnection.update("qq_waifu", {}, {})
-                        break
-                    elif replace_text[0]:
-                        return MessageChain.create([Plain("放弃换妻")])
-                    else:
-                        expire_counter -= 1
-                        if expire_counter < 0:
-                            return MessageChain.create([Plain(f"放弃换妻")])
-
-                SQLConnection.update(
-                    "qq_waifu",
-                    {
-                        "waifuId": tgt_waifu["waifu_id"],
-                        "waifuDict": json.dumps(
-                            tgt_waifu["waifu_dict"], ensure_ascii=False
-                        ),
-                        "otherDict": json.dumps(
-                            tgt_waifu["other_dict"], ensure_ascii=False
-                        ),
-                    },
-                    {"id": str(message.member.id)},
-                )
-                SQLConnection.update(
-                    "qq_waifu",
-                    {
-                        "waifuId": src_waifu["waifu_id"],
-                        "waifuDict": json.dumps(
-                            src_waifu["waifu_dict"], ensure_ascii=False
-                        ),
-                        "otherDict": json.dumps(
-                            src_waifu["other_dict"], ensure_ascii=False
-                        ),
-                    },
-                    {"id": my_message[0]["src"]},
-                )
-                SQLConnection.update(
-                    "qq_user",
-                    {
-                        "message": json.dumps(other_message, ensure_ascii=False),
-                    },
-                    {"id": str(message.member.id)},
-                )
-                return MessageChain.create([Plain("换妻成功！")])
-
-            else:
-                src_user = SQLConnection.search(
-                    "qq_waifu",
-                    {
-                        "id": str(message.member.id),
-                    },
-                )
-                tgt_user = SQLConnection.search(
-                    "qq_waifu",
-                    {
-                        "id": content,
-                    },
-                )
-                if not src_user:
-                    return MessageChain.create(
-                        [Plain(f"{get_user_name(message)}你没有锁定老婆")]
-                    )
-                elif not tgt_user:
-                    return MessageChain.create([Plain(f"{content}不存在，或是没有锁定老婆")])
-                src_waifu = json.loads(src_user[0][3])
-                tgt_waifu = json.loads(tgt_user[0][3])
-                message_content = f"{get_user_name(message)}将以{src_waifu['name']}申请交换{tgt_user[0][0]}的{tgt_waifu['name']}"
-                new_message = [
-                    {
-                        "type": "waifu_exchange",
-                        "title": "申请换妻",
-                        "src": str(message.member.id),
-                        "tgt": tgt_user[0][0],
-                        "content": message_content,
-                    }
-                ]
-                old_message = SQLConnection.search("qq_user", {"id": tgt_user[0][0]})[
-                    0
-                ][6]
-                try:
-                    old_message = json.loads(old_message)
-                    old_message = [
-                        x for x in old_message if x["type"] != "waifu_exchange"
-                    ]
-                except Exception:
-                    old_message = []
-                SQLConnection.update(
-                    "qq_user",
-                    {
-                        "message": json.dumps(
-                            old_message + new_message, ensure_ascii=False
-                        ),
-                    },
-                    {
-                        "id": tgt_user[0][0],
-                    },
-                )
-                return MessageChain.create([Plain(f"成功，{message_content}")])
-            '''
-
         return MessageChain.create([])
+
+    def get_tmp_waifu(self, user):
+        try:
+            waifu_dict = json.loads(user[5]) # type: ignore
+            waifu_id = waifu_dict['id']
+            waifu_is_shine = waifu_dict['is_shine']
+            waifu_no_center_box = waifu_dict['no_center_box']
+        except Exception as e:
+            waifu_id = user[5] # type: ignore
+            waifu_is_shine, waifu_no_center_box = False, False
+        return waifu_id,waifu_is_shine,waifu_no_center_box
 
     def get_waifu_list(self):
         waifu_list = SQLConnection.search("qq_waifu", {})
