@@ -221,7 +221,7 @@ class GetRandomAnimeFemale(MessageHandler):
                         {"id": str(message.member.id)},
                     )
                 else:
-                    waifu_data = json.loads(my_waifu[0][2])
+                    waifu_data = json.loads(my_waifu[0][2].replace("\\\"", "\""))
                     return MessageChain.plain(f"{get_user_name(message)}你的{schn}{waifu_data['姓名']}已经锁定上了")
             else:
                 res = Waifu.get_anime_character(waifu_id)
@@ -322,7 +322,7 @@ class GetRandomAnimeFemale(MessageHandler):
             elif DatetimeUtils.is_today(user[2]) and not user[1] > 5: # type: ignore
                 return MessageChain.create([Plain(f"每天运势/随机{schn}/NTR只能一次")])
 
-            tgt_waifu = json.loads(tgt_user[0][3])
+            tgt_waifu = json.loads(tgt_user[0][3].replace("\\\"", "\""))
             tgt_dice = tgt_waifu["def"]
             atk_dice = random.choice(self.atk_dice_list)
             tgt_roll = Dice.roll(tgt_dice)
@@ -386,7 +386,7 @@ class GetRandomAnimeFemale(MessageHandler):
                 {
                     "id": x[4] if x[4] else x[0],
                     "qq": x[0],
-                    "data": json.loads(x[3]),
+                    "data": json.loads(x[3].replace("\\\"", "\"")),
                 }
                 for x in waifu_list
                 if x[3] != "{}"
@@ -417,7 +417,7 @@ class GetRandomAnimeFemale(MessageHandler):
             return {
                 "qq": src_user[0][0],
                 "waifu_id": src_user[0][1],
-                "waifu_dict": json.loads(src_user[0][2]),
-                "other_dict": json.loads(src_user[0][3]),
+                "waifu_dict": json.loads(src_user[0][2].replace("\\\"", "\"")),
+                "other_dict": json.loads(src_user[0][3].replace("\\\"", "\"")),
                 "qq_name": src_user[0][4],
             }
