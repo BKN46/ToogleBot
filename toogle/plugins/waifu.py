@@ -1,3 +1,4 @@
+import base64
 import json
 import random
 
@@ -9,7 +10,7 @@ import toogle.plugins.compose.waifu as Waifu
 from toogle.message import Image, Member, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack, get_user_name
 from toogle.plugins.compose.waifu_battle import Dice
-from toogle.plugins.compose.waifu_card import get_waifu_card
+from toogle.plugins.compose.waifu_card import get_waifu_card, ranking_compose
 from toogle.sql import DatetimeUtils, SQLConnection
 from toogle.utils import draw_pic_text, text2img
 
@@ -136,6 +137,11 @@ class GetRandomAnimeFemale(MessageHandler):
                 )
             res_data = json.loads(my_waifu[0][3].replace("\\\"", "\""))
             if my_waifu and len(res_data) > 0 and 'CV' in res_data:
+                if 'pic_bytes' in res_data:
+                    return MessageChain.create([
+                        message.as_quote(),
+                        Image(base64=res_data['pic_bytes']),
+                    ])
                 res_str, res_pic = (
                     Waifu.parse_popularity_data(res_data),
                     res_data["pic"],
@@ -144,7 +150,8 @@ class GetRandomAnimeFemale(MessageHandler):
                 is_new = False
             elif my_waifu:
                 res_str, res_pic, res_data = Waifu.get_anime_character_popularity(
-                    acdb_id=my_waifu[0][1]
+                    acdb_id=my_waifu[0][1],
+                    extra_ratio=self.get_shine_score_ratio(waifu_is_shine, waifu_no_center_box),
                 )
                 res_data.update({ # type: ignore
                     "def": random.choice(self.def_dice_list),
@@ -159,7 +166,8 @@ class GetRandomAnimeFemale(MessageHandler):
                 is_new = False
             else:
                 res_str, res_pic, res_data = Waifu.get_anime_character_popularity(
-                    acdb_id=waifu_id
+                    acdb_id=waifu_id,
+                    extra_ratio=self.get_shine_score_ratio(waifu_is_shine, waifu_no_center_box),
                 )
                 is_new = True
 
@@ -177,6 +185,8 @@ class GetRandomAnimeFemale(MessageHandler):
                 is_shine=waifu_is_shine,
                 no_center_box=waifu_no_center_box,
             )
+            base64_str = base64.b64encode(pic_bytes).decode()
+            self.update_waifu_dict(message.member.id, { "pic_bytes": base64_str })
             m_res = MessageChain.create(
                 [   
                     message.as_quote(),
@@ -199,17 +209,35 @@ class GetRandomAnimeFemale(MessageHandler):
                         Plain(f"{get_user_name(message)}你的{schn}已经被{others[0][0]}抢了"),
                     ]
                 )
+            
+            res_str, res_pic, res_data = Waifu.get_anime_character_popularity(
+                acdb_id=waifu_id,
+                extra_ratio=self.get_shine_score_ratio(waifu_is_shine, waifu_no_center_box),
+            )
+            pic_bytes = get_waifu_card(
+                get_user_name(message),
+                res_data['name'], # type: ignore
+                res_pic, # type: ignore
+                res_data['src'], # type: ignore
+                res_data['type'], # type: ignore
+                '\n'.join([x for x in res_str.split('\n')][4:]),
+                res_data['CV'], # type: ignore
+                is_new=False,
+                waifu_score=res_data['score'], # type: ignore
+                waifu_rank=res_data['rank'], # type: ignore
+                is_shine=waifu_is_shine,
+                no_center_box=waifu_no_center_box,
+            )
+            res_data.update({ # type: ignore
+                "def": random.choice(self.def_dice_list),
+                "is_shine": waifu_is_shine,
+                "no_center_box": waifu_no_center_box,
+                "pic_bytes": base64.b64encode(pic_bytes).decode(),
+            })
+            
             if len(my_waifu) > 0:
                 if my_waifu[0][1] != waifu_id:
                     res = Waifu.get_anime_character(waifu_id)
-                    res_str, res_pic, res_data = Waifu.get_anime_character_popularity(
-                        acdb_id=waifu_id
-                    )
-                    res_data.update({ # type: ignore
-                        "def": random.choice(self.def_dice_list),
-                        "is_shine": waifu_is_shine,
-                        "no_center_box": waifu_no_center_box,
-                    })
                     SQLConnection.update(
                         "qq_waifu",
                         {
@@ -225,14 +253,6 @@ class GetRandomAnimeFemale(MessageHandler):
                     return MessageChain.plain(f"{get_user_name(message)}你的{schn}{waifu_data['姓名']}已经锁定上了")
             else:
                 res = Waifu.get_anime_character(waifu_id)
-                res_str, res_pic, res_data = Waifu.get_anime_character_popularity(
-                    acdb_id=waifu_id
-                )
-                res_data.update({ # type: ignore
-                    "def": random.choice(self.def_dice_list),
-                    "is_shine": waifu_is_shine,
-                    "no_center_box": waifu_no_center_box,
-                })
                 SQLConnection.insert(
                     "qq_waifu",
                     {
@@ -263,16 +283,16 @@ class GetRandomAnimeFemale(MessageHandler):
         elif message_text.startswith("对象排行"):
             waifu_list = self.get_waifu_list()
             if message_text == "对象排行":
-                path = Waifu.ranking_compose(waifu_list[:10])
-                m_res = MessageChain.create([Image.fromLocalFile(path)])
+                pic_bytes = ranking_compose(waifu_list[:10])
+                m_res = MessageChain.create([Image(bytes=pic_bytes)])
                 return m_res
             elif message_text.split()[-1].startswith("#"):
                 page = int(message_text.split()[-1][1:]) - 1
                 if page < 0 or page * 10 >= len(waifu_list):
                     return MessageChain.create([Plain(f"页数不合法")])
                 page_range = [max(0, page * 10), min((page + 1) * 10, len(waifu_list))]
-                path = Waifu.ranking_compose(waifu_list[page_range[0] : page_range[1]])
-                m_res = MessageChain.create([Image.fromLocalFile(path)])
+                pic_bytes = ranking_compose(waifu_list[page_range[0] : page_range[1]])
+                m_res = MessageChain.create([Image(bytes=pic_bytes)])
                 return m_res
             elif "我" in message_text:
                 pos = [x for x in waifu_list if x["qq"] == str(message.member.id)]
@@ -289,11 +309,11 @@ class GetRandomAnimeFemale(MessageHandler):
                 max(0, pos[0]["rank"] - 5),
                 min(pos[0]["rank"] + 5, len(waifu_list)),
             ]
-            path = Waifu.ranking_compose(
+            pic_bytes = ranking_compose(
                 waifu_list[display_range[0] : display_range[1]],
                 highlight=pos[0]["rank"],
             )
-            m_res = MessageChain.create([Image.fromLocalFile(path)])
+            m_res = MessageChain.create([Image(bytes=pic_bytes)])
             return m_res
 
         elif message_text.startswith("我要NTR") or message_text.startswith("我要ntr"):
@@ -403,6 +423,15 @@ class GetRandomAnimeFemale(MessageHandler):
         ]
         return waifu_list
 
+    def get_shine_score_ratio(self, is_shine, no_center_box):
+        if is_shine:
+            if no_center_box:
+                return 2
+            else:
+                return 1.5
+        else:
+            return 1
+
     def get_waifu(self, qq_id):
         # id, waifuId, waifuDict, otherDict, name, credit
         src_user = SQLConnection.search(
@@ -421,3 +450,20 @@ class GetRandomAnimeFemale(MessageHandler):
                 "other_dict": json.loads(src_user[0][3].replace("\\\"", "\"")),
                 "qq_name": src_user[0][4],
             }
+
+    def update_waifu_dict(self, qq_id, update_content):
+        src_user = SQLConnection.search(
+            "qq_waifu",
+            { "id": str(qq_id) },
+        )
+        if not src_user:
+            return False
+        other_dict = json.loads(src_user[0][3].replace("\\\"", "\""))
+        other_dict.update(update_content)
+        SQLConnection.update(
+            "qq_waifu",
+            {
+                "otherDict": json.dumps(other_dict, ensure_ascii=False),
+            },
+            { "id": str(qq_id) }
+        )

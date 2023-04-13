@@ -483,7 +483,7 @@ def parse_popularity_data(data):
     return res
 
 
-def get_anime_character_popularity(acdb_id=None, sexual="f"):
+def get_anime_character_popularity(acdb_id=None, sexual="f", extra_ratio=1.0):
     try:
         if acdb_id:
             acdb_pic, _, acdb_id, acdb_raw = get_anime_character(acdb_id)
@@ -515,7 +515,7 @@ def get_anime_character_popularity(acdb_id=None, sexual="f"):
         "bgm_heat": bgm_src_detail["popularity"],
     }
 
-    score, rank = score_calc(res_data)
+    score, rank = score_calc(res_data, extra_ratio=extra_ratio)
     res_data = {
         **res_data,
         "score": score,
@@ -534,7 +534,7 @@ def get_anime_character_popularity(acdb_id=None, sexual="f"):
     return parse_popularity_data(res_data), acdb_pic, res_data
 
 
-def score_calc(res_data):
+def score_calc(res_data, extra_ratio=1.0):
     def sigmoid(x, shift=0, ratio=1):
         return (1 / (1 + math.exp(-(x + shift) / ratio))) * ratio
 
@@ -553,6 +553,8 @@ def score_calc(res_data):
             score += 50
         else:
             score += 10
+
+    score = score * extra_ratio
 
     if score > 1000:
         rank = "UR"
@@ -622,69 +624,6 @@ def max_resize(img, max_width=PIC_SIZE[0], max_height=PIC_SIZE[1]):
             (int(img.size[0] * max_height / img.size[1]), max_height),
             PIL.Image.Resampling.LANCZOS,
         )
-
-
-def ranking_compose(waifu_data_list, highlight=0):
-    SIZE[1] = PIC_SIZE[1] * len(waifu_data_list)
-    gen_image = PIL.Image.new("RGBA", SIZE, (255, 255, 255))
-
-    bg_num_font = PIL.ImageFont.truetype(FONT_TYPE, 200)
-    name_font = PIL.ImageFont.truetype(FONT_TYPE, 60)
-    src_font = PIL.ImageFont.truetype(FONT_TYPE, 30)
-    score_font = PIL.ImageFont.truetype(FONT_TYPE, 70)
-    rank_font = PIL.ImageFont.truetype(FONT_TYPE, 180)
-    user_font = PIL.ImageFont.truetype(FONT_TYPE, 50)
-
-    for index, waifu_data in enumerate(waifu_data_list):
-        user_name = waifu_data["id"]
-        ac_data = waifu_data["data"]
-        ac_stand = waifu_data["rank"]
-
-        image = max_resize(buffered_url_pic(ac_data["pic"])).convert("RGBA")
-        ac_name = ac_data["name"]
-        ac_src = ac_data["src"]
-        ac_score = ac_data["score"]
-        ac_rank = ac_data["rank"]
-
-        word_box = PIL.Image.new(
-            "RGBA", (SIZE[0] - PIC_SIZE[0], PIC_SIZE[1]), (255, 255, 255, 0)
-        )
-        draw = PIL.ImageDraw.Draw(word_box)
-
-        std_text = f"{ac_stand}"
-        # std_text_size = draw.textsize(std_text, font=bg_num_font)
-        draw.text(
-            (SIZE[0] - 350 - len(std_text) * 120, 200),
-            std_text,
-            BG_COLOR[(index + 1) % 2],
-            font=bg_num_font,
-        )
-        if ac_stand == highlight:
-            pic_bg = PIL.Image.new("RGBA", (SIZE[0], PIC_SIZE[1]), BG_COLOR[2])
-        else:
-            pic_bg = PIL.Image.new("RGBA", (SIZE[0], PIC_SIZE[1]), BG_COLOR[index % 2])
-        gen_image.paste(pic_bg, (0, index * PIC_SIZE[1]))
-
-        offset_x = int((PIC_SIZE[0] - image.size[0]) / 2)
-        offset_y = int((PIC_SIZE[1] - image.size[1]) / 2)
-        gen_image.paste(image, (offset_x, index * PIC_SIZE[1] + offset_y), image)
-
-        draw.text((20, 40), f"{ac_name}", (0, 0, 0), font=name_font)
-        draw.text((20, 110), f"《{ac_src}》", (0, 0, 0), font=src_font)
-        draw.text((0, 160), f"{ac_rank}", RANK_COLOR[ac_rank], font=rank_font)
-        draw.text((370, 180), f"SCORE {ac_score: .2f}", (0, 0, 0), font=score_font)
-        draw.text((370, 260), f"对象是 {user_name}", (0, 0, 0), font=user_font)
-        draw.text((540, 310), f"{waifu_data['qq']}", (50, 50, 50), font=src_font)
-        draw.text(
-            (900, 40),
-            f"[ {ac_data['def']} ]",
-            BG_COLOR[(index + 1) % 2],
-            font=score_font,
-        )
-        gen_image.paste(word_box, (PIC_SIZE[0], index * PIC_SIZE[1]), word_box)
-
-    gen_image.save(SAVE_PATH)
-    return SAVE_PATH
 
 
 def get_font_wrap(text: str, font: PIL.ImageFont.ImageFont, box_width: int):

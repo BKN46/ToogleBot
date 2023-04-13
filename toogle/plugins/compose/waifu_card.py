@@ -1,3 +1,4 @@
+import base64
 import io
 import random
 
@@ -6,7 +7,7 @@ import PIL.ImageColor
 import PIL.ImageDraw
 import PIL.ImageFont
 
-from toogle.plugins.compose.waifu import text_on_image, buffered_url_pic
+from toogle.plugins.compose.waifu import text_on_image, buffered_url_pic, max_resize
 
 
 def width_resize(img, max_width, min_height):
@@ -186,8 +187,8 @@ def get_waifu_card(
         buffered_url_pic(pic_url),
         max_width = figure_slot.size[0],
         min_height = figure_slot.size[1],
-    )
-    figure_slot.paste(figure_pic, (0, -20))
+    ).convert("RGBA")
+    figure_slot.paste(figure_pic, (0, -20), figure_pic)
     figure_slot = circle_corner(figure_slot , 0, int(255 * 1), border=2)
 
     center_box.paste(
@@ -352,6 +353,84 @@ def get_waifu_card(
     gen_image.save(img_bytes, format="PNG")
     # gen_image.show()
     return img_bytes.getvalue()
+
+
+def ranking_compose(waifu_data_list, highlight=0) -> bytes:
+    FONT_TYPE = "toogle/plugins/compose/Arial Unicode MS Font.ttf"
+    SIZE = [1500, 4000]
+    PIC_SIZE = [350, int(SIZE[1] / 10)]
+    BG_COLOR = [
+        (255, 255, 255),
+        (235, 235, 235),
+        (200, 238, 243),
+    ]
+
+    SIZE[1] = PIC_SIZE[1] * len(waifu_data_list)
+    gen_image = PIL.Image.new("RGBA", tuple(SIZE), (255, 255, 255))
+
+    bg_num_font = PIL.ImageFont.truetype(FONT_TYPE, 200)
+    name_font = PIL.ImageFont.truetype(FONT_TYPE, 60)
+    src_font = PIL.ImageFont.truetype(FONT_TYPE, 30)
+    score_font = PIL.ImageFont.truetype(FONT_TYPE, 70)
+    rank_font = PIL.ImageFont.truetype(FONT_TYPE, 180)
+    user_font = PIL.ImageFont.truetype(FONT_TYPE, 50)
+
+    for index, waifu_data in enumerate(waifu_data_list):
+        user_name = waifu_data["id"]
+        ac_data = waifu_data["data"]
+        ac_stand = waifu_data["rank"]
+
+        pic_base64 = ac_data.get("pic_bytes", "")
+        if pic_base64:
+            image = max_resize(PIL.Image.open(io.BytesIO(base64.b64decode(pic_base64)))).convert("RGBA")
+        else:
+            image = max_resize(buffered_url_pic(ac_data["pic"])).convert("RGBA")
+        ac_name = ac_data["name"]
+        ac_src = ac_data["src"]
+        ac_score = ac_data["score"]
+        ac_rank = ac_data["rank"]
+
+        word_box = PIL.Image.new(
+            "RGBA", (SIZE[0] - PIC_SIZE[0], PIC_SIZE[1]), (255, 255, 255, 0)
+        )
+        draw = PIL.ImageDraw.Draw(word_box)
+
+        std_text = f"{ac_stand}"
+        # std_text_size = draw.textsize(std_text, font=bg_num_font)
+        draw.text(
+            (SIZE[0] - 350 - len(std_text) * 120, 200),
+            std_text,
+            BG_COLOR[(index + 1) % 2],
+            font=bg_num_font,
+        )
+        if ac_stand == highlight:
+            pic_bg = PIL.Image.new("RGBA", (SIZE[0], PIC_SIZE[1]), BG_COLOR[2])
+        else:
+            pic_bg = PIL.Image.new("RGBA", (SIZE[0], PIC_SIZE[1]), BG_COLOR[index % 2])
+        gen_image.paste(pic_bg, (0, index * PIC_SIZE[1]))
+
+        offset_x = int((PIC_SIZE[0] - image.size[0]) / 2)
+        offset_y = int((PIC_SIZE[1] - image.size[1]) / 2)
+        gen_image.paste(image, (offset_x, index * PIC_SIZE[1] + offset_y), image)
+
+        draw.text((20, 40), f"{ac_name}", (0, 0, 0), font=name_font)
+        draw.text((20, 110), f"《{ac_src}》", (0, 0, 0), font=src_font)
+        draw.text((0, 160), f"{ac_rank}", RANK_COLOR[ac_rank], font=rank_font)
+        draw.text((370, 180), f"SCORE {ac_score: .2f}", (0, 0, 0), font=score_font)
+        draw.text((370, 260), f"对象是 {user_name}", (0, 0, 0), font=user_font)
+        draw.text((540, 310), f"{waifu_data['qq']}", (50, 50, 50), font=src_font)
+        draw.text(
+            (900, 40),
+            f"[ {ac_data.get('def', 'NONE')} ]",
+            BG_COLOR[(index + 1) % 2],
+            font=score_font,
+        )
+        gen_image.paste(word_box, (PIC_SIZE[0], index * PIC_SIZE[1]), word_box)
+
+    img_bytes = io.BytesIO()
+    gen_image.save(img_bytes, format="PNG")
+    return img_bytes.getvalue()
+
 
 if __name__ == "__main__":
     from toogle.plugins.compose.waifu import get_random_anime_character
