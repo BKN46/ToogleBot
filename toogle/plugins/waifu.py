@@ -70,6 +70,9 @@ class GetRandomAnimeFemale(MessageHandler):
 
                 others = SQLConnection.search("qq_waifu", {"waifuId": res[2]})
 
+                is_shine = random.random() < 0.05
+                no_center_box = random.random() < 0.1 and is_shine
+
                 if others and not str(others[0][0]) == str(message.member.id):
                     text = f"\n{get_user_name(message)}你的{schn}是:\n{res[1]}\n\n但是已经被{others[0][0]}抢先下手了"
                     SQLConnection.update_user(
@@ -84,20 +87,16 @@ class GetRandomAnimeFemale(MessageHandler):
                         res_text,
                         res_raw['CV'],
                         is_repeat=str(others[0][0]),
+                        is_shine=is_shine,
+                        no_center_box=no_center_box,
                     )
                 else:
                     text = f"\n{get_user_name(message)}你的{schn}是:\n{res[1]}\n输入【锁定{schn}】即可锁定{schn}"
-                    SQLConnection.update_user(
-                        message.member.id,
-                        f"last_luck='{DatetimeUtils.get_now_time()}', waifu='{res[2]}'",
-                    )
-
-                    is_shine = random.random() < 0.05
-                    no_center_box = random.random() < 0.1 and is_shine
 
                     SQLConnection.update(
                         "qq_user",
                         {
+                            "last_luck": str(DatetimeUtils.get_now_time()),
                             "waifu": json.dumps({
                                 "id": res[2],
                                 "is_shine": is_shine,
