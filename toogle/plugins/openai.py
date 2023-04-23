@@ -1,4 +1,6 @@
+import datetime
 import json
+import math
 import re
 import requests
 import time
@@ -31,9 +33,33 @@ default_settings = {
     "midjourney": "You will generate a stills image description exactly as instructed by me.\n\n- you will write the description in one long line without using line breaks.\n\nThe concept of the image I will send you later\n\n, start first with a headline - \"Prompt [number]:\", then in a new line start the description with the phrase \"/imagine prompt:\" then continue by mentioning the concept and fluently attach it to an art form, then choose an artist from your data bank as a matching inspiration for the art form, then describe the scene in some detail but not too much, then choose the color temperature, describe facial expressions if there are any in the image, then choose the lighting, and atmosphere. all the descriptions should not take more than 5 lines of text.\n\nArt forms to choose from:\nPhotography, Illustration, watercolor, oil painting, comics, Pixar 3D, digital illustration\n\n- If the art form is photography, you will choose a lens size (for example 35mm) \n\n- you will generate 3 different descriptions in 6 different art forms and styles\n\n- you will end each description with the phrase \"--v 5 --stylize 1000\"\n\n- you will wait for your next concept OR a request for more descriptions for the same concept\n\n- the description will be in English, text given later I will give you in the next paragraph",
 }
 
+
+class GPTContext:
+    content = []
+
+    def __init__(self, settings: str = "") -> None:
+        if settings:
+            self.content.append({"role": "system", "content": settings})
+
+    def add_user_talk(self, text):
+        self.content.append({"role": "user", "content": text})
+
+    def add_gpt_reply(self, text):
+        self.content.append({"role": "assistant", "content": text})
+
+    def json(self):
+        return json.dumps(self.content, indent=2, ensure_ascii=False)
+    
+    @staticmethod
+    def from_json(json_text):
+        res = GPTContext()
+        res.content = json.loads(json_text)
+        return res
+
+
 class GetOpenAIConversation(MessageHandler):
     name = "OpenAI对话"
-    trigger = r"^\.gpt(\[.*?\]|)(all|)\s(.*)"
+    trigger = r"^\.gpt(\[.*?\]|)(all|context|bill|)\s(.*)"
     thread_limit = True
     readme = "OpenAI GPT-4 模型对话，使用例：\n.gpt 你好\n.gpt[JK] 你好"
     interval = 600
@@ -47,9 +73,11 @@ class GetOpenAIConversation(MessageHandler):
         extra = match_group.group(2)
         message_content = match_group.group(3)
 
-        max_time = 45
+        max_time, context_content = 45, []
         if extra=='all':
             max_time = 600
+        elif extra=='bill':
+            return MessageChain.plain(GetOpenAIConversation.get_openai_usage())
 
         if setting:
             setting = setting[1:-1]
@@ -133,3 +161,27 @@ class GetOpenAIConversation(MessageHandler):
                 res_text += "\n[由于时长限制后续生成直接截断]"
                 break
         return res_text.strip()
+
+    @staticmethod
+    def get_openai_usage(day_count=30):
+        date_now = datetime.datetime.now()
+        end_date = date_now.strftime("%Y-%m-%d")
+        start_date = (date_now - datetime.timedelta(days=day_count)).strftime("%Y-%m-%d")
+        path = f"/dashboard/billing/usage?end_date={end_date}&start_date={start_date}"
+        res = requests.get(url + path, headers=header, timeout=30, proxies=proxies).json()
+        total_usage = res['total_usage']
+        daily_cost = [
+            sum([x['cost'] for x in day['line_items']])
+            for day in res['daily_costs']
+        ]
+
+        res_text = ""
+        max_day, max_length = 300, 15
+        for i, cost in enumerate(daily_cost):
+            day_length = math.ceil(min(cost, max_day) / max_day * max_length)
+            day = (date_now - datetime.timedelta(days=day_count-i)).strftime("%Y-%m-%d")
+            res_text += f"{day} ${cost/100:<6.2f} {'#' * day_length}\n"
+
+        res_text += f"Total: {total_usage/100:.2f} usd\n"
+
+        return res_text
