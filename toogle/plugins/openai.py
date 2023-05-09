@@ -63,7 +63,7 @@ class GetOpenAIConversation(MessageHandler):
     thread_limit = True
     readme = "OpenAI GPT-4 模型对话，使用例：\n.gpt 你好\n.gpt[JK] 你好"
     interval = 600
-    message_length_limit = 200
+    message_length_limit = 1000
 
     async def ret(self, message: MessagePack) -> MessageChain:
         match_group = re.match(self.trigger, message.message.asDisplay())
