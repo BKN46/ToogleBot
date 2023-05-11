@@ -43,6 +43,7 @@ class CSGOBuff(MessageHandler):
         extra_param = {
             "page_num": 1,
             "sort_by": "price.asc",
+            "quality": "normal",
         }
         def add_param(text: str):
             if text == "普通":
@@ -69,13 +70,29 @@ class CSGOBuff(MessageHandler):
                 extra_param['max_price'] = int(text[2:])
             elif text.startswith("价格降序") and len(text) > 2:
                 extra_param['sort_by'] = "price.desc"
+            elif "刀" in text:
+                extra_param['quality'] = "unusual"
+                return False
             else:
                 return False
             return True
         
         search_content = " ".join([x for x in search_content.split() if not add_param(x)])
-        res = CSGOBuff.get_buff(search=search_content, **extra_param)
-        return MessageChain.plain(res)
+        res_raw = CSGOBuff.get_buff(search=search_content, **extra_param)
+
+        if len(res_raw) <= 3:
+            res_list = []
+            for item in res_raw:
+                res_list.append(Image(url=item[1]))
+                res_list.append(Plain(item[0]))
+            res = MessageChain.create([
+                Plain("搜索结果:\n"),
+                *res_list
+            ])
+        else:
+            res = MessageChain.plain("搜索结果:\n" + "\n".join([x[0] for x in res_raw]))
+
+        return res
 
     @staticmethod
     def get_buff(**params):
@@ -103,5 +120,13 @@ class CSGOBuff(MessageHandler):
 
         items = res["data"]["items"]
 
-        res_text = "\n".join([f"¥{item['sell_min_price']:<10} {item['name']}" for item in items])
-        return "搜索结果:\n" + res_text
+        res = [
+            (
+                f"¥{item['sell_min_price']:<10} {item['name']}",
+                item['goods_info']['icon_url']
+            )
+            for item in items
+            if float(item['sell_min_price']) > 0
+        ]
+
+        return res
