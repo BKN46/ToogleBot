@@ -35,10 +35,46 @@ class CSGOBuff(MessageHandler):
     trigger = r"^.csgo\s"
     thread_limit = True
     readme = "CSGO Buff饰品查询"
+    interval = 30
 
     async def ret(self, message: MessagePack) -> MessageChain:
         search_content = message.message.asDisplay()[5:].strip()
-        res = CSGOBuff.get_buff(search=search_content)
+
+        extra_param = {
+            "page_num": 1,
+            "sort_by": "price.asc",
+        }
+        def add_param(text: str):
+            if text == "普通":
+                extra_param['quality'] = "normal"
+            elif text == "普通刀":
+                extra_param['quality'] = "unusual"
+            elif text == "暗金":
+                extra_param['quality'] = "strange"
+            elif text == "暗金刀":
+                extra_param['quality'] = "unusual_strange"
+            elif text == "纪念品":
+                extra_param['quality'] = "tournament"
+            elif text == "隐秘":
+                extra_param['rarity'] = "ancient_weapon"
+            elif text == "保密":
+                extra_param['rarity'] = "legendary_weapon"
+            elif text == "受限":
+                extra_param['rarity'] = "mythical_weapon"
+            elif text.startswith("pg") and len(text) > 2:
+                extra_param['page_num'] = int(text[2:])
+            elif text.startswith("最低") and len(text) > 2:
+                extra_param['min_price'] = int(text[2:])
+            elif text.startswith("最高") and len(text) > 2:
+                extra_param['max_price'] = int(text[2:])
+            elif text.startswith("价格降序") and len(text) > 2:
+                extra_param['sort_by'] = "price.desc"
+            else:
+                return False
+            return True
+        
+        search_content = " ".join([x for x in search_content.split() if not add_param(x)])
+        res = CSGOBuff.get_buff(search=search_content, **extra_param)
         return MessageChain.plain(res)
 
     @staticmethod
@@ -47,8 +83,6 @@ class CSGOBuff(MessageHandler):
 
         params.update({
             "game": "csgo",
-            "page_num": 1,
-            "sort_by": "price.asc",
         })
         params = params
 
