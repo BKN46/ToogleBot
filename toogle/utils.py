@@ -379,8 +379,10 @@ def draw_pic_text(
     pic_size: Tuple[int, int] = (300, 460),
     max_size: Tuple[int, int] = (1000, 500),
     padding: Tuple[int, int] = (20, 20),
+    word_padding: Tuple[int, int] = (0, 0),
     bg_color: Tuple[int, int, int] = (255, 255, 255),
     font_color: Tuple[int, int, int] = (20, 20, 20),
+    byte_mode: bool = True
 ):
     pic = pic_max_resize(pic, pic_size[0] - padding[0], pic_size[1] - 2 * padding[1])
     pic_size = pic.size
@@ -401,11 +403,15 @@ def draw_pic_text(
         (max_size[0], max(max_size[1], text_pic_size[1])),
         bg_color,
     )
-    gen_image.paste(pic, (padding[0], padding[1]))
-    gen_image.paste(text_pic, (pic_size[0] + padding[0], 0))
-    img_bytes = io.BytesIO()
-    gen_image.save(img_bytes, format="PNG")
-    return img_bytes.getvalue()
+    gen_image.paste(pic, (padding[0], padding[1]), pic)
+    gen_image.paste(text_pic, (pic_size[0] + padding[0] + word_padding[0], padding[1] + word_padding[1]))
+
+    if byte_mode:
+        img_bytes = io.BytesIO()
+        gen_image.save(img_bytes, format="PNG")
+        return img_bytes.getvalue()
+    else:
+        return gen_image
 
 
 def is_admin(id: int) -> Boolean:
