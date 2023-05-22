@@ -85,7 +85,7 @@ class CSGOBuff(MessageHandler):
                 other_param['max_paint_wear'] = float(text[4:])
             elif text.startswith("价格降序") and len(text) > 2:
                 extra_param['sort_by'] = "price.desc"
-            elif "刀" in text:
+            elif "刀" in text or "匕首" in text:
                 extra_param['quality'] = "unusual"
                 return False
             elif "手套" in text:
@@ -163,7 +163,7 @@ class CSGOBuff(MessageHandler):
         return "#b0c3d9"
 
     @staticmethod
-    def compose_weapon_list(res_list):
+    def compose_weapon_list(res_list, word_size=20):
         res_pic = PIL.Image.new(
             "RGBA",
             (600, 180 * len(res_list) + 20),
@@ -179,7 +179,7 @@ class CSGOBuff(MessageHandler):
                 padding=(20, 0),
                 max_size=(600, 200),
                 word_padding=(0, 60),
-                word_size=20,
+                word_size=word_size,
                 byte_mode=False,
             )
             bar = PIL.Image.new(
@@ -287,7 +287,7 @@ class CSGORandomCase(MessageHandler):
 
         # text, pic_url, grade, weapon_id
         render_list = [[
-            f"{x['name']}\n磨损: {x['wear']}\n模板: {x['template_index']}",
+            f"{x['name']}\n磨损: {x['wear']:.6f} 模板: {x['template_index']}\n价格: ¥{x['min_price']} - ¥{x['max_price']}",
             x['pic'],
             x['rarity'],
             x['item_id'],
@@ -411,6 +411,8 @@ class CSGORandomCase(MessageHandler):
                 "name": item["localized_name"],
                 "item_id": item["goods_id"],
                 "pic": item["goods"]["original_icon_url"],
+                "min_price": item["min_price"],
+                "max_price": item["max_price"],
                 "rarity": rarity,
             }
             if not now_rarity or rarity != now_rarity:
