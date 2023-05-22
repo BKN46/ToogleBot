@@ -1,4 +1,8 @@
 import io
+import os
+import json
+import random
+import threading
 
 import requests
 import PIL.Image
@@ -14,6 +18,8 @@ proxies = {
     'http': config.get('REQUEST_PROXY_HTTP', ''),
     'https': config.get('REQUEST_PROXY_HTTPS', ''),
 }
+
+thread_lock = threading.Lock()
 
 class AStock(MessageHandler):
     name = "A股详情查询"
@@ -34,6 +40,7 @@ class AStock(MessageHandler):
         else:
             img_bytes = render_report(search_list[0][0])
             return MessageChain.create([Image(bytes=img_bytes)])
+
 
 class CSGOBuff(MessageHandler):
     name = "CSGO Buff饰品查询"
@@ -99,7 +106,6 @@ class CSGOBuff(MessageHandler):
         else:
             res_pic = CSGOBuff.compose_weapon_list(res_raw)
             return MessageChain.create([Image(bytes=res_pic)])
-
 
     @staticmethod
     def get_buff(**params):
@@ -251,3 +257,221 @@ class CSGOBuff(MessageHandler):
         img_bytes = io.BytesIO()
         res_pic.save(img_bytes, format="PNG")
         return img_bytes.getvalue()
+
+
+class CSGORandomCase(MessageHandler):
+    name = "CSGO开箱"
+    trigger = r"^.betcs\s"
+    thread_limit = True
+    readme = "CSGO开箱模拟"
+    interval = 120
+
+    async def ret(self, message: MessagePack) -> MessageChain:
+        search_content = message.message.asDisplay()[6:].strip()
+        try:
+            open_num = int(search_content.split()[-1])
+            if open_num > 10:
+                return MessageChain.plain("最多一次开10个箱子")
+            search_content = ' '.join(search_content.split()[:-1])
+        except Exception as e:
+            open_num = 1
+        case_search = CSGORandomCase.search_case(search_content)
+
+        if len(case_search) <= 0:
+            return MessageChain.plain("未搜索到相关箱子")
+        elif len(case_search) > 1:
+            return MessageChain.plain("搜索到多个箱子：\n" + "\n".join([x[1] for x in case_search]))
+
+        case_info = CSGORandomCase.get_case(case_search[0][0])
+        weapons = [CSGORandomCase.random_weapon(case_info) for _ in range(open_num)]
+
+        # text, pic_url, grade, weapon_id
+        render_list = [[
+            f"{x['name']}\n磨损: {x['wear']}\n模板: {x['template_index']}",
+            x['pic'],
+            x['rarity'],
+            x['item_id'],
+        ] for x in weapons]
+
+        res_pic = CSGOBuff.compose_weapon_list(render_list)
+        return MessageChain.create([Image(bytes=res_pic)])
+
+
+    @staticmethod
+    def get_case(case_name):
+        thread_lock.acquire()
+        cache_path = "data/csgo_case_data.json"
+        if os.path.isfile(cache_path):
+            with open(cache_path, "r") as f:
+                case_infos = json.load(f)
+            if case_name not in case_infos:
+                case_info = CSGORandomCase.get_case_info(case_name)
+                case_infos[case_name] = case_info
+                with open(cache_path, "w") as f:
+                    json.dump(case_infos, f, ensure_ascii=False, indent=2)
+        else:
+            case_info = CSGORandomCase.get_case_info(case_name)
+            case_infos = {}
+            case_infos[case_name] = case_info
+            with open(cache_path, "w") as f:
+                json.dump(case_infos, f, ensure_ascii=False, indent=2)
+        thread_lock.release()
+        return case_infos[case_name]
+
+    @staticmethod
+    def search_case(name):
+        url = 'https://buff.163.com/api/market/goods'
+
+        params = {
+            "game": "csgo",
+            "page_num": 1,
+            "search": name,
+            "category": "csgo_type_weaponcase",
+        }
+
+        try:
+            cookies = open("data/buff_cookie", "r").read().strip()
+        except Exception as e:
+            raise Exception("未配置buff cookie")
+
+        headers = {
+            "cookie": cookies
+        }
+
+        try:
+            res = requests.get(url, params=params, headers=headers, proxies=proxies)
+            res = res.json()
+        except Exception as e:
+            raise Exception("请求失败")
+        if res["code"] != 'OK':
+            raise Exception("请求失败")
+
+        items = res["data"]["items"]
+        return [(x['market_hash_name'], x['name']) for x in items]
+
+    @staticmethod
+    def get_case_info(case_name, unusual_only=False):
+        url = 'https://buff.163.com/api/market/csgo_container'
+
+        params = {
+            "container": case_name,
+            "is_container": 1,
+            "container_type": "weaponcase",
+        }
+
+        if unusual_only:
+            params.update({"unusual_only": 1})
+
+        try:
+            cookies = open("data/buff_cookie", "r").read().strip()
+        except Exception as e:
+            raise Exception("未配置buff cookie")
+
+        headers = {
+            "cookie": cookies
+        }
+
+        try:
+            res = requests.get(url, params=params, headers=headers, proxies=proxies)
+            res = res.json()
+        except Exception as e:
+            raise Exception("请求失败")
+        if res["code"] != 'OK':
+            raise Exception("请求失败")
+        
+        unusual_content = []
+
+        if unusual_only:
+            return res["data"]["items"]
+        elif res["data"]["has_unusual"]:
+            unusual_content = CSGORandomCase.get_case_info(case_name, unusual_only=True)
+
+        case_content, now_rarity = [], None
+        raw_content = unusual_content + res["data"]["items"]
+        for item in raw_content:
+            rarity = item["goods"]["tags"]["rarity"]["internal_name"]
+            item_dict = {
+                "name": item["localized_name"],
+                "item_id": item["goods_id"],
+                "pic": item["goods"]["original_icon_url"],
+                "rarity": rarity,
+            }
+            if not now_rarity or rarity != now_rarity:
+                now_rarity = rarity
+                case_content.append([item_dict])
+            else:
+                case_content[-1].append(item_dict)
+
+        return case_content
+
+    @staticmethod
+    def random_weapon(case_content):
+        rarity_probability = [
+            0.0026,
+            0.0064,
+            0.032,
+            0.1598,
+            0.7992,
+        ]
+        cobblestone_rarity_probability = [
+            0.00026,
+            0.00128,
+            0.0064,
+            0.032,
+            0.1598,
+            0.7992,
+        ]
+        wear_probability = [
+            0.03,
+            0.24,
+            0.33,
+            0.24,
+            0.16,
+        ]
+        wear_content = [
+            0,
+            0.07,
+            0.15,
+            0.38,
+            0.45,
+            1,
+        ]
+        wear_name = [
+            "崭新出厂",
+            "略有磨损",
+            "久经沙场",
+            "破损不堪",
+            "战痕累累",
+        ]
+
+        if len(case_content) == 6:
+            rarity_probability = cobblestone_rarity_probability
+        total_probability = sum(rarity_probability[:len(case_content)])
+        random_num = random.random() * total_probability
+        for i, content in enumerate(case_content):
+            random_num -= rarity_probability[i]
+            if random_num <= 0:
+                item_result = random.choice(content)
+                break
+        else:
+            item_result = random.choice(case_content[len(case_content) - 1])
+
+        template_index = random.randint(0, 999)
+        random_num = random.random() * sum(wear_probability)
+        for i, wear in enumerate(wear_probability):
+            random_num -= wear
+            if random_num <= 0:
+                wear_result = random.random() * (wear_content[i + 1] - wear_content[i]) + wear_content[i]
+                break
+        else:
+            raise Exception("随机失败")
+        
+        stattrack = random.random() < 0.1
+
+        return {
+            **item_result,
+            "name": f"{item_result['name']} {'（StatTrak™）' if stattrack else ''}| ({wear_name[i]})",
+            "template_index": template_index,
+            "wear": wear_result,
+        }
+
