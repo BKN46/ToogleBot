@@ -320,6 +320,15 @@ class CSGORandomCase(MessageHandler):
 
     @staticmethod
     def search_case(name):
+        cache_path = "data/csgo_case_name.json"
+        if os.path.isfile(cache_path):
+            with open(cache_path, "r") as f:
+                case_infos = json.load(f)
+            if name in case_infos:
+                return case_infos[name]
+        else:
+            case_infos = {}
+
         url = 'https://buff.163.com/api/market/goods'
 
         params = {
@@ -347,7 +356,15 @@ class CSGORandomCase(MessageHandler):
             raise Exception("请求失败")
 
         items = res["data"]["items"]
-        return [(x['market_hash_name'], x['name']) for x in items]
+        res =  [(x['market_hash_name'], x['name']) for x in items]
+    
+        case_infos[name] = res
+        thread_lock.acquire()
+        with open(cache_path, "w") as f:
+            json.dump(case_infos, f, ensure_ascii=False, indent=2)
+        thread_lock.release()
+
+        return res
 
     @staticmethod
     def get_case_info(case_name, unusual_only=False):
