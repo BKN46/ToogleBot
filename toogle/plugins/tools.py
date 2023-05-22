@@ -3,9 +3,10 @@ import os
 import json
 import random
 import threading
+import time
 
 import requests
-import PIL.Image
+import PIL.Image, PIL.ImageDraw, PIL.ImageFont
 from matplotlib import pyplot as plt
 
 from toogle.configs import config
@@ -271,20 +272,24 @@ class CSGORandomCase(MessageHandler):
         try:
             open_num = int(search_content.split()[-1])
             if open_num > 10:
-                return MessageChain.plain("最多一次开10个箱子")
+                return MessageChain.create([message.as_quote(), Plain("最多一次开10个箱子")])
             search_content = ' '.join(search_content.split()[:-1])
         except Exception as e:
             open_num = 1
         case_search = CSGORandomCase.search_case(search_content)
 
         if len(case_search) <= 0:
-            return MessageChain.plain("未搜索到相关箱子")
+            return MessageChain.create([message.as_quote(), Plain("未搜索到相关箱子")])
         elif len(case_search) > 1:
-            return MessageChain.plain("搜索到多个箱子：\n" + "\n".join([x[1] for x in case_search]))
+            return MessageChain.create([message.as_quote(), Plain("搜索到多个箱子：\n" + "\n".join([x[1] for x in case_search]))])
 
         case_info = CSGORandomCase.get_case(case_search[0][0])
-        weapons = [CSGORandomCase.random_weapon(case_info) for _ in range(open_num)]
 
+        if open_num == 1:
+            res_pic = CSGORandomCase.open_case_animation(case_info)
+            return MessageChain.create([message.as_quote(), Image(bytes=res_pic)])
+
+        weapons = [CSGORandomCase.random_weapon(case_info) for _ in range(open_num)]
         # text, pic_url, grade, weapon_id
         render_list = [[
             f"{x['name']}\n磨损: {x['wear']:.6f} 模板: {x['template_index']}\n价格: ¥{x['min_price']} - ¥{x['max_price']}",
@@ -294,7 +299,7 @@ class CSGORandomCase(MessageHandler):
         ] for x in weapons]
 
         res_pic = CSGOBuff.compose_weapon_list(render_list)
-        return MessageChain.create([Image(bytes=res_pic)])
+        return MessageChain.create([message.as_quote(), Image(bytes=res_pic)])
 
 
     @staticmethod
@@ -414,6 +419,7 @@ class CSGORandomCase(MessageHandler):
                 "min_price": item["min_price"],
                 "max_price": item["max_price"],
                 "rarity": rarity,
+                "category": item["goods"]["tags"]["category"]["internal_name"],
             }
             if not now_rarity or rarity != now_rarity:
                 now_rarity = rarity
@@ -424,7 +430,7 @@ class CSGORandomCase(MessageHandler):
         return case_content
 
     @staticmethod
-    def random_weapon(case_content):
+    def random_weapon(case_content, no_unusal=False):
         rarity_probability = [
             0.0026,
             0.0064,
@@ -487,6 +493,9 @@ class CSGORandomCase(MessageHandler):
         
         stattrack = random.random() < 0.1
 
+        if no_unusal and ('knife' in item_result["category"] or 'glove' in item_result["category"]):
+            return CSGORandomCase.random_weapon(case_content, no_unusal=True)
+
         return {
             **item_result,
             "name": f"{item_result['name']} {'（StatTrak™）' if stattrack else ''}| ({wear_name[i]})",
@@ -494,3 +503,71 @@ class CSGORandomCase(MessageHandler):
             "wear": wear_result,
         }
 
+    @staticmethod
+    def open_case_animation(case_content, debug=False):
+        item_result = CSGORandomCase.random_weapon(case_content)
+        frame_buff = [CSGORandomCase.random_weapon(case_content, no_unusal=True) for _ in range(8)]
+
+        gif_frames = []
+        init_offset = random.randint(0, 60)
+        offset = init_offset
+        momentum, deacc, is_end = 70, 0.4, False
+        icon_width = 150
+        out_start_time = time.time()
+        while momentum > 0:
+            start_time = time.time()
+
+            frame_pic = PIL.Image.new("RGBA", (750, 200), (255, 255, 255))
+            center_bar = PIL.Image.new("RGBA", (4, 180), (120, 120, 120))
+            for i in range(0, 7):
+                weapon_pic = PIL.Image.new("RGBA", (icon_width, 170), (255, 255, 255))
+                weapon_icon = Image.buffered_url_pic(frame_buff[i]["pic"], return_PIL=True)
+                weapon_icon = pic_max_resize(weapon_icon, icon_width, 150) # type: ignore
+                weapon_pic.paste(weapon_icon, (0, 0), weapon_icon)
+                weapon_bar = PIL.Image.new(
+                    "RGBA",
+                    (150, 20),
+                    CSGOBuff.get_weapon_grade_color(frame_buff[i]["rarity"]),
+                )
+                weapon_pic.paste(weapon_bar, (0, icon_width))
+                frame_pic.paste(weapon_pic, (i * icon_width - round(offset), 0))
+            if offset > icon_width:
+                del_weapon = int(offset / icon_width)
+                frame_buff = frame_buff[del_weapon:] + [CSGORandomCase.random_weapon(case_content, no_unusal=True) for _ in range(del_weapon)]
+                if momentum / 2 * (momentum / deacc) - init_offset <= icon_width * 3 and not is_end:
+                    frame_buff[5] = item_result
+                    is_end = True
+                offset -= icon_width * del_weapon
+            frame_pic.paste(center_bar, (373, 10))
+
+            gif_frames.append(frame_pic)
+            offset += momentum
+            momentum -= deacc
+            if debug:
+                print(momentum, (time.time() - start_time) * 1000)
+
+        # print(item_result)
+        final_pic = CSGOBuff.compose_weapon_list([[
+            f"{x['name']}\n磨损: {x['wear']:.6f} 模板: {x['template_index']}\n价格: ¥{x['min_price']} - ¥{x['max_price']}",
+            x['pic'],
+            x['rarity'],
+            x['item_id'],
+            ]for x in [item_result]
+        ])
+        final_pic = PIL.Image.open(io.BytesIO(final_pic))
+        result_pic = PIL.Image.new("RGBA", (750, 200), (255, 255, 255))
+        result_pic.paste(final_pic, (0, 0))
+
+        img_bytes = io.BytesIO()
+        gif_frames[0].save(
+            img_bytes,
+            format="GIF",
+            save_all=True,
+            append_images=gif_frames[1:] + [gif_frames[-1] for _ in range(10)] + [result_pic for _ in range(150)],
+            optimize=True,
+            duration=40,
+            # loop=1,
+        )
+        if debug:
+            print("use time: ", (time.time() - out_start_time) * 1000, "ms")
+        return img_bytes.getvalue()

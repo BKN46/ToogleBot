@@ -110,17 +110,24 @@ class Image(Element):
         return Image(bytes=text2img(text, **kwargs))
 
     @staticmethod
-    def buffered_url_pic(pic_url) -> "Image":
+    def buffered_url_pic(pic_url, return_PIL=False):
         buffer_path = "data/buffer/"
         all_buffer = os.listdir(buffer_path)
 
         trans_url = pic_url.replace("://", "_").replace("/", "_")
 
         if trans_url in all_buffer:
-            return Image.fromLocalFile(buffer_path + trans_url)
+            if not return_PIL:
+                return Image.fromLocalFile(buffer_path + trans_url)
+            else:
+                return PIL.Image.open(buffer_path + trans_url)
 
-        PIL.Image.open(requests.get(pic_url, stream=True).raw).save(buffer_path + trans_url)
-        return Image.fromLocalFile(buffer_path + trans_url)
+        pil_image = PIL.Image.open(requests.get(pic_url, stream=True).raw)
+        pil_image.save(buffer_path + trans_url, format="PNG")
+        if not return_PIL:
+            return Image.fromLocalFile(buffer_path + trans_url)
+        else:
+            return pil_image
 
     @staticmethod
     def fromLocalFile(path: str) -> "Image":
