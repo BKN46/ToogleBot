@@ -1,3 +1,4 @@
+import datetime
 import io
 import os
 import json
@@ -146,7 +147,7 @@ class CSGOBuff(MessageHandler):
         ]
         # text, pic_url, grade, id
         return res
-    
+
     @staticmethod
     def get_weapon_grade_color(grade_name):
         grade_color = {
@@ -211,13 +212,27 @@ class CSGOBuff(MessageHandler):
 
         res = requests.get(url, params=params, headers=headers, proxies=proxies)
         price_history = res.json()['data']['price_history']
+        plt.figure(figsize=(8, 3))
         plt.plot([x[1] for x in price_history])
         pic_buf = io.BytesIO()
         plt.savefig(pic_buf, format='png')
         price_history_graph = pic_max_resize(
-            PIL.Image.open(pic_buf), 800, 800
+            PIL.Image.open(pic_buf), 800, 300
         )
         plt.close()
+
+        # get order history
+        url = f"https://buff.163.com/api/market/goods/bill_order"
+        params = {
+            "game": "csgo",
+            "goods_id": weapon_id,
+        }
+        res = requests.get(url, params=params, headers=headers, proxies=proxies).json()
+        
+        order_history = [
+            f"{datetime.datetime.fromtimestamp(int(x['buyer_pay_time'])).strftime('%Y-%m-%d')}  ¥{x['price']}"
+            for x in res['data']['items']
+        ]
 
         # get first trade
         url = f"https://buff.163.com/api/market/goods/sell_order"
@@ -251,9 +266,16 @@ class CSGOBuff(MessageHandler):
         res_pic.paste(PIL.Image.open(io.BytesIO(text_pic)), (10, 10))
 
         weapon_pic = pic_max_resize(
-            PIL.Image.open(requests.get(weapon_pic_url, stream=True).raw), 750, 300
+            PIL.Image.open(requests.get(weapon_pic_url, stream=True).raw), 750, 300, hard_limit=True
         )
-        res_pic.paste(weapon_pic, (20, 150), weapon_pic)
+        weapon_margin = (int((800 - 40 - weapon_pic.size[0]) / 2), int((300 - weapon_pic.size[1]) / 2))
+        res_pic.paste(weapon_pic, (20 + weapon_margin[0], 120 + weapon_margin[1]), weapon_pic)
+
+        text_pic = text2img(
+            f"成交记录:\n" + "\n".join(order_history),
+            max_size=(800, 500),
+        )
+        res_pic.paste(PIL.Image.open(io.BytesIO(text_pic)), (50, 700))
 
         img_bytes = io.BytesIO()
         res_pic.save(img_bytes, format="PNG")
@@ -481,24 +503,31 @@ class CSGORandomCase(MessageHandler):
         else:
             item_result = random.choice(case_content[len(case_content) - 1])
 
-        template_index = random.randint(0, 999)
-        random_num = random.random() * sum(wear_probability)
-        for i, wear in enumerate(wear_probability):
-            random_num -= wear
-            if random_num <= 0:
-                wear_result = random.random() * (wear_content[i + 1] - wear_content[i]) + wear_content[i]
-                break
+        if "印花" in item_result["name"]:
+            template_index = 0
+            wear_result = 0
+            stattrack = False
+            final_name = f"{item_result['name']}"
         else:
-            raise Exception("随机失败")
-        
-        stattrack = random.random() < 0.1
+            template_index = random.randint(0, 999)
+            random_num = random.random() * sum(wear_probability)
+            for i, wear in enumerate(wear_probability):
+                random_num -= wear
+                if random_num <= 0:
+                    wear_result = random.random() * (wear_content[i + 1] - wear_content[i]) + wear_content[i]
+                    break
+            else:
+                raise Exception("随机失败")
+            
+            stattrack = random.random() < 0.1
+            final_name = f"{item_result['name']} {'（StatTrak™）' if stattrack else ''}| ({wear_name[i]})"
 
         if no_unusal and ('knife' in item_result["category"] or 'glove' in item_result["category"]):
             return CSGORandomCase.random_weapon(case_content, no_unusal=True)
 
         return {
             **item_result,
-            "name": f"{item_result['name']} {'（StatTrak™）' if stattrack else ''}| ({wear_name[i]})",
+            "name": final_name,
             "template_index": template_index,
             "wear": wear_result,
         }

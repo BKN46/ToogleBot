@@ -357,18 +357,26 @@ def draw_rich_text(
 def pic_max_resize(
     img: PIL.Image.Image,
     max_width: int,
-    max_height: int
+    max_height: int,
+    hard_limit: bool = False,
 ):
-    if img.size[0] >= img.size[1]:
+    if hard_limit:
+        resize_ratio = min(max_width / img.size[0], max_height / img.size[1])
         return img.resize(
-            (max_width, int(img.size[1] * max_width / img.size[0])),
+            (int(img.size[0] * resize_ratio), int(img.size[1] * resize_ratio)),
             PIL.Image.ANTIALIAS,
         )
     else:
-        return img.resize(
-            (int(img.size[0] * max_height / img.size[1]), max_height),
-            PIL.Image.ANTIALIAS,
-        )
+        if img.size[0] >= img.size[1]:
+            return img.resize(
+                (max_width, int(img.size[1] * max_width / img.size[0])),
+                PIL.Image.ANTIALIAS,
+            )
+        else:
+            return img.resize(
+                (int(img.size[0] * max_height / img.size[1]), max_height),
+                PIL.Image.ANTIALIAS,
+            )
 
 
 def draw_pic_text(

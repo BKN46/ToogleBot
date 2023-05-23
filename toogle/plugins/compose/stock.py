@@ -185,7 +185,7 @@ def get_HK_quarter_future(code: str):
     )
     res = requests.get(url).json()
     if res['result']['data']:
-        result_text = f"业绩展望:\n\n" + res['result']['data'][0]['FUTURE_EXPECT']
+        result_text = f"业绩展望:\n\n" + str(res['result']['data'][0]['FUTURE_EXPECT'])
     else:
         result_text = f"业绩展望:\n\n暂无"
     return result_text
