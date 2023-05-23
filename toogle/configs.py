@@ -1,8 +1,8 @@
-import configparser
-
 import nonebot
 import time
+import threading
 
+interval_locker = threading.Lock()
 
 def ini_parse(data: str):
     if data.startswith("[") and data.endswith("]"):
@@ -42,18 +42,26 @@ class IntervalLimiter():
         id = str(id)
         now_time_sec = int(time.time())
         if function_name not in self.root.keys():
+            return True
+        else:
+            if id not in self.root[function_name] or self.root[function_name][id] < now_time_sec:
+                return True
+            return False
+        
+    def force_user_interval(self, function_name, id, interval=30):
+        id = str(id)
+        now_time_sec = int(time.time())
+        interval_locker.acquire()
+        if function_name not in self.root.keys():
             self.root.update({
                 function_name: {
                     id: now_time_sec + interval
                 }
             })
-            return True
         else:
-            if id not in self.root[function_name] or self.root[function_name][id] < now_time_sec:
-                self.root[function_name].update({
-                    id: now_time_sec + interval
-                })
-                return True
-            return False
+            self.root[function_name].update({
+                id: now_time_sec + interval
+            })
+        interval_locker.release()
 
 interval_limiter = IntervalLimiter()

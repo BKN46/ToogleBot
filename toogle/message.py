@@ -135,8 +135,9 @@ class Image(Element):
 
 
 class MessageChain:
-    def __init__(self, message_list: Sequence[Element]) -> None:
+    def __init__(self, message_list: Sequence[Element], no_interval=False) -> None:
         self.root = message_list
+        self.no_interval = no_interval
 
     def asDisplay(self) -> str:
         return "".join(i.asDisplay() for i in self.root)
@@ -149,9 +150,9 @@ class MessageChain:
         return quotes[0].id if quotes else None # type:ignore
 
     @staticmethod
-    def create(message_list: List) -> "MessageChain":
-        return MessageChain(message_list)
+    def create(message_list: List, no_interval=False) -> "MessageChain":
+        return MessageChain(message_list, no_interval)
     
     @staticmethod
-    def plain(text: str) -> "MessageChain":
-        return MessageChain([Plain(text)])
+    def plain(text: str, no_interval=False) -> "MessageChain":
+        return MessageChain([Plain(text)], no_interval=no_interval)

@@ -14,7 +14,7 @@ from nonebot.adapters.mirai2.event.message import MessageSource
 
 from toogle.configs import config
 from toogle.message import MessageChain
-from toogle.nonebot2_adapter import bot_get_all_group, bot_send_message, bot_exec, PluginWrapper, admin_user_checker
+from toogle.nonebot2_adapter import bot_get_all_group, bot_send_message, bot_exec, PluginWrapper, admin_user_checker, worker_shutdown
 from toogle.utils import get_main_groups, is_admin
 
 broadcast_matcher = on_regex("^broadcast (.*)$", rule=admin_user_checker)
@@ -47,3 +47,15 @@ async def handle_debug(
     await debug_matcher.send(json.dumps(res, indent=2, ensure_ascii=False))
 
 debug_matcher.append_handler(handle_debug)
+
+
+shutdown_matcher = on_regex(r"^\.shutdown(.*)", rule=admin_user_checker)
+
+async def handle_shutdown(
+    foo: Tuple[Any, ...] = RegexGroup(),
+):
+    await worker_shutdown()
+    await shutdown_matcher.send("Goodbye~")
+    exit()
+
+shutdown_matcher.append_handler(handle_debug)

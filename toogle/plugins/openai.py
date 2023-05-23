@@ -82,10 +82,10 @@ class GetOpenAIConversation(MessageHandler):
         if setting:
             setting = setting[1:-1]
             if setting not in default_settings:
-                return MessageChain.plain(f"预设[{setting}]场景不存在，请使用以下场景：{'、'.join(default_settings.keys())}")
+                return MessageChain.plain(f"预设[{setting}]场景不存在，请使用以下场景：{'、'.join(default_settings.keys())}", no_interval=True)
 
         if len(message_content) > self.message_length_limit:
-            return MessageChain.plain(f"请求字数超限：{len(message_content)} > {self.message_length_limit}")
+            return MessageChain.plain(f"请求字数超限：{len(message_content)} > {self.message_length_limit}", no_interval=True)
 
         try:
             # res = GetOpenAIConversation.get_completion(message_content)
@@ -96,10 +96,10 @@ class GetOpenAIConversation(MessageHandler):
             )
             return MessageChain.plain(res)
         except ReadTimeout as e:
-            return MessageChain.plain("请求OpenAI GPT模型超时，请稍后尝试")
+            return MessageChain.plain("请求OpenAI GPT模型超时，请稍后尝试", no_interval=True)
         except Exception as e:
             # return MessageChain.plain(f"出现错误: {repr(e)}")
-            return MessageChain.plain(f"OpenAI GPT模型服务可能出错，请稍后尝试")
+            return MessageChain.plain(f"OpenAI GPT模型服务可能出错，请稍后尝试", no_interval=True)
 
     @staticmethod
     def get_completion(text: str) -> str:

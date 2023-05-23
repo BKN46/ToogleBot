@@ -6,7 +6,7 @@ from toogle.sql import DatetimeUtils, SQLConnection
 
 class GetAICompose(MessageHandler):
     name = "AI画图"
-    trigger = r"^.ai\s"
+    trigger = r"^\.ai\s"
     thread_limit = True
     # white_list = True
     readme = "获取NovelAI生成图片，注意输入文本必须英文"

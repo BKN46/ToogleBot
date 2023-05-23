@@ -265,23 +265,23 @@ class CSGORandomCase(MessageHandler):
     trigger = r"^.betcs\s"
     thread_limit = True
     readme = "CSGO开箱模拟"
-    interval = 120
+    interval = 300
 
     async def ret(self, message: MessagePack) -> MessageChain:
         search_content = message.message.asDisplay()[6:].strip()
         try:
             open_num = int(search_content.split()[-1])
             if open_num > 10:
-                return MessageChain.create([message.as_quote(), Plain("最多一次开10个箱子")])
+                return MessageChain.create([message.as_quote(), Plain("最多一次开10个箱子")], no_interval=True)
             search_content = ' '.join(search_content.split()[:-1])
         except Exception as e:
             open_num = 1
         case_search = CSGORandomCase.search_case(search_content)
 
         if len(case_search) <= 0:
-            return MessageChain.create([message.as_quote(), Plain("未搜索到相关箱子")])
+            return MessageChain.create([message.as_quote(), Plain("未搜索到相关箱子")], no_interval=True)
         elif len(case_search) > 1:
-            return MessageChain.create([message.as_quote(), Plain("搜索到多个箱子：\n" + "\n".join([x[1] for x in case_search]))])
+            return MessageChain.create([message.as_quote(), Plain("搜索到多个箱子：\n" + "\n".join([x[1] for x in case_search]))], no_interval=True)
 
         case_info = CSGORandomCase.get_case(case_search[0][0])
 

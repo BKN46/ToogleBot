@@ -314,6 +314,8 @@ async def thread_worker(index):
 
         try:
             res = await plugin.ret(message_pack)
+            if plugin.interval and not res.no_interval:
+                interval_limiter.force_user_interval(plugin.name, message_pack.member.id, interval=plugin.interval)
             await bot_send_message(message_pack, res)
             # nonebot.logger.success(f"{plugin.name} in worker {index} running complete.") # type: ignore
         except (UrllibError, RequestsError):
@@ -331,11 +333,13 @@ def worker_start(thread_num=THREAD_NUM):
     for x in THREAD_POOL:
         x.start()
 
-def worker_shutdown(thread_num=THREAD_NUM):
+async def worker_shutdown(thread_num=THREAD_NUM):
     for i in range(thread_num * 2):
         WORK_QUEUE.put((None, None, True)) # type: ignore
     for x in THREAD_POOL:
         x.join()
     nonebot.logger.success("All worker thread shutdown.") # type: ignore
+    for i in config.get("ADMIN_LIST", []):
+        await bot_send_message(int(i), "Toogle threads all shutdown.", friend=True)
 
 worker_start()
