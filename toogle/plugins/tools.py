@@ -45,7 +45,7 @@ class AStock(MessageHandler):
 
 class CSGOBuff(MessageHandler):
     name = "CSGO Buff饰品查询"
-    trigger = r"^.csgo\s"
+    trigger = r"^\.csgo\s"
     thread_limit = True
     readme = "CSGO Buff饰品查询"
     interval = 30
@@ -262,7 +262,7 @@ class CSGOBuff(MessageHandler):
 
 class CSGORandomCase(MessageHandler):
     name = "CSGO开箱"
-    trigger = r"^.betcs\s"
+    trigger = r"^\.betcs\s"
     thread_limit = True
     readme = "CSGO开箱模拟"
     interval = 300
