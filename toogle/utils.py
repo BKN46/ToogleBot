@@ -429,6 +429,13 @@ def is_admin(id: int) -> Boolean:
     return False
 
 
+def is_admin_group(id: int) -> Boolean:
+    for i in config.get("ADMIN_GROUP_LIST", []):
+        if id == int(i):
+            return True
+    return False
+
+
 def get_main_groups() -> List[int]:
     return [
         int(x) for x in

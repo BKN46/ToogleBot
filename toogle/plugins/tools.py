@@ -98,6 +98,14 @@ class CSGOBuff(MessageHandler):
             return True
         
         search_content = " ".join([x for x in search_content.split() if not add_param(x)])
+
+        try:
+            weapon_id = int(search_content)
+            res_pic = CSGOBuff.get_weapon_detail(weapon_id, **other_param)
+            return MessageChain.create([Image(bytes=res_pic)])
+        except Exception as e:
+            weapon_id = 0
+
         res_raw = CSGOBuff.get_buff(search=search_content, **extra_param)
 
         if len(res_raw) <= 0:
@@ -137,7 +145,7 @@ class CSGOBuff(MessageHandler):
 
         res = [
             (
-                f"{item['name']}\n买: ¥{item['sell_min_price']:<10} 卖: ¥{item['buy_max_price']:<10}",
+                f"{item['name']}\n买: ¥{item['sell_min_price']:<10} 卖: ¥{item['buy_max_price']:<10}\nID: {item['id']}",
                 item['goods_info']['icon_url'],
                 item['goods_info']['info']['tags']['rarity']['internal_name'],
                 item['id'],
@@ -273,7 +281,7 @@ class CSGOBuff(MessageHandler):
 
         text_pic = text2img(
             f"成交记录:\n" + "\n".join(order_history),
-            max_size=(800, 500),
+            max_size=(800, 800),
         )
         res_pic.paste(PIL.Image.open(io.BytesIO(text_pic)), (50, 700))
 
