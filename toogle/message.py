@@ -154,5 +154,7 @@ class MessageChain:
         return MessageChain(message_list, no_interval)
     
     @staticmethod
-    def plain(text: str, no_interval=False) -> "MessageChain":
+    def plain(text: str, no_interval=False, quote=None) -> "MessageChain":
+        if quote:
+            return MessageChain([quote, Plain(text)], no_interval=no_interval)
         return MessageChain([Plain(text)], no_interval=no_interval)

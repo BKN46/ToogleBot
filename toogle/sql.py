@@ -1,4 +1,5 @@
 import datetime
+import json
 from typing import Dict
 
 import sqlite3
@@ -224,6 +225,24 @@ class SQLConnection:
         else:
             SQLConnection.insert_user(id)
             return None
+        
+    @staticmethod
+    def get_user_data(id):
+        user = SQLConnection.search("qq_user", {"id": id})
+        if user:
+            if user[0][7].strip() and user[0][7] != "null":
+                data = json.loads(user[0][7]) 
+                return data
+            return {}
+        else:
+            SQLConnection.insert_user(id)
+            return {}
+        
+    @staticmethod
+    def update_user_data(id, data):
+        original_data = SQLConnection.get_user_data(id)
+        original_data.update(data)
+        SQLConnection.update("qq_user", {"data": json.dumps(original_data)}, {"id": id})
 
 
 if __name__ == "__main__":

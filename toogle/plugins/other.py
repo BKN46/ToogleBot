@@ -7,7 +7,10 @@ import PIL.Image
 from toogle.message import Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack
 from toogle.nonebot2_adapter import bot_send_message
+from toogle.plugins.others.steam import source_server_info
+from toogle.sql import SQLConnection
 from toogle.utils import is_admin
+from toogle.configs import config
 import toogle.plugins.others.racehorse as race_horse
 import toogle.plugins.others.csgo as CSGO
 
@@ -165,7 +168,13 @@ class CSGORandomCase(MessageHandler):
         case_info = CSGO.get_case(case_search[0][0])
 
         if open_num == 1:
-            res_pic = CSGO.open_case_animation(case_info)
+            item_result = CSGO.random_weapon(case_info)
+
+            item_inventory = SQLConnection.get_user_data(message.member.id).get("csgo_inventory", [])
+            item_inventory.append(item_result)
+            SQLConnection.update_user_data(message.member.id, {"csgo_inventory": item_inventory})
+
+            res_pic = CSGO.open_case_animation(item_result, case_info)
             return MessageChain.create([message.as_quote(), Image(bytes=res_pic)])
 
         weapons = [CSGO.random_weapon(case_info) for _ in range(open_num)]
@@ -179,3 +188,76 @@ class CSGORandomCase(MessageHandler):
 
         res_pic = CSGO.compose_weapon_list(render_list)
         return MessageChain.create([message.as_quote(), Image(bytes=res_pic)])
+
+
+class ToogleCSServer(MessageHandler):
+    name = "CS服务器相关"
+    trigger = r"^\.cs(\s|$)"
+    thread_limit = True
+    readme = "CS服务器相关"
+
+    async def ret(self, message: MessagePack) -> MessageChain:
+        content = message.message.asDisplay()[3:].strip()
+        if content.startswith("regist"):
+            content = content[6:].strip()
+            if not content.startswith("STEAM_") and len(content.split(':')[-1]) != 8:
+                return MessageChain.plain(f"请输入正确的Steam2 ID\n可在https://steamdb.info/calculator/查询")
+            SQLConnection.update_user_data(message.member.id, {'steam2id': content})
+            return MessageChain.plain(f"已绑定Steam2 ID: {content}")
+
+
+        elif content.startswith("status"):
+            text = source_server_info(config.get("CSGO_SERVER_HOST"), int(config.get("CSGO_SERVER_PORT") or 27015))
+            return MessageChain.plain(text)
+
+        elif content.startswith("inventory"):
+            item_inventory = SQLConnection.get_user_data(message.member.id).get("csgo_inventory", [])
+            if not item_inventory:
+                return MessageChain.plain("你还没有库存", quote=message.as_quote())
+            render_list = [[
+                f"{x['name']}\n磨损: {x['wear']:.6f} 模板: {x['template_index']}\n价格: ¥{x['min_price']} - ¥{x['max_price']}",
+                x['pic'],
+                x['rarity'],
+                x['item_id'],
+            ] for x in item_inventory]
+            res_pic = CSGO.compose_weapon_list(render_list)
+            return MessageChain.create([message.as_quote(), Image(bytes=res_pic)])
+    
+        elif content.startswith("sell"):
+            content = int(content[4:].strip())
+            item_inventory = SQLConnection.get_user_data(message.member.id).get("csgo_inventory", [])
+            if not item_inventory:
+                return MessageChain.plain("你还没有库存", quote=message.as_quote())
+            if content >= len(item_inventory) or content < 0:
+                return MessageChain.plain("库存序号错误", quote=message.as_quote())
+            tmp_item = item_inventory[content]
+            item_inventory = item_inventory[:content] + item_inventory[content + 1:]
+            SQLConnection.update_user_data(message.member.id, {"csgo_inventory": item_inventory})
+            return MessageChain.plain(f"已出售 {tmp_item['name']}")
+
+        elif content.startswith("equip"):
+            content = int(content[5:].strip())
+            steam_id = SQLConnection.get_user_data(message.member.id).get("steam2id", None)
+            if not steam_id:
+                return MessageChain.plain(f"请先绑定Steam2 ID, 示例:\n.tooglecs regist #你的Steam2 ID#\n\nSteam2 ID可在https://steamdb.info/calculator/查询", quote=message.as_quote())
+            item_inventory = SQLConnection.get_user_data(message.member.id).get("csgo_inventory", [])
+            if not item_inventory:
+                return MessageChain.plain("你还没有库存", quote=message.as_quote())
+            if content >= len(item_inventory) or content < 0:
+                return MessageChain.plain("库存序号错误", quote=message.as_quote())
+            item = item_inventory[content]
+            update_res = CSGO.update_csgo_server_data(steam_id, item['eng_name'], item['internal_name'], item['wear'], item['stattrack'], item['template_index'])
+            if update_res:
+                return MessageChain.plain(f"已装备 {item['name']}", quote=message.as_quote())
+            else:
+                return MessageChain.plain(f"装备失败", quote=message.as_quote())
+
+        help_str = (
+            f".cs regist #Steam2ID# 来绑定steam\n"
+            f".cs status 服务器状态查询\n"
+            f".cs inventory 来查看库存\n"
+            f".cs sell #序号# 来出售库存中的武器（序号从0开始）\n"
+            f".cs equip #序号# 来装备库存中的武器（序号从0开始）\n"
+        )
+        return MessageChain.plain(help_str, quote=message.as_quote())
+

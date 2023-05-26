@@ -30,6 +30,7 @@ MarkupSafe==2.1.1
 matplotlib==3.6.2
 multidict==6.0.2
 mypy-extensions==0.4.3
+mysql-connector-python==8.0.22
 snb-cli==0.6.7
 nonebot-adapter-mirai2==0.0.22
 nonebot-plugin-apscheduler==0.2.0
@@ -41,10 +42,12 @@ Pillow==9.3.0
 platformdirs==2.5.2
 poyo==0.5.0
 prompt-toolkit==3.0.31
+protobuf==3.20.3
 pydantic==1.9.2
 pyfiglet==0.8.post1
 pygtrie==2.5.0
 pyparsing==3.0.9
+python-a2s==1.3.0
 python-dateutil==2.8.2
 python-dotenv==0.21.0
 python-Levenshtein==0.20.8

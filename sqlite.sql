@@ -5,6 +5,7 @@ CREATE TABLE `qq_user` (
   `credit` int DEFAULT NULL,
   `last_remake` timestamp NULL DEFAULT NULL,
   `waifu` longtext DEFAULT '',
+  `data` longtext DEFAULT '',
   `message` longtext,
   PRIMARY KEY (`id`)
 );
