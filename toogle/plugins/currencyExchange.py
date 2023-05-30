@@ -87,10 +87,10 @@ class CurrencyExchange(MessageHandler):
     }
     currency_map.update(block_chain_map)
 
-    num_str = "零一二三四五六七八九十百千万亿壹贰叁肆伍陆柒捌玖拾佰仟0123456789点两单俩上兆儿/*+-,()mkwe"
+    num_str = "零一二三四五六七八九十百千万亿壹贰叁肆伍陆柒捌玖拾佰仟0123456789点两单俩上兆/*+-,()mkwe"
     num_str = "|".join([x for x in num_str])
     keys_str = "|".join(currency_map.keys())
-    exhibit_list = ["一刀"]
+    exhibit_list = ["一刀", "两刀"]
     trigger = f".*?(([\.|{num_str}]+)(usd|jpy|hkd|eur|gbp|{keys_str})).*" # type: ignore
     readme = "快捷货币转换"
 
@@ -100,7 +100,7 @@ class CurrencyExchange(MessageHandler):
 
         if matchs:
             if matchs.group(1) in self.exhibit_list:
-                raise Exception("触发一刀")
+                raise Exception("误触发")
             currency = matchs.group(3)
             if currency in self.block_chain_map:
                 rates = self.get_blockchain()
