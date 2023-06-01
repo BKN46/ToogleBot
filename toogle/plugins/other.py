@@ -68,6 +68,22 @@ class JokingHazard(MessageHandler):
         return MessageChain.create([Image(bytes=io_buf.getvalue())])
 
 
+class RandomAlbum(MessageHandler):
+    name = "随机专辑"
+    trigger = r"^随机专辑$"
+    thread_limit = True
+    readme = "随机专辑 来自人生不可不听的1001张专辑"
+
+    async def ret(self, message: MessagePack) -> MessageChain:
+        path = "data/albums.pkl"
+        try:
+            pics = pickle.load(open(path, "rb"))
+        except Exception as e:
+            return MessageChain.plain("无数据", quote=message.as_quote())
+        pic = random.choice(pics)
+        return MessageChain.create([Image(bytes=pic)])
+
+
 class CSGOBuff(MessageHandler):
     name = "CSGO Buff饰品查询"
     trigger = r"^\.csgo\s"
