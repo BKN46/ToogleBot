@@ -1,6 +1,13 @@
+import io
 import random
 import time
 from typing import List, Union
+
+from matplotlib import pyplot as plt
+import PIL.Image, PIL.ImageDraw, PIL.ImageFont
+
+FONT_PATH = "toogle/plugins/compose/Arial Unicode MS Font.ttf"
+FONT = PIL.ImageFont.truetype(FONT_PATH, 20)
 
 
 class Horse:
@@ -79,7 +86,7 @@ class Horse:
             self.distance += self.speed * 1.2 + random.randint(-2, 15)
             self.stamina -= 15
 
-        if self.distance > race_length:
+        if self.distance >= race_length:
             self.finish = True
             return True
 
@@ -225,6 +232,8 @@ def do_race(race: Race, horses: List[Horse], sleep_interval = 1):
 
     race_round = 0
 
+    horse_history = {horse.name: [0] for horse in horses}
+
     while horses:
         race_round +=1
         round_output = []
@@ -248,6 +257,7 @@ def do_race(race: Race, horses: List[Horse], sleep_interval = 1):
 
             if horse.finish:
                 round_output.append(f"{horse.name} 完成了比赛")
+                horse.distance = min(horse.distance, race.get_race_length())
                 horses.remove(horse)
                 final_res.append(horse)
 
@@ -263,10 +273,33 @@ def do_race(race: Race, horses: List[Horse], sleep_interval = 1):
                 + "\n".join([f"{rank+1}. {horse.name} ({horse.distance:.2f}m)" for rank, horse in enumerate(re_rank[:5])])
             )
 
+        horse_history = {horse.name: horse_history[horse.name] + [horse.distance] for horse in final_res + horses}
+        plt.figure(figsize=(6, 6))
+        plt.rcParams['font.sans-serif'] = ["Arial Unicode MS"]
+        for horse_name, history in horse_history.items():
+            plt.plot(history, label=horse_name)
+        plt.xlabel("Time")
+        plt.ylabel("Distance")
+        plt.legend(loc="best")
+        pic_buf = io.BytesIO()
+        plt.savefig(pic_buf, format="png")
+        plt.close()
+        graph_pic = PIL.Image.open(pic_buf)
+
         if round_output:
-            yield "\n".join(round_output)
+            draw_text = "\n".join(round_output)
         else:
-            yield f"比赛进行中... 目前领先的是: {horses_rank[0].name}"
+            draw_text = f"比赛进行中... 目前领先的是: {horses_rank[0].name}"
+        text_height = FONT.getbbox(draw_text)[3] * len(draw_text.split("\n"))     
+        pic = PIL.Image.new("RGBA", (graph_pic.width, graph_pic.height + text_height + 20), (255, 255, 255, 255))
+        draw = PIL.ImageDraw.Draw(pic)
+        draw.text((10, 10), draw_text, font=FONT, fill=(0, 0, 0, 255))
+        pic.paste(graph_pic, (0, text_height + 20))
+
+        pic_buf = io.BytesIO()
+        pic.save(pic_buf, format="png")
+        yield pic_buf.getvalue()
+
         time.sleep(sleep_interval)
 
     yield (
@@ -276,8 +309,12 @@ def do_race(race: Race, horses: List[Horse], sleep_interval = 1):
         f"余下的参与者:\n" + "\n".join([f"{rank + 4}. {horse.name}" for rank, horse in enumerate(final_res[3:])])
     )
 
-if __name__ == "__main__":
+def main():
     race, horses = init_race()
-    for i in do_race(race, horses):
-        print(i)
-        print("-"*20)
+    for index, i in enumerate(do_race(race, horses)):
+        if isinstance(i, str):
+            print(i)
+            print("-"*20)
+        elif isinstance(i, bytes):
+            with open(f"data/test/{index}.png", "wb") as f:
+                f.write(i)

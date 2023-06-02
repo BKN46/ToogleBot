@@ -31,8 +31,11 @@ class RaceHorse(MessageHandler):
         
         race, horse = race_horse.init_race()
         for msg in race_horse.do_race(race, horse, sleep_interval=10):
-            await bot_send_message(message.group.id, MessageChain.plain(msg))
-        
+            if isinstance(msg, str):
+                await bot_send_message(message.group.id, MessageChain.plain(msg))
+            elif isinstance(msg, bytes):
+                await bot_send_message(message.group.id, MessageChain.create([Image(bytes=msg)]))
+
         return MessageChain.plain("比赛结束")
 
 
