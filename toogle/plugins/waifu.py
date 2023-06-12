@@ -134,6 +134,10 @@ class GetRandomAnimeFemale(MessageHandler):
                 return MessageChain.create(
                     [Plain(f"{get_user_name(message)}你还没有{schn}\n输入【随机老婆】来抽一个")]
                 )
+            if not my_waifu:
+                return MessageChain.create(
+                    [Plain(f"{get_user_name(message)}你还没有锁定{schn}")]
+                )
             res_data = json.loads(my_waifu[0][3].replace("\\\"", "\""))
             if my_waifu and len(res_data) > 0 and 'CV' in res_data:
                 if 'pic_bytes' in res_data:
@@ -342,7 +346,17 @@ class GetRandomAnimeFemale(MessageHandler):
                 return MessageChain.create([Plain(f"每天运势/随机{schn}/NTR只能一次")])
 
             tgt_waifu = json.loads(tgt_user[0][3].replace("\\\"", "\""))
-            tgt_dice = tgt_waifu["def"]
+            if not tgt_waifu["def"]:
+                tgt_dice = random.choice(self.def_dice_list)
+                SQLConnection.update(
+                    "qq_waifu",
+                    { 
+                        "otherDict": json.dumps(tgt_waifu, ensure_ascii=False),
+                    },
+                    {"id": content},
+                )
+            else:
+                tgt_dice = tgt_waifu["def"]
             atk_dice = random.choice(self.atk_dice_list)
             tgt_roll = Dice.roll(tgt_dice)
             atk_roll = Dice.roll(atk_dice)
@@ -358,6 +372,9 @@ class GetRandomAnimeFemale(MessageHandler):
                 return MessageChain.create([Plain(info + f"NTR失败!")])
 
             tgt_waifu.update({"def": random.choice(self.def_dice_list)})
+            if "pic_bytes" in tgt_waifu:
+                tgt_waifu.__delitem__("pic_bytes")
+
             SQLConnection.delete("qq_waifu", {"id": content})
             my_waifu = SQLConnection.search("qq_waifu", {"id": str(message.member.id)})
             if not my_waifu:
