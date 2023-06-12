@@ -8,7 +8,7 @@ import nonebot
 from toogle.configs import config
 from toogle.message_handler import MessageHandler
 from toogle.nonebot2_adapter import LinearHandler, PluginWrapper
-from toogle.scheduler import ScheduleModule, schedular_start
+from toogle.scheduler import ScheduleModule, copied_plugin_list
 
 plugin_list = os.listdir("toogle/plugins/")
 export_plugins, schedule_plugins = [], []
@@ -32,6 +32,7 @@ for index, plugin_name in enumerate(plugin_list):
             issubclass(tmp, MessageHandler),
         ]):
             export_plugins.append(PluginWrapper(tmp))  # type: ignore
+            copied_plugin_list.append(PluginWrapper(tmp))  # type: ignore
             import_time = (time.time() - start_time) * 1000
             nonebot.logger.success(f"[{tmp.__name__}] imported ({index + 1}/{len(plugin_list)}) ({import_time:.2f}ms)")  # type: ignore
             start_time = time.time()

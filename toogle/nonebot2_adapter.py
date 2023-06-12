@@ -54,7 +54,7 @@ class PluginWrapper:
         event: MessageEvent,
         message: MessageChain = EventMessage(),
     ) -> None:
-        message_pack = PluginWrapper.get_message_pack(matcher, event, message)
+        message_pack = PluginWrapper.get_message_pack(event, message)
         if not message_pack:
             await matcher.send("不支持该种聊天方式！")
             return
@@ -71,11 +71,10 @@ class PluginWrapper:
         if not is_traffic_free(self.plugin, message_pack) and not is_admin(message_pack.member.id):
             await matcher.send(get_traffic_time(self.plugin, message_pack))
             return
-        await plugin_run(self.plugin, message_pack, matcher, event, message)
+        await plugin_run(self.plugin, message_pack)
 
     @staticmethod
     def get_message_pack(
-        matcher: Matcher,
         event: MessageEvent,
         message: MessageChain = EventMessage(),
     ) -> Optional[MessagePack]:
@@ -117,7 +116,7 @@ class LinearHandler:
         event: MessageEvent,
         message: MessageChain = EventMessage(),
     ) -> None:
-        message_pack = PluginWrapper.get_message_pack(matcher, event, message)
+        message_pack = PluginWrapper.get_message_pack(event, message)
         if not message_pack:
             await matcher.send("不支持该种聊天方式！")
             return
@@ -126,16 +125,13 @@ class LinearHandler:
                 if not is_traffic_free(plugin.plugin, message_pack):
                     await matcher.send(get_traffic_time(plugin.plugin, message_pack))
                     return
-                await plugin_run(plugin.plugin, message_pack, matcher, event, message)
+                await plugin_run(plugin.plugin, message_pack)
                 return
 
 
 async def plugin_run(
     plugin: MessageHandler,
     message_pack: MessagePack,
-    matcher: Matcher,
-    event: MessageEvent,
-    message: MessageChain,
 ):
     thread_put_job(plugin, message_pack)
 
@@ -245,28 +241,7 @@ async def bot_send_message(target: Union[int, MessagePack], message: Union[Toogl
             messageChain=MessageChain(""),
         )
     else:
-        group = GroupInfo(
-            id=target_id,
-            name="",
-            permission=permission,
-        )
-        sender = GroupChatInfo(
-            id=100000,
-            memberName="None",
-            group=group,
-            specialTitle="",
-            permission=permission,
-            joinTimestamp=0,
-            lastSpeakTimestamp=0,
-            muteTimeRemaining=0,
-        )
-        event = GroupMessage(
-            self_id=int(bot.self_id),
-            type="GroupMessage",
-            source=source,
-            sender=sender,
-            messageChain=MessageChain(""),
-        )
+        event = get_event(bot, target_id, 100000, MessageChain(""))
     if isinstance(message, ToogleChain):
         quote = message.get_quote()
         nb_message = toogle2nb(message)
@@ -281,6 +256,33 @@ async def bot_send_message(target: Union[int, MessagePack], message: Union[Toogl
         message=nb_message,
         quote = quote,
     )
+
+
+def get_event(bot, target_id, sender_id, message_chain):
+    source = MessageSource(id=target_id, time=datetime.datetime.now())
+    group = GroupInfo(
+        id=target_id,
+        name="",
+        permission=UserPermission.OWNER,
+    )
+    sender = GroupChatInfo(
+        id=sender_id,
+        memberName="None",
+        group=group,
+        specialTitle="",
+        permission=UserPermission.OWNER,
+        joinTimestamp=0,
+        lastSpeakTimestamp=0,
+        muteTimeRemaining=0,
+    )
+    event = GroupMessage(
+        self_id=int(bot.self_id),
+        type="GroupMessage",
+        source=source,
+        sender=sender,
+        messageChain=message_chain,
+    )
+    return event
 
 
 async def bot_get_all_group():

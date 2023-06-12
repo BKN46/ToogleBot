@@ -4,7 +4,7 @@ import os
 
 from toogle.message import Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack
-from toogle.scheduler import ScheduleModule, get_job_name, load_manual_schedular, remove_job
+from toogle.scheduler import ScheduleModule, all_schedule, get_job_name, load_manual_schedular, remove_job
 from toogle.plugins.compose.daily_news import download_daily
 from toogle.nonebot2_adapter import bot_send_message
 from toogle.configs import config
@@ -46,7 +46,7 @@ class HealthyTips(ScheduleModule):
 
 class CreateSchedule(MessageHandler):
     name="创建定时"
-    trigger = r"^(创建|我的|删除)定时(可触发|)"
+    trigger = r"^(创建|我的|删除|全部)定时(可触发|)"
     white_list = False
     readme = "创建定时任务"
 
@@ -60,6 +60,10 @@ class CreateSchedule(MessageHandler):
             return MessageChain.plain(self.del_schedule(message.group.id, message.member.id, int(msg)))
         elif message.message.asDisplay().startswith("我的"):
             return MessageChain.plain(self.my_schedule(message.group.id, message.member.id))
+        elif message.message.asDisplay().startswith("全部"):
+            if not is_admin(message.member.id):
+                return MessageChain.plain("没有权限", quote=message.as_quote())
+            return MessageChain.plain(all_schedule())
 
         if msg.startswith("可触发"):
             is_programmable = True

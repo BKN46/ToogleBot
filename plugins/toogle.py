@@ -71,7 +71,7 @@ async def handle_help(
                 )
         return f"\n{'#'*15}\n".join(res)
 
-    message_pack = PluginWrapper.get_message_pack(matcher, event, message)
+    message_pack = PluginWrapper.get_message_pack(event, message)
     search_content = re.search(get_help_regex, message_pack.message.asDisplay()).groups()[1].strip() # type: ignore
     if not search_content:
         res = get_help_page(0)

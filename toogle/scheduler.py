@@ -5,11 +5,16 @@ import traceback
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from nonebot_plugin_apscheduler import scheduler as nonebot_scheduler
+from nonebot.message import handle_event
 import nonebot
+from poyo import parse_string
+from toogle.message import MessageChain
+from toogle.message_handler import MessagePack
 
-from toogle.nonebot2_adapter import bot_send_message, WORK_QUEUE
+from toogle.nonebot2_adapter import bot_send_message, WORK_QUEUE, get_event, PluginWrapper, plugin_run, toogle2nb
 
 native_scheduler = AsyncIOScheduler()
+copied_plugin_list = []
 
 # scheduler.add_job(send_daily_news, "cron", minute=0, hour=9, args=[app])
 # scheduler.add_job(app.sendGroupMessage, "cron", **timer_data, args=[group, message])
@@ -45,7 +50,7 @@ class ScheduleModule:
                 file=open("schedule_err.log", "a"),
             )
 
-    def regist(self, scheduler):
+    def regist(self):
         time_dict = {
             x: self.__getattribute__(x) for x in [
                 'year',
@@ -58,10 +63,11 @@ class ScheduleModule:
                 'second',
             ] if isinstance(self.__getattribute__(x), str) or self.__getattribute__(x) >= 0
         }
-        scheduler.add_job(
+        nonebot_scheduler.add_job(
             self.ret_wrapper,
             'cron',
             kwargs={'name': self.name},
+            name=self.name,
             **time_dict
         )
         nonebot.logger.success(f"[Schedule][{self.name}] registed!") # type: ignore
@@ -119,8 +125,31 @@ def load_manual_schedular(item):
     for k, v in time.items():
         tmp_module.__setattr__(k, v)
 
-    async def ret():
-        await bot_send_message(send_group, text)
+    if not is_programmable:
+        async def ret():
+            await bot_send_message(send_group, text)
+    else:
+        async def ret():
+            bot = nonebot.get_bot()
+            nb_message = toogle2nb(MessageChain.plain(text))
+            event = get_event(bot, send_group, creator_id, nb_message)
+            # await handle_event(bot, event)
+            message_pack = PluginWrapper.get_message_pack(event, nb_message)
+            if not message_pack:
+                await bot_send_message(send_group, "定时任务出现未知错误")
+                return
+            for plugin in copied_plugin_list:
+                if plugin.plugin.is_trigger(message_pack):
+                    await plugin_run(plugin.plugin, message_pack)
+                    return
     
     tmp_module.ret = ret
-    tmp_module.regist(nonebot_scheduler)
+    tmp_module.regist()
+
+
+def all_schedule():
+    jobs = nonebot_scheduler.get_jobs()
+    res = ""
+    for job in jobs:
+        res += f"{job.name}\n"
+    return res
