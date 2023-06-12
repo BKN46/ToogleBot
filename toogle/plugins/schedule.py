@@ -8,7 +8,7 @@ from toogle.scheduler import ScheduleModule, all_schedule, get_job_name, load_ma
 from toogle.plugins.compose.daily_news import download_daily
 from toogle.nonebot2_adapter import bot_send_message
 from toogle.configs import config
-from toogle.utils import get_main_groups, is_admin
+from toogle.utils import get_main_groups, is_admin, is_admin_group
 
 
 class DailyNews(ScheduleModule):
@@ -46,12 +46,12 @@ class HealthyTips(ScheduleModule):
 
 class CreateSchedule(MessageHandler):
     name="创建定时"
-    trigger = r"^(创建|我的|删除|全部)定时(可触发|)"
+    trigger = r"^(创建|我的|删除|全部)定时(可触发|)(单次|)"
     white_list = False
     readme = "创建定时任务"
 
     async def ret(self, message: MessagePack) -> MessageChain:
-        if not is_admin(message.member.id):
+        if not is_admin(message.member.id) and not is_admin_group(message.group.id):
             return MessageChain.plain("没有权限", quote=message.as_quote())
 
         msg = message.message.asDisplay()[4:].strip()
@@ -70,6 +70,12 @@ class CreateSchedule(MessageHandler):
             msg = msg[3:].strip()
         else:
             is_programmable = False
+
+        if msg.startswith("单次"):
+            single_time = True
+            msg = msg[2:].strip()
+        else:
+            single_time = False
 
         if len(msg.split('\n')) < 1:
             return MessageChain.plain("没有内容")
@@ -90,7 +96,7 @@ class CreateSchedule(MessageHandler):
         ]
         timer_info = {
             k: crond_text[i]
-            for i, k in enumerate(timer_header) if crond_text[i]!='*' and crond_text[i].isdigit()
+            for i, k in enumerate(timer_header) if crond_text[i]!='*'
         }
 
         if 'minute' not in timer_info or 'second' not in timer_info:
@@ -99,6 +105,7 @@ class CreateSchedule(MessageHandler):
         self.save_schedule(
             send_text,
             is_programmable,
+            single_time,
             message.group.id,
             message.member.id,
             timer_info,
@@ -107,7 +114,7 @@ class CreateSchedule(MessageHandler):
         return MessageChain.plain("创建成功！", quote=message.as_quote())
     
 
-    def save_schedule(self, text, is_programmable, group_id, creator_id, time):
+    def save_schedule(self, text, is_programmable, single_time, group_id, creator_id, time):
         json_path = 'data/schedule.json'
         if not os.path.isfile(json_path):
             with open(json_path, 'w') as f:
@@ -116,6 +123,7 @@ class CreateSchedule(MessageHandler):
         item = {
             'text': text,
             'program': is_programmable,
+            'single_time': single_time,
             'group_id': group_id,
             'creator_id': creator_id,
             'time': time,

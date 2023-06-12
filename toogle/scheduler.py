@@ -16,8 +16,6 @@ from toogle.nonebot2_adapter import bot_send_message, WORK_QUEUE, get_event, Plu
 native_scheduler = AsyncIOScheduler()
 copied_plugin_list = []
 
-# scheduler.add_job(send_daily_news, "cron", minute=0, hour=9, args=[app])
-# scheduler.add_job(app.sendGroupMessage, "cron", **timer_data, args=[group, message])
 class ScheduleModule:
     name = "BKN的机器人定时组件"
     trigger = r""
@@ -25,6 +23,8 @@ class ScheduleModule:
     white_list = False
     thread_limit = False
     interval = 0
+
+    single_time = False
 
     year = -1
     month = -1
@@ -41,7 +41,19 @@ class ScheduleModule:
     async def ret_wrapper(self, **kwargs):
         try:
             await self.ret()
-            nonebot.logger.success(f"[Schedule][{self.name}] done") # type: ignore
+            if self.single_time:
+                remove_job(self.name)
+                json_path = 'data/schedule.json'
+                if not os.path.isfile(json_path):
+                    with open(json_path, 'w') as f:
+                        f.write('[]')
+                schedules = json.load(open(json_path, 'r'))
+                schedules = [x for x in schedules if get_job_name(x) != self.name]
+                json.dump(schedules, open(json_path, 'w'), indent=4, ensure_ascii=False)
+                nonebot.logger.success(f"[Schedule][{self.name}] done and been removed") # type: ignore
+                del self
+            else:
+                nonebot.logger.success(f"[Schedule][{self.name}] done") # type: ignore
         except Exception as e:
             print(
                 f"{'*'*20}\n[{datetime.datetime.now().strftime('%Y-%m-%d, %H:%M:%S')}]"
@@ -116,12 +128,15 @@ def get_job_name(item):
 def load_manual_schedular(item):
     send_group = item['group_id']
     creator_id = item['creator_id']
+    single_time = item['single_time']
     text = item['text']
     is_programmable = item['program']
     time = item['time']
 
     tmp_module = ScheduleModule()
     tmp_module.name = get_job_name(item)
+    if single_time:
+        tmp_module.single_time = True
     for k, v in time.items():
         tmp_module.__setattr__(k, v)
 
@@ -145,6 +160,7 @@ def load_manual_schedular(item):
     
     tmp_module.ret = ret
     tmp_module.regist()
+    return tmp_module
 
 
 def all_schedule():
