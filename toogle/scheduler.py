@@ -1,10 +1,13 @@
 import datetime
+import json
+import os
 import traceback
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from nonebot_plugin_apscheduler import scheduler as nonebot_scheduler
 import nonebot
 
-from toogle.nonebot2_adapter import bot_send_message
+from toogle.nonebot2_adapter import bot_send_message, WORK_QUEUE
 
 native_scheduler = AsyncIOScheduler()
 
@@ -64,8 +67,60 @@ class ScheduleModule:
         nonebot.logger.success(f"[Schedule][{self.name}] registed!") # type: ignore
 
 
+def schedule_time_to_str(time_dict):
+    return '_'.join([f"{v}" for k, v in time_dict.items()])
+
+
 def schedular_start():
     jobs = native_scheduler.get_jobs()
     for job in jobs:
         nonebot.logger.success(f"[Schedule][{job.kwargs.get('name')}] trigger: {job.trigger}") # type: ignore
     native_scheduler.start()
+
+
+def reload_manual_schedular():
+    json_path = 'data/schedule.json'
+    if not os.path.exists(json_path):
+        return
+    schedular_list = json.load(open(json_path, 'r'))
+    for item in schedular_list:
+        jobs = nonebot_scheduler.get_jobs()
+        if get_job_name(item) in [job.name for job in jobs]:
+            continue
+        load_manual_schedular(item)
+
+
+def remove_job(name):
+    jobs = nonebot_scheduler.get_jobs()
+    for job in jobs:
+        if job.name == name:
+            nonebot_scheduler.remove_job(job.id)
+            return True
+    return False
+
+
+def get_job_name(item):
+    send_group = item['group_id']
+    creator_id = item['creator_id']
+    text = item['text']
+    time = item['time']
+    return f"{creator_id}_{send_group}_{text}_{schedule_time_to_str(time)}"
+
+
+def load_manual_schedular(item):
+    send_group = item['group_id']
+    creator_id = item['creator_id']
+    text = item['text']
+    is_programmable = item['program']
+    time = item['time']
+
+    tmp_module = ScheduleModule()
+    tmp_module.name = get_job_name(item)
+    for k, v in time.items():
+        tmp_module.__setattr__(k, v)
+
+    async def ret():
+        await bot_send_message(send_group, text)
+    
+    tmp_module.ret = ret
+    tmp_module.regist(nonebot_scheduler)
