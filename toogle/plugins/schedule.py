@@ -153,11 +153,12 @@ class CreateSchedule(MessageHandler):
             with open(json_path, 'w') as f:
                 f.write('[]')
         schedules = json.load(open(json_path, 'r'))
-        schedules = [s for s in schedules if s['group_id']==group_id and s['creator_id']==creator_id]
-        if index < 1 or index > len(schedules):
+        my_schedules = [s for s in schedules if s['group_id']==group_id and s['creator_id']==creator_id]
+        if index < 1 or index > len(my_schedules):
             return "序号不正确"
-        if not remove_job(get_job_name(schedules[index-1])):
+        if not remove_job(get_job_name(my_schedules[index-1])):
             return "删除失败"
-        del schedules[index-1]
+        schedule_index = schedules.index(my_schedules[index-1])
+        del schedules[schedule_index-1]
         json.dump(schedules, open(json_path, 'w'), indent=4, ensure_ascii=False)
         return "删除成功"
