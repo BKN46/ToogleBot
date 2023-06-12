@@ -47,6 +47,11 @@ class At(Element):
         return f"@{self.target}"
 
 
+class AtAll(Element):
+    def asDisplay(self) -> str:
+        return f"@all"
+
+
 class Plain(Element):
     def __init__(self, text: str) -> None:
         self.text = text

@@ -25,7 +25,7 @@ from urllib3.exceptions import HTTPError as UrllibError
 
 from toogle.configs import config, interval_limiter
 from toogle.exceptions import VisibleException
-from toogle.message import At, Element, Group, Image, Member
+from toogle.message import At, AtAll, Element, Group, Image, Member
 from toogle.message import MessageChain as ToogleChain
 from toogle.message import Plain, Quote
 from toogle.message_handler import MessageHandler, MessagePack
@@ -181,6 +181,8 @@ def toogle2nb(
             message_list.append(MessageSegment.image(base64=item.getBase64()))
         elif isinstance(item, At):
             message_list.append(MessageSegment.at(item.target))
+        elif isinstance(item, AtAll):
+            message_list.append(MessageSegment.at_all())
 
     return MessageChain(message_list)
 
@@ -204,6 +206,8 @@ def nb2toogle(message: MessageChain) -> ToogleChain:
                     target=item.data.get("target"),  # type: ignore
                 )
             )
+        elif item.type == MessageType.AT_ALL:
+            message_list.append(AtAll())
         else:
             message_list.append(Element())
     return ToogleChain(message_list)
@@ -318,7 +322,8 @@ async def thread_worker(index):
             res = await plugin.ret(message_pack)
             if plugin.interval and not res.no_interval:
                 interval_limiter.force_user_interval(plugin.name, message_pack.member.id, interval=plugin.interval)
-            await bot_send_message(message_pack, res)
+            if len(res.root) > 0:
+                await bot_send_message(message_pack, res)
             # nonebot.logger.success(f"{plugin.name} in worker {index} running complete.") # type: ignore
         except (UrllibError, RequestsError):
             await bot_send_message(message_pack, f"爬虫网络连接错误，请稍后尝试")
