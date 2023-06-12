@@ -5,7 +5,8 @@ import time
 from typing import Any, Tuple
 from datetime import datetime
 
-from nonebot import get_bot, get_bots
+import nonebot
+from nonebot import get_bot, get_bots, get_driver
 from nonebot.params import RegexGroup, EventMessage
 from nonebot.plugin import on_message, on_regex
 from nonebot.matcher import Matcher
@@ -17,6 +18,7 @@ from toogle.message import MessageChain
 from toogle.nonebot2_adapter import bot_get_all_group, bot_send_message, bot_exec, PluginWrapper, admin_user_checker, worker_shutdown
 from toogle.utils import get_main_groups, is_admin
 
+driver = get_driver()
 broadcast_matcher = on_regex("^broadcast (.*)$", rule=admin_user_checker)
 
 async def handle_broadcast(
@@ -59,3 +61,9 @@ async def handle_shutdown(
     exit()
 
 shutdown_matcher.append_handler(handle_debug)
+
+
+@driver.on_shutdown
+async def do_something():
+    nonebot.logger.warning("Shutting down...") # type: ignore
+    await worker_shutdown()

@@ -339,7 +339,7 @@ async def worker_shutdown(thread_num=THREAD_NUM):
     for x in THREAD_POOL:
         x.join()
     nonebot.logger.success("All worker thread shutdown.") # type: ignore
-    for i in config.get("ADMIN_LIST", []):
-        await bot_send_message(int(i), "Toogle threads all shutdown.", friend=True)
+    # for i in config.get("ADMIN_LIST", []):
+    #     await bot_send_message(int(i), "Toogle threads all shutdown.", friend=True)
 
 worker_start()
