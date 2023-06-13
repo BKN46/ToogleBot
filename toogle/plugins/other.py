@@ -1,5 +1,6 @@
 import datetime
 import io
+import json
 import pickle
 import random
 import time
@@ -297,17 +298,37 @@ class Diablo4Tracker(MessageHandler):
             no_reply = True
 
         try:
-            res = requests.get("https://diablo4.life/api/trackers/worldBoss/reportHistory?name=&limit=20").json()['reports']
+            res = requests.get("https://diablo4.life/api/trackers/worldBoss/reportHistory?name=&limit=25").json()['reports']
         except Exception as e:
             if no_reply:
                 return MessageChain([])
             return MessageChain.plain("请求失败", quote=message.as_quote())
 
+        unconfirmed_dict = {}
+
         for item in res:
             now_time = int(time.time() * 1000)
             left_time = ((item['spawnTime'] - now_time) / 1000 / 60)
-            if left_time > 0 and left_time < 10 and item['status'] == 'validated':
+            if left_time > 0 and left_time < 30 and 'status' in item and item['status'] == 'validated':
                 spawn_time_text = datetime.datetime.fromtimestamp(item['spawnTime'] / 1000).strftime("%Y-%m-%d %H:%M:%S")
+                alert_text = (
+                    f"注意世界Boss即将于{spawn_time_text}刷新\n"
+                    f"BOSS：{item['name']}\n位于：{item['location']}\n"
+                )
+                return MessageChain.plain(alert_text)
+            elif left_time > 0 and left_time < 30 and 'status' not in item:
+                spawn_time = item['spawnTime']
+                report_user = item['user']['uid']
+                if spawn_time not in unconfirmed_dict:
+                    unconfirmed_dict[spawn_time] = [report_user]
+                else:
+                    if report_user not in unconfirmed_dict[spawn_time]:
+                        unconfirmed_dict[spawn_time].append(report_user)
+
+        if unconfirmed_dict:
+            sorted_unconfirmed = list(sorted(unconfirmed_dict.items(), key=lambda x: len(x[1]), reverse=True))
+            if len(sorted_unconfirmed[0][1]) >=5:
+                spawn_time_text = datetime.datetime.fromtimestamp(sorted_unconfirmed[0][0] / 1000).strftime("%Y-%m-%d %H:%M:%S")
                 alert_text = (
                     f"注意世界Boss即将于{spawn_time_text}刷新\n"
                     f"BOSS：{item['name']}\n位于：{item['location']}\n"
@@ -316,8 +337,14 @@ class Diablo4Tracker(MessageHandler):
         
         if no_reply:
             return MessageChain([])
-        res = [x for x in res if x['status'] == 'validated']
-        spawn_time_text = datetime.datetime.fromtimestamp(res[0]['spawnTime'] / 1000).strftime("%Y-%m-%d %H:%M:%S")
-        next_time = datetime.datetime.fromtimestamp(res[0]['spawnTime'] / 1000 + 60 * 15 + 3600 * 5).strftime("%Y-%m-%d %H:%M:%S")
-        next_time_2 = datetime.datetime.fromtimestamp(res[0]['spawnTime'] / 1000 + 60 * 15 + 3600 * 8).strftime("%Y-%m-%d %H:%M:%S")
+
+        try:
+            last_time = requests.get("https://diablo4.life/api/trackers/worldBoss/list").json()['lastEvent']['time']
+        except Exception as e:
+            if no_reply:
+                return MessageChain([])
+            return MessageChain.plain("请求失败", quote=message.as_quote())
+        spawn_time_text = datetime.datetime.fromtimestamp(last_time / 1000).strftime("%Y-%m-%d %H:%M:%S")
+        next_time = datetime.datetime.fromtimestamp(last_time / 1000 + 60 * 15 + 3600 * 5).strftime("%Y-%m-%d %H:%M:%S")
+        next_time_2 = datetime.datetime.fromtimestamp(last_time / 1000 + 60 * 15 + 3600 * 8).strftime("%Y-%m-%d %H:%M:%S")
         return MessageChain.plain(f"暂无世界Boss刷新信息\n最近一次刷新为 {spawn_time_text}\n下次刷新可能在 {next_time} - {next_time_2}", quote=message.as_quote())
