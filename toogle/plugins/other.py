@@ -8,7 +8,7 @@ import time
 import PIL.Image
 import requests
 
-from toogle.message import Image, MessageChain, Plain
+from toogle.message import At, Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack
 from toogle.nonebot2_adapter import bot_send_message
 from toogle.plugins.others.steam import source_server_info
@@ -287,15 +287,29 @@ class ToogleCSServer(MessageHandler):
 
 class Diablo4Tracker(MessageHandler):
     name = "D4 event tracker"
-    trigger = r"^d4boss(\snoreply|)$"
+    trigger = r"^d4boss(\snoreply|\ssub|\sunsub|)$"
     thread_limit = True
-    readme = "暗黑破坏神4跟踪"
+    readme = "暗黑破坏神4世界boss跟踪\n输入d4boss来获取目前世界boss情况\n输入d4boss sub来订阅世界boss提醒\n输入d4boss unsub来取消订阅世界boss提醒"
+
+    sub_json_path = "data/d4boss.json"
 
     async def ret(self, message: MessagePack) -> MessageChain:
         content = message.message.asDisplay()[6:].strip()
         no_reply = False
         if content.startswith("noreply"):
             no_reply = True
+        elif content.startswith("sub"):
+            self.update_save(sub_group=message.group.id, sub_id=message.member.id)
+            return MessageChain.plain("订阅成功")
+        elif content.startswith("unsub"):
+            self.update_save(sub_group=message.group.id, sub_id=message.member.id, sub=False)
+            return MessageChain.plain("取消订阅成功")
+
+        save_data = self.read_save()
+        if str(message.group.id) in save_data['sub_list']:
+            at_list = [At(x) for x in save_data['sub_list'][str(message.group.id)]]
+        else:
+            at_list = []
 
         try:
             res = requests.get("https://diablo4.life/api/trackers/worldBoss/reportHistory?name=&limit=25").json()['reports']
@@ -309,13 +323,15 @@ class Diablo4Tracker(MessageHandler):
         for item in res:
             now_time = int(time.time() * 1000)
             left_time = ((item['spawnTime'] - now_time) / 1000 / 60)
-            if left_time > 0 and left_time < 30 and 'status' in item and item['status'] == 'validated':
+            if left_time > 0 and left_time < 30 and 'status' in item and item['status'] == 'validated' and not self.time_near(item['spawnTime'], save_data['last_boss_time']):
+                self.update_save(boss_time=item['spawnTime'])
                 spawn_time_text = datetime.datetime.fromtimestamp(item['spawnTime'] / 1000).strftime("%Y-%m-%d %H:%M:%S")
                 alert_text = (
                     f"注意世界Boss即将于{spawn_time_text}刷新\n"
                     f"BOSS：{item['name']}\n位于：{item['location']}\n"
+                    f"[此消息可通过 d4boss sub 指令来订阅]\n"
                 )
-                return MessageChain.plain(alert_text)
+                return MessageChain.create([Plain(alert_text)] + at_list)
             elif left_time > 0 and left_time < 30 and 'status' not in item:
                 spawn_time = item['spawnTime']
                 report_user = item['user']['uid']
@@ -327,13 +343,15 @@ class Diablo4Tracker(MessageHandler):
 
         if unconfirmed_dict:
             sorted_unconfirmed = list(sorted(unconfirmed_dict.items(), key=lambda x: len(x[1]), reverse=True))
-            if len(sorted_unconfirmed[0][1]) >=5:
+            if len(sorted_unconfirmed[0][1]) >=5 and not self.time_near(sorted_unconfirmed[0][0], save_data['last_boss_time']):
+                self.update_save(boss_time=sorted_unconfirmed[0][0])
                 spawn_time_text = datetime.datetime.fromtimestamp(sorted_unconfirmed[0][0] / 1000).strftime("%Y-%m-%d %H:%M:%S")
                 alert_text = (
                     f"注意世界Boss即将于{spawn_time_text}刷新\n"
                     f"BOSS：{item['name']}\n位于：{item['location']}\n"
+                    f"[此消息可通过「d4boss sub」指令来订阅]\n"
                 )
-                return MessageChain.plain(alert_text)
+                return MessageChain.create([Plain(alert_text)] + at_list)
         
         if no_reply:
             return MessageChain([])
@@ -347,4 +365,40 @@ class Diablo4Tracker(MessageHandler):
         spawn_time_text = datetime.datetime.fromtimestamp(last_time / 1000).strftime("%Y-%m-%d %H:%M:%S")
         next_time = datetime.datetime.fromtimestamp(last_time / 1000 + 60 * 15 + 3600 * 5).strftime("%Y-%m-%d %H:%M:%S")
         next_time_2 = datetime.datetime.fromtimestamp(last_time / 1000 + 60 * 15 + 3600 * 8).strftime("%Y-%m-%d %H:%M:%S")
-        return MessageChain.plain(f"暂无世界Boss刷新信息\n最近一次刷新为 {spawn_time_text}\n下次刷新可能在 {next_time} - {next_time_2}", quote=message.as_quote())
+        return MessageChain.plain((
+            f"暂无世界Boss刷新信息\n最近一次刷新为 {spawn_time_text}\n"
+            f"下次刷新可能在 {next_time} - {next_time_2}\n"
+            f"可回复「d4boss sub」来订阅boss刷新信息"
+        ), quote=message.as_quote())
+
+
+    def read_save(self):
+        try:
+            with open(self.sub_json_path, "r") as f:
+                return json.load(f)
+        except Exception as e:
+            content = {
+                "last_boss_time": 0,
+                "sub_list": {}
+            }
+            json.dump(content, open(self.sub_json_path, "w"), indent=4, ensure_ascii=False)
+            return content
+
+
+    def update_save(self, sub_group=None, sub_id=None, sub=True, boss_time=None):
+        save_data = self.read_save()
+        sub_group = str(sub_group)
+        if sub_id:
+            if sub_group not in save_data['sub_list'] and sub:
+                save_data['sub_list'][sub_group] = [sub_id]
+            elif sub and sub_id not in save_data['sub_list'][sub_group]:
+                save_data['sub_list'][sub_group].append(sub_id)
+            elif not sub and sub_group in save_data['sub_list'] and sub_id in save_data['sub_list'][sub_group]:
+                save_data['sub_list'][sub_group].remove(sub_id)
+        if boss_time:
+            save_data['last_boss_time'] = boss_time
+        json.dump(save_data, open(self.sub_json_path, "w"), indent=4, ensure_ascii=False)
+
+    
+    def time_near(self, time1, time2):
+        return abs(time1 - time2) / 1000 / 60 < 5
