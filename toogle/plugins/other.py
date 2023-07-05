@@ -323,16 +323,17 @@ class Diablo4Tracker(MessageHandler):
         for item in res:
             now_time = int(time.time() * 1000)
             left_time = ((item['spawnTime'] - now_time) / 1000 / 60)
-            if left_time > 0 and left_time < 30 and 'status' in item and item['status'] == 'validated' and not self.time_near(item['spawnTime'], save_data['last_boss_time']):
+            if left_time > 0 and left_time < 60 and 'status' in item and item['status'] == 'validated' and not self.time_near(item['spawnTime'], save_data['last_boss_time']):
                 self.update_save(boss_time=item['spawnTime'])
                 spawn_time_text = datetime.datetime.fromtimestamp(item['spawnTime'] / 1000).strftime("%Y-%m-%d %H:%M:%S")
                 alert_text = (
                     f"注意世界Boss即将于{spawn_time_text}刷新\n"
                     f"BOSS：{item['name']}\n位于：{item['location']}\n"
                     f"[此消息可通过 d4boss sub 指令来订阅]\n"
+                    f"[或是通过「d4boss unsub」来取消订阅]\n\n"
                 )
                 return MessageChain.create([Plain(alert_text)] + at_list)
-            elif left_time > 0 and left_time < 30 and 'status' not in item:
+            elif left_time > 0 and left_time < 60 and 'status' not in item:
                 spawn_time = item['spawnTime']
                 report_user = item['user']['uid']
                 if spawn_time not in unconfirmed_dict:
@@ -350,6 +351,7 @@ class Diablo4Tracker(MessageHandler):
                     f"注意世界Boss即将于{spawn_time_text}刷新\n"
                     f"BOSS：{item['name']}\n位于：{item['location']}\n"
                     f"[此消息可通过「d4boss sub」指令来订阅]\n"
+                    f"[或是通过「d4boss unsub」来取消订阅]\n\n"
                 )
                 return MessageChain.create([Plain(alert_text)] + at_list)
         

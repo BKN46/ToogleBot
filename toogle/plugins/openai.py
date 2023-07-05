@@ -99,7 +99,7 @@ class GetOpenAIConversation(MessageHandler):
             return MessageChain.plain("请求OpenAI GPT模型超时，请稍后尝试", no_interval=True)
         except Exception as e:
             # return MessageChain.plain(f"出现错误: {repr(e)}")
-            return MessageChain.plain(f"OpenAI GPT模型服务可能出错，请稍后尝试", no_interval=True)
+            return MessageChain.plain(f"OpenAI GPT模型服务可能出错，请稍后尝试\n{repr(e)}", no_interval=True)
 
     @staticmethod
     def get_completion(text: str) -> str:
@@ -116,7 +116,7 @@ class GetOpenAIConversation(MessageHandler):
             "logprobs": None,
             "stop": "You: ",
         }
-        res = requests.post(url + path, headers=header, json=body, timeout=15, proxies=proxies)
+        res = requests.post(url + path, headers=header, json=body, timeout=15, proxies=proxies, verify=False)
         try:
             return res.json()["choices"][0]["text"].strip()
         except Exception as e:
@@ -129,7 +129,7 @@ class GetOpenAIConversation(MessageHandler):
             "model": model,
             "messages": [{"role": "user", "content": text}]
         }
-        res = requests.post(url + path, headers=header, json=body, timeout=15, proxies=proxies)
+        res = requests.post(url + path, headers=header, json=body, timeout=15, proxies=proxies, verify=False)
         try:
             return res.json()["choices"][0]["message"]["content"].strip()
         except Exception as e:
@@ -146,7 +146,7 @@ class GetOpenAIConversation(MessageHandler):
         if settings:
             body['messages'] = [{"role": "system", "content": settings}] + body['messages']
 
-        res = requests.post(url + path, headers=header, json=body, proxies=proxies, stream=True, timeout=5)
+        res = requests.post(url + path, headers=header, json=body, proxies=proxies, stream=True, timeout=5, verify=False)
         res_text = ''
         start_time = time.time()
         for line in res.iter_lines():
