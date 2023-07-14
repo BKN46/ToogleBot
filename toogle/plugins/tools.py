@@ -9,6 +9,7 @@ from toogle.configs import config
 from toogle.message import Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack
 from toogle.plugins.compose.stock import get_search, render_report
+from toogle.plugins.others import baidu_index
 
 proxies = {
     'http': config.get('REQUEST_PROXY_HTTP', ''),
@@ -35,3 +36,19 @@ class AStock(MessageHandler):
         else:
             img_bytes = render_report(search_list[0][0])
             return MessageChain.create([Image(bytes=img_bytes)])
+
+
+class BaiduIndex(MessageHandler):
+    name = "百度指数"
+    trigger = r"^百度指数\s"
+    thread_limit = True
+    interval = 600
+    readme = "百度指数查询" 
+
+    async def ret(self, message: MessagePack) -> MessageChain:
+        search_content = message.message.asDisplay()[4:].strip()
+        res = baidu_index.search_index(search_content)
+        if isinstance(res, bytes):
+            return MessageChain.create([message.as_quote(), Image(bytes=res)])
+        else:
+            return MessageChain.create([message.as_quote(), Plain(res)])
