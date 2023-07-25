@@ -8,7 +8,7 @@ bs4==0.0.1
 certifi==2022.9.24
 chardet==5.0.0
 charset-normalizer==2.1.1
-click==8.1.3
+click==7.1.2
 colorama==0.4.6
 contourpy==1.0.6
 cookiecutter==1.7.3
@@ -25,13 +25,15 @@ Jinja2==3.1.2
 jinja2-time==0.2.0
 kiwisolver==1.4.4
 Levenshtein==0.20.8
+libtorrent==2.0.9
 loguru==0.6.0
 MarkupSafe==2.1.1
 matplotlib==3.6.2
 multidict==6.0.2
 mypy-extensions==0.4.3
-mysql-connector-python==8.0.22
-snb-cli==0.6.7
+mysql-connector-python==8.0.21
+mysqlclient==2.1.1
+nb-cli==0.6.7
 nonebot-adapter-mirai2==0.0.22
 nonebot-plugin-apscheduler==0.2.0
 nonebot2==2.0.0rc1
@@ -43,9 +45,11 @@ platformdirs==2.5.2
 poyo==0.5.0
 prompt-toolkit==3.0.31
 protobuf==3.20.3
+pycryptodome==3.18.0
 pydantic==1.9.2
 pyfiglet==0.8.post1
 pygtrie==2.5.0
+PyMySQL==1.0.3
 pyparsing==3.0.9
 python-a2s==1.3.0
 python-dateutil==2.8.2
@@ -55,6 +59,7 @@ python-slugify==6.1.2
 pytz==2022.7.1
 pytz-deprecation-shim==0.1.0.post0
 PyYAML==6.0
+qdata==0.2.4
 rapidfuzz==2.13.2
 requests==2.28.1
 rfc3986==1.5.0
@@ -66,7 +71,7 @@ starlette==0.19.1
 text-unidecode==1.3
 thefuzz==0.19.0
 tomli==2.0.1
-tomlkit==0.10.2
+tomlkit==0.10.0
 tqdm==4.64.1
 typing-extensions==4.4.0
 tzdata==2022.7
@@ -75,6 +80,7 @@ urllib3==1.26.12
 uvicorn==0.18.3
 uvloop==0.17.0
 watchfiles==0.18.0
+watchgod==0.8.2
 wcwidth==0.2.5
 websockets==10.4
 yarl==1.8.1

@@ -11,6 +11,7 @@ import requests
 from toogle.message import At, Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack
 from toogle.nonebot2_adapter import bot_send_message
+from toogle.plugins.others.magnet import do_magnet_parse
 from toogle.plugins.others.steam import source_server_info
 from toogle.sql import SQLConnection
 from toogle.utils import is_admin
@@ -349,7 +350,7 @@ class Diablo4Tracker(MessageHandler):
                 spawn_time_text = datetime.datetime.fromtimestamp(sorted_unconfirmed[0][0] / 1000).strftime("%Y-%m-%d %H:%M:%S")
                 alert_text = (
                     f"注意世界Boss即将于{spawn_time_text}刷新\n"
-                    f"BOSS：{item['name']}\n位于：{item['location']}\n"
+                    f"BOSS：{item['name']}\n位于：{item['location']}\n" # type: ignore
                     f"[此消息可通过「d4boss sub」指令来订阅]\n"
                     f"[或是通过「d4boss unsub」来取消订阅]\n\n"
                 )
@@ -404,3 +405,15 @@ class Diablo4Tracker(MessageHandler):
     
     def time_near(self, time1, time2):
         return abs(time1 - time2) / 1000 / 60 < 5
+
+
+class MagnetParse(MessageHandler):
+    name = "磁链内容解析"
+    trigger = r"magnet:\?xt=urn:[a-z0-9]+:[a-z0-9]{32}"
+    thread_limit = True
+    interval = 300
+    readme = "尝试解析磁力链接内容"
+
+    async def ret(self, message: MessagePack) -> MessageChain:
+        res = do_magnet_parse(message.message.asDisplay())
+        return MessageChain.plain(res, quote=message.as_quote())
