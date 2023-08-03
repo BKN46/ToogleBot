@@ -44,7 +44,7 @@ def mag2tor(magnet_link):
 
 
 def parse_magnet(text):
-    regex = r"(magnet:\?xt=urn:[a-z0-9]+:[a-z0-9]{32}.*)"
+    regex = r"(magnet:\?xt=urn:[a-z0-9]+:[a-zA-Z0-9].*)"
     for line in text.split("\n"):
         res = re.search(regex, line)
         if res:

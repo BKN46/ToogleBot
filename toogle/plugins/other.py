@@ -409,7 +409,7 @@ class Diablo4Tracker(MessageHandler):
 
 class MagnetParse(MessageHandler):
     name = "磁链内容解析"
-    trigger = r"magnet:\?xt=urn:[a-z0-9]+:[a-z0-9]{32}"
+    trigger = r"magnet:\?xt=urn:[a-z0-9]+:[a-zA-Z0-9]{32}.*"
     thread_limit = True
     interval = 300
     readme = "尝试解析磁力链接内容"
