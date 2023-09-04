@@ -19,7 +19,7 @@ class GetRandomAnimeFemale(MessageHandler):
     name = "随机ACG老婆"
     trigger = r"^(随机老婆|随机老公|我的老婆$|我的老公$|锁定老婆$|锁定老公$|对象排行|可选对象属性$|我要NTR|我要ntr|换妻)"
     thread_limit = True
-    readme = "随机冻漫角色"
+    readme = "随机冻漫角色\n可以使用'对象排行 #2'进行翻页等"
 
     atk_dice_list = ["2d6", "d12", "d10", "2d4", "d8", "d6", "d4"]
     def_dice_list = ["4d6", "3d8", "5d4", "2d12", "2d10", "3d6", "2d8", "4d4", "d20kh"]
