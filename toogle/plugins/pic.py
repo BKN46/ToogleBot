@@ -10,7 +10,7 @@ import PIL.ImageFont
 from toogle.message import At, Image, Member, MessageChain, Plain, Quote
 from toogle.message_handler import MessageHandler, MessagePack
 from toogle.sql import SQLConnection
-from toogle.utils import create_path
+from toogle.utils import create_path, is_admin
 
 create_path('data/qutu')
 create_path('data/long_img')
@@ -151,7 +151,7 @@ class LongTu(MessageHandler):
 
 class HistoryTu(MessageHandler):
     name = "黑历史"
-    trigger = r"^(记史|存黑历史|黑历史)"
+    trigger = r"^(记史|存黑历史|黑历史|删黑历史)"
     thread_limit = True
     readme = "群史官"
 
@@ -184,6 +184,22 @@ class HistoryTu(MessageHandler):
                 files = [IMAGES_PATH + x for x in os.listdir(IMAGES_PATH) if text_filter in x]
                 file = files[num]
                 return MessageChain.create([Image.fromLocalFile(file)])
+
+        if message_content.startswith("删黑历史"):
+            if not is_admin(message.member.id):
+                return MessageChain.plain(f"你也配？")
+            files = [IMAGES_PATH + x for x in os.listdir(IMAGES_PATH)]
+            del_files = []
+            try:
+                for num in message_content[4:].strip().split():
+                    del_files.append(files[int(num)])
+                pics = [Image(bytes=open(i, 'rb').read()) for i in del_files]
+                for pic in del_files:
+                    os.remove(pic)
+                return MessageChain.create([Plain(f"哗啦啦，删掉了{len(del_files)}张黑历史:")] + pics)
+            except Exception as e:
+                return MessageChain.plain(f"删黑历史失败: {e}\n{str(del_files)}")
+
         else:
             if message.quote:
                 pics = message.quote.message.get(Image)
