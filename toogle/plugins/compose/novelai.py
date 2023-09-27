@@ -5,23 +5,24 @@ import requests
 
 from toogle.configs import config
 
-req_site = {
-    "NovelAI": {
-        "hosts": "https://api.novelai.net",
-        "headers": {
-            "authorization": f"Bearer {config.get('NovelAISecret')}",
-            "origin": "https://novelai.net",
-            "referer": "https://novelai.net/",
-            "sec-ch-ua": '''"Google Chrome";v="105", "Not)A;Brand";v="8", "Chromium";v="105"''',
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": '''"Windows"''',
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-site",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
+def get_req_site():
+    return {
+        "NovelAI": {
+            "hosts": "https://api.novelai.net",
+            "headers": {
+                "authorization": f"Bearer {config.get('NovelAISecret')}",
+                "origin": "https://novelai.net",
+                "referer": "https://novelai.net/",
+                "sec-ch-ua": '''"Google Chrome";v="105", "Not)A;Brand";v="8", "Chromium";v="105"''',
+                "sec-ch-ua-mobile": "?0",
+                "sec-ch-ua-platform": '''"Windows"''',
+                "sec-fetch-dest": "empty",
+                "sec-fetch-mode": "cors",
+                "sec-fetch-site": "same-site",
+                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
+            },
         },
-    },
-}
+    }
 
 proxies = {
     "http": None,
@@ -44,8 +45,8 @@ def get_ai_generate(
     content_str, image_byte=None, site="NovelAI", model="safe-diffusion"
 ):
     path = "/ai/generate-image"
-    hosts = req_site[site]["hosts"]
-    headers = req_site[site]["headers"]
+    hosts = get_req_site()[site]["hosts"]
+    headers = get_req_site()[site]["headers"]
     url = hosts + path
 
     content_str = content_str.replace("，", ",")
@@ -82,8 +83,8 @@ def get_ai_generate(
 
 def get_balance(site="NovelAI"):
     path = "/user/data"
-    hosts = req_site[site]["hosts"]
-    headers = req_site[site]["headers"]
+    hosts = get_req_site()[site]["hosts"]
+    headers = get_req_site()[site]["headers"]
     url = hosts + path
     res = requests.get(url, headers=headers, proxies=proxies) # type: ignore
     fixed_anlas = res.json()["subscription"]["trainingStepsLeft"][
