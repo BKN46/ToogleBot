@@ -218,7 +218,7 @@ def get_designated_search(sexual, search_list):
             tmp = ", ".join(
                 [
                     f"{x}【{PARAM_KEYWORD[x][2] if not x.endswith('年') or x in PARAM_KEYWORD.keys() else YEAR_SEARCH_COST}】"
-                    for x in search_list
+                    for x in search_list if x in PARAM_KEYWORD.keys() or x.endswith('年')
                 ]
             )
             raise ACError(f"分数不足: {tmp}")
@@ -755,7 +755,7 @@ if __name__ == "__main__":
     # print(get_designated_search("f", ["红发", "轻小说"])[1])
     # calc_confirm()
 
-    data, url = get_designated_search("f", ["红发", "轻小说"])
+    data, url = get_designated_search("f", ["粉毛", "动漫", "2019年", "魔法少女"])
     pic_url, text, profile_id, raw = data
     pic = waifu_card(
         pic_url, # type: ignore
