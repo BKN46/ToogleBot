@@ -11,7 +11,7 @@ import requests
 from toogle.message import At, Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack
 from toogle.nonebot2_adapter import bot_send_message
-from toogle.plugins.others.magnet import do_magnet_parse
+from toogle.plugins.others.magnet import do_magnet_parse, do_magnet_preview, parse_size
 from toogle.plugins.others.steam import source_server_info
 from toogle.sql import SQLConnection
 from toogle.utils import is_admin
@@ -415,5 +415,18 @@ class MagnetParse(MessageHandler):
     readme = "尝试解析磁力链接内容"
 
     async def ret(self, message: MessagePack) -> MessageChain:
-        res = do_magnet_parse(message.message.asDisplay())
-        return MessageChain.plain(res, quote=message.as_quote())
+        # res = do_magnet_parse(message.message.asDisplay())
+        # return MessageChain.plain(res, quote=message.as_quote())
+        res = do_magnet_preview(message.message.asDisplay())
+        if isinstance(res, str):
+            return MessageChain.plain(res, quote=message.as_quote())
+        else:
+            resource_name = res['name']
+            resource_size = parse_size(res['size'])
+            resource_count = res['count']
+            pics = [x['screenshot'] for x in res['screenshots']]
+            res_message = MessageChain([
+                message.as_quote(),
+                Plain(f"磁链内容解析成功：\n名称: {resource_name}\n大小: {resource_size}\n文件数: {resource_count}\n预览:\n")
+            ] + [Image(url=x) for x in pics[:5]])
+            return res_message
