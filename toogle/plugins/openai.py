@@ -9,7 +9,7 @@ from requests.exceptions import ReadTimeout
 
 from toogle.configs import config, interval_limiter
 from toogle.message import Image, MessageChain, Plain
-from toogle.message_handler import MessageHandler, MessagePack
+from toogle.message_handler import MESSAGE_HISTORY, MessageHandler, MessagePack
 from toogle.sql import DatetimeUtils, SQLConnection
 
 api_key = config.get("OpenAISecret")
@@ -60,7 +60,7 @@ class GPTContext:
 
 class GetOpenAIConversation(MessageHandler):
     name = "OpenAI对话"
-    trigger = r"^\.gpt(\[.*?\]|)(all|context|bill|)\s(.*)"
+    trigger = r"^\.gpt(\[.*?\]|)(all|context|bill|\+|)\s(.*)"
     thread_limit = True
     readme = "OpenAI GPT-4 模型对话，使用例：\n.gpt 你好\n.gpt[JK] 你好"
     interval = 600
@@ -77,6 +77,12 @@ class GetOpenAIConversation(MessageHandler):
         if len(message_content) > self.message_length_limit:
             return MessageChain.plain(f"请求字数超限：{len(message_content)} > {self.message_length_limit}", no_interval=True)
 
+        max_time, context_content = 45, []
+        if extra=='all':
+            max_time = 600
+        elif extra=='bill':
+            return MessageChain.plain(GetOpenAIConversation.get_openai_usage())
+
         pics = message.message.get(Image)
         if pics:
             model = "gpt-4-vision-preview"
@@ -85,14 +91,14 @@ class GetOpenAIConversation(MessageHandler):
                 else {"type": "text", "text": x.asDisplay()}
                 for x in message.message.root
             ]
+        elif extra=="+":
+            model = "gpt-4-1106-preview"
+            history_context = MESSAGE_HISTORY.get(message.group.id)
+            if not history_context:
+                return MessageChain.plain("无记录聊天历史", no_interval=True)
+            context_content = ["\n".join([f"{x.member.name}: {x.message.asDisplay()}" for x in history_context])]
         else:
             model = "gpt-4-1106-preview"
-
-        max_time, context_content = 45, []
-        if extra=='all':
-            max_time = 600
-        elif extra=='bill':
-            return MessageChain.plain(GetOpenAIConversation.get_openai_usage())
 
         if setting:
             setting = setting[1:-1]
@@ -104,6 +110,7 @@ class GetOpenAIConversation(MessageHandler):
             res = GetOpenAIConversation.get_chat_stream(
                 message_content,
                 model=model,
+                other_history=context_content,
                 max_time=max_time,
                 settings=default_settings.get(setting, '')
             )
@@ -149,7 +156,7 @@ class GetOpenAIConversation(MessageHandler):
             return res.text
 
     @staticmethod
-    def get_chat_stream(text: Union[str, list], max_time=30, settings: str = "", model="gpt-4", max_tokens=1000) -> str:
+    def get_chat_stream(text: Union[str, list], max_time=30, settings: str = "", other_history: list[str] = [], model="gpt-4", max_tokens=1000) -> str:
         path = "/chat/completions"
         body = {
             "model": model,
@@ -157,6 +164,9 @@ class GetOpenAIConversation(MessageHandler):
             "stream": True,
             "max_tokens": max_tokens,
         }
+
+        if other_history:
+            body['messages'] = [{"role": "user", "content": x} for x in other_history] + body['messages']
         if settings:
             body['messages'] = [{"role": "system", "content": settings}] + body['messages']
 
