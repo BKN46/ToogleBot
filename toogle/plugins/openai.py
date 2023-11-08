@@ -2,6 +2,7 @@ import datetime
 import json
 import math
 import re
+from typing import Union
 import requests
 import time
 from requests.exceptions import ReadTimeout
@@ -73,6 +74,20 @@ class GetOpenAIConversation(MessageHandler):
         extra = match_group.group(2)
         message_content = match_group.group(3)
 
+        if len(message_content) > self.message_length_limit:
+            return MessageChain.plain(f"请求字数超限：{len(message_content)} > {self.message_length_limit}", no_interval=True)
+
+        pics = message.message.get(Image)
+        if pics:
+            model = "gpt-4-vision-preview"
+            message_content = [
+                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{x.getBase64()}" }} if isinstance(x, Image) 
+                else {"type": "text", "text": x.asDisplay()}
+                for x in message.message.root
+            ]
+        else:
+            model = "gpt-4-1106-preview"
+
         max_time, context_content = 45, []
         if extra=='all':
             max_time = 600
@@ -84,13 +99,11 @@ class GetOpenAIConversation(MessageHandler):
             if setting not in default_settings:
                 return MessageChain.plain(f"预设[{setting}]场景不存在，请使用以下场景：{'、'.join(default_settings.keys())}", no_interval=True)
 
-        if len(message_content) > self.message_length_limit:
-            return MessageChain.plain(f"请求字数超限：{len(message_content)} > {self.message_length_limit}", no_interval=True)
-
         try:
             # res = GetOpenAIConversation.get_completion(message_content)
             res = GetOpenAIConversation.get_chat_stream(
                 message_content,
+                model=model,
                 max_time=max_time,
                 settings=default_settings.get(setting, '')
             )
@@ -136,12 +149,13 @@ class GetOpenAIConversation(MessageHandler):
             return res.text
 
     @staticmethod
-    def get_chat_stream(text: str, max_time=30, settings: str = "", model="gpt-4") -> str:
+    def get_chat_stream(text: Union[str, list], max_time=30, settings: str = "", model="gpt-4", max_tokens=1000) -> str:
         path = "/chat/completions"
         body = {
             "model": model,
             "messages": [{"role": "user", "content": text}],
             "stream": True,
+            "max_tokens": max_tokens,
         }
         if settings:
             body['messages'] = [{"role": "system", "content": settings}] + body['messages']
