@@ -1,7 +1,33 @@
 import re
-from typing import Any, Dict, Optional, Union
+import time
+from typing import Any, Dict, List, Optional, Union
 
 from toogle.message import Group, Member, MessageChain, Plain, Quote
+
+
+class MessageHistory:
+    history = {}
+    windows = 10
+
+    def add(self, id, message: "MessagePack"):
+        if id not in self.history:
+            self.history[id] = []
+        self.history[id].append(message)
+        if len(self.history[id]) > self.windows:
+            self.history[id].pop(0)
+
+    def get(self, id) -> Optional[List["MessagePack"]]:
+        if id not in self.history:
+            return None
+        return self.history[id]
+    
+    def recent(self) -> Optional[List["MessagePack"]]:
+        if not self.history:
+            return None
+        return list(self.history.values())[-1]
+
+
+MESSAGE_HISTORY = MessageHistory()
 
 
 class MessagePack:
@@ -18,6 +44,7 @@ class MessagePack:
         self.group = group
         self.member = member
         self.quote = quote
+        self.time = time.time()
 
     def as_quote(self):
         return Quote(

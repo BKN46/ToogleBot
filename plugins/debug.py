@@ -15,6 +15,7 @@ from nonebot.adapters.mirai2.event.message import MessageSource
 
 from toogle.configs import config
 from toogle.message import MessageChain
+from toogle.message_handler import MESSAGE_HISTORY
 from toogle.nonebot2_adapter import bot_get_all_group, bot_send_message, bot_exec, PluginWrapper, admin_user_checker, worker_shutdown
 from toogle.utils import get_main_groups, is_admin
 
@@ -61,6 +62,21 @@ async def handle_shutdown(
     exit()
 
 shutdown_matcher.append_handler(handle_debug)
+
+
+history_matcher = on_regex(r"^\.history(.*)", rule=admin_user_checker)
+
+async def handle_debug_history(
+    foo: Tuple[Any, ...] = RegexGroup(),
+):
+    history = MESSAGE_HISTORY.recent()
+    if not history:
+        await history_matcher.send("No history")
+        return
+    text = "\n-----\n".join([f"[{x.time:.2f}]{x.member.id}: {x.message.asDisplay()}" for x in history])
+    await history_matcher.send(text)
+
+history_matcher.append_handler(handle_debug_history)
 
 
 @driver.on_shutdown

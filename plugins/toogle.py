@@ -9,13 +9,17 @@ from nonebot.adapters import Message
 from nonebot.matcher import Matcher
 from nonebot.params import RegexGroup, EventMessage
 from nonebot.plugin import on_message, on_regex
+from nonebot.message import event_postprocessor
 
 from nonebot.adapters.mirai2.event.message import MessageEvent
 from nonebot.adapters.mirai2 import MessageChain
 
 from toogle.configs import config
 from toogle.index import export_plugins
+from toogle.message_handler import MESSAGE_HISTORY
 from toogle.nonebot2_adapter import PluginWrapper
+
+# ping trigger
 
 echo = on_regex("^22222$")
 
@@ -24,6 +28,8 @@ async def handle_echo(foo: Tuple[Any, ...] = RegexGroup()):
 
 
 echo.append_handler(handle_echo)
+
+# main part
 
 from toogle.index import export_plugins, linear_handler
 
@@ -39,6 +45,8 @@ else:
     matcher = on_message()
     matcher.append_handler(linear_handler.ret)
 
+
+# /help
 
 get_help_regex = f"^(#help#|\.help|/help|@{config['MIRAI_QQ'][0]})(.*)"
 get_help = on_regex(get_help_regex)
@@ -82,3 +90,10 @@ async def handle_help(
     await get_help.send(res)
 
 get_help.append_handler(handle_help)
+
+
+# message history
+@event_postprocessor
+async def record_history(event: MessageEvent, message: MessageChain = EventMessage()):
+    message_pack = PluginWrapper.get_message_pack(event, message)
+    MESSAGE_HISTORY.add(message_pack.group.id, message_pack) # type: ignore
