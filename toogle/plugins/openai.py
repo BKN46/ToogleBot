@@ -2,14 +2,14 @@ import datetime
 import json
 import math
 import re
-from typing import Union
+from typing import Optional, Union
 import requests
 import time
 from requests.exceptions import ReadTimeout
 
 from toogle.configs import config, interval_limiter
 from toogle.message import Image, MessageChain, Plain
-from toogle.message_handler import MESSAGE_HISTORY, MessageHandler, MessagePack
+from toogle.message_handler import MESSAGE_HISTORY, MessageHandler, MessagePack, ActiveHandler
 from toogle.sql import DatetimeUtils, SQLConnection
 
 api_key = config.get("OpenAISecret")
@@ -209,3 +209,41 @@ class GetOpenAIConversation(MessageHandler):
         res_text += f"Total: {total_usage/100:.2f} usd\n"
 
         return res_text
+
+
+class ActiveAIConversation(ActiveHandler):
+    name = "OpenAI主动加入聊天"
+    trigger = r""
+    readme = "OpenAI主动加入聊天"
+    white_list = False
+    thread_limit = False
+    trigger_rate = 0.01
+    interval = 0
+
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        history_context = MESSAGE_HISTORY.get(message.group.id)
+        if not history_context:
+            return
+
+        pics = message.message.get(Image)
+        if pics:
+            model = "gpt-4-vision-preview"
+            message_content = [
+                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{x.getBase64()}" }} if isinstance(x, Image) 
+                else {"type": "text", "text": x.asDisplay()}
+                for x in message.message.root
+            ]
+        else:
+            model = "gpt-4-1106-preview"
+            message_content = message.message.asDisplay()
+
+        context_content = ["\n".join([f"{x.member.name}: {x.message.asDisplay()}" for x in history_context])]
+        res = GetOpenAIConversation.get_chat_stream(
+            message_content,
+            model=model,
+            other_history=context_content,
+            max_time=60,
+            max_tokens=150,
+            settings="你是一个名叫大黄狗的智能AI，你正在继续话题讨论，不要介绍自己，保持语气随便自然，150字以内"
+        )
+        return MessageChain.plain(res)

@@ -15,9 +15,9 @@ from nonebot.adapters.mirai2.event.message import MessageEvent
 from nonebot.adapters.mirai2 import MessageChain
 
 from toogle.configs import config
-from toogle.index import export_plugins
+from toogle.index import export_plugins, active_plugins
 from toogle.message_handler import MESSAGE_HISTORY
-from toogle.nonebot2_adapter import PluginWrapper
+from toogle.nonebot2_adapter import PluginWrapper, bot_send_message
 
 # ping trigger
 
@@ -48,7 +48,7 @@ else:
 
 # /help
 
-get_help_regex = f"^(#help#|\.help|/help|@{config['MIRAI_QQ'][0]})(.*)"
+get_help_regex = f"^(#help#|\.help|/help|@{config['MIRAI_QQ'][0]})(.*)" # type: ignore
 get_help = on_regex(get_help_regex)
 
 async def handle_help(
@@ -94,6 +94,14 @@ get_help.append_handler(handle_help)
 
 # message history
 @event_postprocessor
-async def record_history(event: MessageEvent, message: MessageChain = EventMessage()):
+async def message_post_process(event: MessageEvent, message: MessageChain = EventMessage()):
+    # record history
     message_pack = PluginWrapper.get_message_pack(event, message)
     MESSAGE_HISTORY.add(message_pack.group.id, message_pack) # type: ignore
+
+    # do active plugins
+    for plugin in active_plugins:
+        if str(message_pack.group.id) in config['GROUP_LIST'] and plugin.is_trigger_random():
+            message_ret = await plugin.ret(message_pack)
+            if message_ret:
+                await bot_send_message(message_pack, message_ret)

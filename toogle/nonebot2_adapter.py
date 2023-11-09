@@ -77,7 +77,7 @@ class PluginWrapper:
     def get_message_pack(
         event: MessageEvent,
         message: MessageChain = EventMessage(),
-    ) -> Optional[MessagePack]:
+    ) -> MessagePack:
         if isinstance(event.sender, GroupChatInfo):
             group = Group(event.sender.group.id, event.sender.group.name)
             member = Member(event.sender.id, event.sender.name)
@@ -85,7 +85,7 @@ class PluginWrapper:
             group = Group(0, "私聊")
             member = Member(event.sender.id, event.sender.nickname)
         else:
-            return None
+            return MessagePack(0, nb2toogle(message), Group(0, "Unkown"), Member(0, "Unkown"), None)
 
         if event.quote:
             quote = Quote(
