@@ -1,8 +1,10 @@
 import datetime
 import json
 import math
+import random
 import re
 from typing import Optional, Union
+import nonebot
 import requests
 import time
 from requests.exceptions import ReadTimeout
@@ -62,6 +64,7 @@ class GetOpenAIConversation(MessageHandler):
     name = "OpenAI对话"
     trigger = r"^\.gpt(\[.*?\]|)(all|context|bill|\+|)\s(.*)"
     thread_limit = True
+    to_me_trigger = True
     readme = "OpenAI GPT-4 模型对话，使用例：\n.gpt 你好\n.gpt[JK] 你好"
     interval = 600
     message_length_limit = 1000
@@ -69,10 +72,13 @@ class GetOpenAIConversation(MessageHandler):
     async def ret(self, message: MessagePack) -> MessageChain:
         match_group = re.match(self.trigger, message.message.asDisplay())
         if not match_group:
-            raise Exception("误触发")
-        setting = match_group.group(1)
-        extra = match_group.group(2)
-        message_content = match_group.group(3)
+            setting = ""
+            extra = ""
+            message_content = message.message.asDisplay()
+        else:
+            setting = match_group.group(1)
+            extra = match_group.group(2)
+            message_content = match_group.group(3)
 
         if len(message_content) > self.message_length_limit:
             return MessageChain.plain(f"请求字数超限：{len(message_content)} > {self.message_length_limit}", no_interval=True)
@@ -96,7 +102,7 @@ class GetOpenAIConversation(MessageHandler):
             history_context = MESSAGE_HISTORY.get(message.group.id)
             if not history_context:
                 return MessageChain.plain("无记录聊天历史", no_interval=True)
-            context_content = ["\n".join([f"{x.member.name}: {x.message.asDisplay()}" for x in history_context])]
+            context_content = GetOpenAIConversation.parse_history_context(history_context)
         else:
             model = "gpt-4-1106-preview"
 
@@ -156,7 +162,7 @@ class GetOpenAIConversation(MessageHandler):
             return res.text
 
     @staticmethod
-    def get_chat_stream(text: Union[str, list], max_time=30, settings: str = "", other_history: list[str] = [], model="gpt-4", max_tokens=1000) -> str:
+    def get_chat_stream(text: Union[str, list], max_time=30, settings: str = "", other_history: list = [], model="gpt-4", max_tokens=1000) -> str:
         path = "/chat/completions"
         body = {
             "model": model,
@@ -211,6 +217,21 @@ class GetOpenAIConversation(MessageHandler):
         return res_text
 
 
+    @staticmethod
+    def parse_history_context(history: list[MessagePack]) -> list:
+        # return [
+        #     [{"type": "text", "text": f"{m.member.name}: "}] + [
+        #         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{x.compress(max_height=400,max_width=400).getBase64()}" }}
+        #         if isinstance(x, Image) 
+        #         else {"type": "text", "text": x.asDisplay()}
+        #         for x in m.message.root
+        #     ] if m.message.get(Image)
+        #     else f"{m.member.name}: {m.message.asDisplay()}"
+        #     for m in history
+        # ]
+        return ["\n".join([f"{x.member.name}: {x.message.asDisplay()}" for x in history])]
+
+
 class ActiveAIConversation(ActiveHandler):
     name = "OpenAI主动加入聊天"
     trigger = r""
@@ -221,9 +242,11 @@ class ActiveAIConversation(ActiveHandler):
     interval = 0
 
     async def ret(self, message: MessagePack) -> Optional[MessageChain]:
-        history_context = MESSAGE_HISTORY.get(message.group.id)
+        history_context = MESSAGE_HISTORY.get(message.group.id, windows=7)
         if not history_context:
             return
+    
+        context_content = GetOpenAIConversation.parse_history_context(history_context)
 
         pics = message.message.get(Image)
         if pics:
@@ -237,13 +260,26 @@ class ActiveAIConversation(ActiveHandler):
             model = "gpt-4-1106-preview"
             message_content = message.message.asDisplay()
 
-        context_content = ["\n".join([f"{x.member.name}: {x.message.asDisplay()}" for x in history_context])]
         res = GetOpenAIConversation.get_chat_stream(
             message_content,
             model=model,
             other_history=context_content,
             max_time=60,
             max_tokens=150,
-            settings="你是一个名叫大黄狗的智能AI，你正在继续话题讨论，不要介绍自己，保持语气随便自然，150字以内"
+            settings="你是一个名叫大黄狗的智能AI，请继续话题讨论，不要介绍自己、不要使用语气词，保持简洁自然亲切友善，使用浓重的北京口音，100字以内"
         )
         return MessageChain.plain(res)
+
+
+    def is_trigger_random(self, message: Optional[MessagePack] = None):
+        message_content = message.message.asDisplay() if message else ""
+        if random.random() < self.trigger_rate:
+            nonebot.logger.success(f"Triggered [{self.name}]")  # type: ignore
+            return True
+        elif message_content[-1] in ["?", "？", "吗", "嘛", "呢"] and random.random() < 0.1:
+            nonebot.logger.success(f"Triggered [{self.name}]")  # type: ignore
+            return True
+        elif message_content.startswith("什么") or message_content.startswith("怎么") or message_content.startswith("为什么") and random.random() < 0.1:
+            nonebot.logger.success(f"Triggered [{self.name}]")  # type: ignore
+            return True
+        return False

@@ -9,6 +9,7 @@ from nonebot.adapters import Message
 from nonebot.matcher import Matcher
 from nonebot.params import RegexGroup, EventMessage
 from nonebot.plugin import on_message, on_regex
+from nonebot.rule import to_me
 from nonebot.message import event_postprocessor
 
 from nonebot.adapters.mirai2.event.message import MessageEvent
@@ -38,6 +39,10 @@ if config.get("CONCURRENCY") == 'true':
         try:
             matcher = on_regex(plugin.plugin.trigger)
             matcher.append_handler(plugin.ret)
+            if plugin.plugin.to_me_trigger:
+                to_me_matcher = on_message(rule=to_me())
+                to_me_matcher.append_handler(plugin.ret)
+                nonebot.logger.success(f"[{plugin.plugin.name}] Also loaded as to_me trigger")  # type: ignore
         except Exception as e:
             nonebot.logger.error(f"[{plugin.plugin.name}] failed to add matcher/handler: {repr(e)}") # type: ignore
 
@@ -101,7 +106,7 @@ async def message_post_process(event: MessageEvent, message: MessageChain = Even
 
     # do active plugins
     for plugin in active_plugins:
-        if str(message_pack.group.id) in config['GROUP_LIST'] and plugin.is_trigger_random():
+        if str(message_pack.group.id) in config['GROUP_LIST'] and plugin.is_trigger_random(message=message_pack):
             message_ret = await plugin.ret(message_pack)
             if message_ret:
                 await bot_send_message(message_pack, message_ret)

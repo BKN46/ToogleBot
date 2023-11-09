@@ -90,9 +90,23 @@ class Image(Element):
         return "[图片]"
 
     def getBase64(self) -> str:
+        if self.base64:
+            return self.base64
         image_bytes = self.getBytes()
         self.base64 = get_base64_encode(image_bytes)
         return self.base64
+    
+    def compress(self, max_height=500, max_width=700) -> "Image":
+        image_bytes = self.getBytes()
+        image = PIL.Image.open(io.BytesIO(image_bytes))
+        if image.height > max_height or image.width > max_width:
+            image.thumbnail((max_width, max_height))
+            image_bytes = io.BytesIO()
+            image.save(image_bytes, format="PNG")
+            new_base64 = get_base64_encode(image_bytes.getvalue())
+        else:
+            new_base64 = self.base64
+        return Image(base64=new_base64)
 
     def getBytes(self) -> bytes:
         if self.base64:

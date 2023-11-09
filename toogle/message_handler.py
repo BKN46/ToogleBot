@@ -10,7 +10,7 @@ from toogle.message import Group, Member, MessageChain, Plain, Quote
 
 class MessageHistory:
     history = {}
-    windows = 10
+    windows = 100
 
     def add(self, id, message: "MessagePack"):
         if id not in self.history:
@@ -19,11 +19,11 @@ class MessageHistory:
         if len(self.history[id]) > self.windows:
             self.history[id].pop(0)
 
-    def get(self, id) -> Optional[List["MessagePack"]]:
+    def get(self, id, windows=10) -> Optional[List["MessagePack"]]:
         if id not in self.history:
             return None
-        return self.history[id]
-    
+        return self.history[id][-windows:]
+
     def recent(self) -> Optional[List["MessagePack"]]:
         if not self.history:
             return None
@@ -65,6 +65,7 @@ class MessageHandler:
     readme = "这是一个BKN的聊天机器人组件"
     white_list = False
     thread_limit = False
+    to_me_trigger = False
     interval = 0
 
     def __init__(self) -> None:
@@ -89,6 +90,7 @@ class ActiveHandler:
     readme = "这是一个BKN的聊天机器人主动消息组件"
     white_list = False
     thread_limit = False
+    to_me_trigger = False
     trigger_rate = 0.001
     interval = 0
 
@@ -104,7 +106,7 @@ class ActiveHandler:
             return True
         return False
 
-    def is_trigger_random(self):
+    def is_trigger_random(self, message: Optional[MessagePack] = None):
         if random.random() < self.trigger_rate:
             nonebot.logger.success(f"Triggered [{self.name}]")  # type: ignore
             return True
