@@ -107,6 +107,6 @@ async def message_post_process(event: MessageEvent, message: MessageChain = Even
     # do active plugins
     for plugin in active_plugins:
         if str(message_pack.group.id) in config['GROUP_LIST'] and plugin.is_trigger_random(message=message_pack):
-            message_ret = await plugin.ret(message_pack)
+            message_ret = await plugin.ret_wrapper(message_pack)
             if message_ret:
                 await bot_send_message(message_pack, message_ret)

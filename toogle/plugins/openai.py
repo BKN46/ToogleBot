@@ -276,6 +276,11 @@ class ActiveAIConversation(ActiveHandler):
         if random.random() < self.trigger_rate:
             nonebot.logger.success(f"Triggered [{self.name}]")  # type: ignore
             return True
+        elif len(message_content) < 5:
+            return False
+        elif "大黄狗" in message_content and random.random() < 0.5:
+            nonebot.logger.success(f"Triggered [{self.name}]")  # type: ignore
+            return True
         elif message_content[-1] in ["?", "？", "吗", "嘛", "呢"] and random.random() < 0.1:
             nonebot.logger.success(f"Triggered [{self.name}]")  # type: ignore
             return True
