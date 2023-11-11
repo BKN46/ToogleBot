@@ -266,25 +266,25 @@ class ActiveAIConversation(ActiveHandler):
             other_history=context_content,
             max_time=60,
             max_tokens=150,
-            settings="你是一个名叫大黄狗的智能AI，请继续话题讨论，不要介绍自己、不要使用语气词，保持简洁自然亲切友善，使用浓重的北京口音，100字以内"
+            settings="你是一个名叫大黄狗的智能AI，请继续话题讨论，不要介绍自己、不要使用语气词、不要提问题，保持简洁自然亲切友善，使用粤语，100字以内"
         )
         return MessageChain.plain(res)
 
 
     def is_trigger_random(self, message: Optional[MessagePack] = None):
         message_content = message.message.asDisplay() if message else ""
-        if random.random() < self.trigger_rate:
+        if random.random() < 0.003:
             nonebot.logger.success(f"Triggered [{self.name}]")  # type: ignore
             return True
         elif len(message_content) < 5:
             return False
-        elif "大黄狗" in message_content and random.random() < 0.5:
+        elif "大黄狗" in message_content and random.random() < 0.25:
             nonebot.logger.success(f"Triggered [{self.name}]")  # type: ignore
             return True
-        elif message_content[-1] in ["?", "？", "吗", "嘛", "呢"] and random.random() < 0.1:
+        elif message_content[-1] in ["?", "？", "吗", "嘛", "呢"] and random.random() < 0.05:
             nonebot.logger.success(f"Triggered [{self.name}]")  # type: ignore
             return True
-        elif message_content.startswith("什么") or message_content.startswith("怎么") or message_content.startswith("为什么") and random.random() < 0.1:
+        elif message_content.startswith("什么") or message_content.startswith("怎么") or message_content.startswith("为什么") and random.random() < 0.05:
             nonebot.logger.success(f"Triggered [{self.name}]")  # type: ignore
             return True
         return False
