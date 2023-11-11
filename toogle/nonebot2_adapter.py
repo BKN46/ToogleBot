@@ -319,12 +319,14 @@ async def thread_worker(index):
             continue
 
         try:
+            start_time = time.time()
             res = await plugin.ret(message_pack)
             if plugin.interval and not res.no_interval:
                 interval_limiter.force_user_interval(plugin.name, message_pack.member.id, interval=plugin.interval)
             if len(res.root) > 0:
                 await bot_send_message(message_pack, res)
-            # nonebot.logger.success(f"{plugin.name} in worker {index} running complete.") # type: ignore
+            use_time = int((time.time() - start_time) * 1000)
+            nonebot.logger.success(f"{plugin.name} in worker {index} running complete. ({use_time}ms)") # type: ignore
         except (UrllibError, RequestsError):
             await bot_send_message(message_pack, f"爬虫网络连接错误，请稍后尝试")
         except VisibleException as e:
