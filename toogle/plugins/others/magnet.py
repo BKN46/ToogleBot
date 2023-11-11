@@ -74,9 +74,12 @@ def do_magnet_parse(text):
 def do_magnet_preview(text):
     magnet_link = parse_magnet(text, only_magnet=True)
     url = f"https://whatslink.info/api/v1/link?url={magnet_link}"
-    res = requests.get(url).json()
+    try:
+        res = requests.get(url).json()
+    except Exception as e:
+        return f"网络错误"
     if res['error']:
-        return res['error']
+        return f"磁链解析错误: {res['error']}"
     else:
         return res
 

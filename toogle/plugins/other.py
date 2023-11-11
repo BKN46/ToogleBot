@@ -409,7 +409,7 @@ class Diablo4Tracker(MessageHandler):
 
 class MagnetParse(MessageHandler):
     name = "磁链内容解析"
-    trigger = r"magnet:\?xt=urn:[a-z0-9]+:[a-zA-Z0-9]{32}.*"
+    trigger = r"magnet:\?xt=urn:[a-z0-9]+:[a-zA-Z0-9]+"
     thread_limit = True
     interval = 300
     readme = "尝试解析磁力链接内容"
@@ -425,8 +425,21 @@ class MagnetParse(MessageHandler):
             resource_size = parse_size(res['size'])
             resource_count = res['count']
             pics = [x['screenshot'] for x in res['screenshots']]
+
+            # image concat
+            pics = [PIL.Image.open(requests.get(x, stream=True).raw) for x in pics]
+            total_width, total_height = max([x.width for x in pics]), sum([x.height for x in pics])
+            combined_pic = PIL.Image.new("RGB", (total_width, total_height))
+            y_offset = 0
+            for pic in pics:
+                combined_pic.paste(pic, (0, y_offset))
+                y_offset += pic.height
+            io_buf = io.BytesIO()
+            combined_pic.save(io_buf, format="PNG")
+
             res_message = MessageChain([
                 message.as_quote(),
-                Plain(f"磁链内容解析成功：\n名称: {resource_name}\n大小: {resource_size}\n文件数: {resource_count}\n预览:\n")
-            ] + [Image(url=x) for x in pics[:5]])
+                Plain(f"磁链内容解析成功：\n名称: {resource_name}\n大小: {resource_size}\n文件数: {resource_count}\n预览:\n"),
+                Image(bytes=io_buf.getvalue()),
+            ])
             return res_message
