@@ -20,6 +20,7 @@ from nonebot.adapters.mirai2.message import MessageType
 # from nonebot.adapters import Event, Message
 from nonebot.matcher import Matcher
 from nonebot.params import EventMessage, RegexGroup, RegexMatched
+import requests
 from requests.exceptions import HTTPError as RequestsError
 from urllib3.exceptions import HTTPError as UrllibError
 
@@ -57,6 +58,9 @@ class PluginWrapper:
         message_pack = PluginWrapper.get_message_pack(event, message)
         if not message_pack:
             await matcher.send("不支持该种聊天方式！")
+            return
+        if not message_pack.message.asDisplay():
+            nonebot.logger.warning("不处理空消息传入") # type: ignore
             return
         if self.plugin.interval and not interval_limiter.user_interval(
             self.plugin.name, message_pack.member.id, interval=self.plugin.interval
@@ -327,7 +331,14 @@ async def thread_worker(index):
                 await bot_send_message(message_pack, res)
             use_time = int((time.time() - start_time) * 1000)
             nonebot.logger.success(f"{plugin.name} in worker {index} running complete. ({use_time}ms)") # type: ignore
-        except (UrllibError, RequestsError):
+        except (
+            UrllibError,
+            RequestsError,
+            requests.exceptions.ConnectionError,
+            requests.exceptions.ReadTimeout,
+            requests.exceptions.ConnectTimeout,
+            requests.exceptions.HTTPError
+        ):
             await bot_send_message(message_pack, f"爬虫网络连接错误，请稍后尝试")
         except VisibleException as e:
             await bot_send_message(message_pack, f"{e.__str__()}")
