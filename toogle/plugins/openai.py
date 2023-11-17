@@ -69,11 +69,13 @@ class GetOpenAIConversation(MessageHandler):
     interval = 600
     message_length_limit = 1000
 
-    async def ret(self, message: MessagePack) -> MessageChain:
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
         match_group = re.match(self.trigger, message.message.asDisplay())
         if not match_group:
             if message.group.id == 0:
-                return MessageChain.plain(f"暂不支持私聊to_me触发")
+                return
+            elif message.quote:
+                return
             setting = ""
             extra = ""
             message_content = message.message.asDisplay()
