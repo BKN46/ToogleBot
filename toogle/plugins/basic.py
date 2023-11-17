@@ -290,15 +290,34 @@ class SeeRecall(MessageHandler):
         recall_history = RECALL_HISTORY.get(message.group.id)
         if not recall_history:
             return MessageChain.create([Plain(f"最近没有撤回记录")])
+
         recall_message_pack = recall_history[-1]
         if time.time() - recall_message_pack.time > 60 * 10:
             return MessageChain.create([Plain(f"十分钟内没有撤回记录")])
-        time_str = datetime.datetime.fromtimestamp(recall_message_pack.time).strftime("%Y-%m-%d %H:%M:%S")
-        return MessageChain.create(
+
+        combined_msg_pack = [recall_message_pack]
+        last_time = recall_message_pack.time
+        for msg in recall_history[::-1]:
+            if msg.id == recall_message_pack.id:
+                continue
+            elif last_time - msg.time > 30:
+                break
+            else:
+                combined_msg_pack.append(msg)
+                last_time = msg.time
+        
+        t_shift = lambda x : datetime.datetime.fromtimestamp(x.time).strftime("%Y-%m-%d %H:%M:%S")
+        res_raw = [
             [
                 Plain(
-                    f"[{time_str}]{recall_message_pack.member.name}({recall_message_pack.member.id})撤回了一条消息：\n"
+                    f"[{t_shift(msg_pack)}]{msg_pack.member.name}({msg_pack.member.id})撤回了一条消息：\n"
                 )
-            ] + recall_message_pack.message.root # type: ignore
-        )
+            ] + msg_pack.message.root + [Plain("\n")] # type: ignore
+            for msg_pack in combined_msg_pack
+        ]
+        res = []
+        for x in res_raw:
+            res += x
+        
+        return MessageChain.create(res)
 

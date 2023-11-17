@@ -424,6 +424,9 @@ class MagnetParse(MessageHandler):
             resource_name = res['name']
             resource_size = parse_size(res['size'])
             resource_count = res['count']
+            if not res['screenshots']:
+                return MessageChain.plain(f"{resource_name}({resource_count}文件 {resource_size})无预览", quote=message.as_quote())
+
             pics_url = [x['screenshot'] for x in res['screenshots']]
 
             # image concat
