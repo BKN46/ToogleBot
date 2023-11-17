@@ -325,6 +325,8 @@ async def thread_worker(index):
         try:
             start_time = time.time()
             res = await plugin.ret(message_pack)
+            if not res:
+                continue
             if plugin.interval and not res.no_interval:
                 interval_limiter.force_user_interval(plugin.name, message_pack.member.id, interval=plugin.interval)
             if len(res.root) > 0:

@@ -12,12 +12,13 @@ from nonebot.plugin import on_message, on_regex
 from nonebot.rule import to_me
 from nonebot.message import event_postprocessor
 
-from nonebot.adapters.mirai2.event.message import MessageEvent
+from nonebot.adapters.mirai2.event.message import MessageEvent, GroupMessage
+from nonebot.adapters.mirai2.event import Event
 from nonebot.adapters.mirai2 import MessageChain
 
 from toogle.configs import config
 from toogle.index import export_plugins, active_plugins
-from toogle.message_handler import MESSAGE_HISTORY
+from toogle.message_handler import MESSAGE_HISTORY, RECALL_HISTORY
 from toogle.nonebot2_adapter import PluginWrapper, bot_send_message
 
 # ping trigger
@@ -97,9 +98,8 @@ async def handle_help(
 get_help.append_handler(handle_help)
 
 
-# message history
 @event_postprocessor
-async def message_post_process(event: MessageEvent, message: MessageChain = EventMessage()):
+async def message_post_process(event: GroupMessage, message: MessageChain = EventMessage()):
     # record history
     message_pack = PluginWrapper.get_message_pack(event, message)
     MESSAGE_HISTORY.add(message_pack.group.id, message_pack) # type: ignore
@@ -110,3 +110,26 @@ async def message_post_process(event: MessageEvent, message: MessageChain = Even
             message_ret = await plugin.ret_wrapper(message_pack)
             if message_ret:
                 await bot_send_message(message_pack, message_ret)
+
+
+@event_postprocessor
+async def all_event_handler(event: Event):
+    if event.type == "GroupRecallEvent":
+        # 撤回事件
+        recalled_message = MESSAGE_HISTORY.search(group_id=event.group.id, msg_id=event.message_id) # type: ignore
+        if recalled_message:
+            RECALL_HISTORY.add(recalled_message.group.id, recalled_message)
+            # await bot_send_message(recalled_message, f"【{recalled_message.member.name}】撤回了一条消息：\n{recalled_message.message.asDisplay()}")
+            pass
+    elif event.type == "NudgeEvent":
+        # 戳一戳事件
+        pass
+    elif event.type == "MemberJoinEvent":
+        # 成员加入事件
+        pass
+    elif event.type == "MemberLeaveEventQuit":
+        # 成员离开事件
+        pass
+    elif event.type == "MemberCardChangeEvent":
+        # 成员群名片变动事件
+        pass

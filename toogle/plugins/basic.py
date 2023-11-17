@@ -4,9 +4,11 @@ import pickle
 import random
 import re
 from functools import reduce
+import time
+from typing import Optional
 
 from toogle.message import At, MessageChain, Plain, Quote
-from toogle.message_handler import MessageHandler, MessagePack
+from toogle.message_handler import RECALL_HISTORY, MessageHandler, MessagePack
 from toogle.utils import create_path
 from toogle.configs import interval_limiter
 
@@ -275,3 +277,28 @@ class Lottery(MessageHandler):
             )
 
         return MessageChain.create([Plain(f"[抽奖]未知错误")])
+
+
+class SeeRecall(MessageHandler):
+    name = "反撤回"
+    trigger = r"撤回什么了"
+    white_list = False
+    thread_limit = False
+    readme = "查看撤回记录"
+
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        recall_history = RECALL_HISTORY.get(message.group.id)
+        if not recall_history:
+            return MessageChain.create([Plain(f"最近没有撤回记录")])
+        recall_message_pack = recall_history[-1]
+        if time.time() - recall_message_pack.time > 60 * 10:
+            return MessageChain.create([Plain(f"十分钟内没有撤回记录")])
+        time_str = datetime.datetime.fromtimestamp(recall_message_pack.time).strftime("%Y-%m-%d %H:%M:%S")
+        return MessageChain.create(
+            [
+                Plain(
+                    f"[{time_str}]{recall_message_pack.member.name}({recall_message_pack.member.id})撤回了一条消息：\n"
+                )
+            ] + recall_message_pack.message.root # type: ignore
+        )
+

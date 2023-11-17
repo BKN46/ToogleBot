@@ -9,8 +9,9 @@ from toogle.message import Group, Member, MessageChain, Plain, Quote
 
 
 class MessageHistory:
-    history = {}
-    windows = 100
+    def __init__(self, windows=100) -> None:
+        self.history = {}
+        self.windows = windows
 
     def add(self, id, message: "MessagePack"):
         if id not in self.history:
@@ -24,6 +25,16 @@ class MessageHistory:
             return None
         return self.history[id][-windows:]
 
+    def search(self, group_id: Optional[int]=None, msg_id: Optional[int]=None, text: Optional[str] = None) -> Optional["MessagePack"]:
+        for group_id, messages in self.history.items():
+            for message in messages:
+                if group_id and group_id != message.group.id:
+                    continue
+                if text and text in message.message.asDisplay():
+                    return message
+                if msg_id and msg_id == message.id:
+                    return message
+
     def recent(self) -> Optional[List["MessagePack"]]:
         if not self.history:
             return None
@@ -31,6 +42,7 @@ class MessageHistory:
 
 
 MESSAGE_HISTORY = MessageHistory()
+RECALL_HISTORY = MessageHistory()
 
 
 class MessagePack:
@@ -80,7 +92,7 @@ class MessageHandler:
             return True
         return False
 
-    async def ret(self, message: MessagePack) -> MessageChain:
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
         return MessageChain([])
     
 
