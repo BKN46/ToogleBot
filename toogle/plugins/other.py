@@ -411,13 +411,14 @@ class MagnetParse(MessageHandler):
     name = "磁链内容解析"
     trigger = r"magnet:\?xt=urn:[a-z0-9]+:[a-zA-Z0-9]+"
     thread_limit = True
-    interval = 300
+    interval = 3600
     readme = "尝试解析磁力链接内容"
 
     async def ret(self, message: MessagePack) -> MessageChain:
         # res = do_magnet_parse(message.message.asDisplay())
         # return MessageChain.plain(res, quote=message.as_quote())
         res = do_magnet_preview(message.message.asDisplay())
+        await bot_send_message(message.group.id, MessageChain.plain(f"已获取磁链，正在解析中", quote=message.as_quote()))
         if isinstance(res, str):
             return MessageChain.plain(res, quote=message.as_quote())
         else:
