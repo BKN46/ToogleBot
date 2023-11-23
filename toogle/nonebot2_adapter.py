@@ -26,7 +26,7 @@ from urllib3.exceptions import HTTPError as UrllibError
 
 from toogle.configs import config, interval_limiter
 from toogle.exceptions import VisibleException
-from toogle.message import At, AtAll, Element, Group, Image, Member
+from toogle.message import At, AtAll, Element, ForwardMessage, Group, Image, Member
 from toogle.message import MessageChain as ToogleChain
 from toogle.message import Plain, Quote
 from toogle.message_handler import MessageHandler, MessagePack
@@ -187,33 +187,87 @@ def toogle2nb(
             message_list.append(MessageSegment.at(item.target))
         elif isinstance(item, AtAll):
             message_list.append(MessageSegment.at_all())
+        elif isinstance(item, ForwardMessage):
+            message_list.append(MessageSegment.plain("消息历史:\n"))
+            for node in item.node_list:
+                message_list.append(MessageSegment.plain(f"{node['senderId']}:"))
+                message_list.append(toogle2nb(node['message']))
 
     return MessageChain(message_list)
 
 
-def nb2toogle(message: MessageChain) -> ToogleChain:
+def nb2toogle(message: Union[MessageChain, list, None]) -> ToogleChain:
     message_list = []
-    for item in message:
-        if item.type == MessageType.PLAIN:
-            message_list.append(Plain(item.data["text"]))
-        elif item.type == MessageType.IMAGE:
-            message_list.append(
-                Image(
-                    id=item.data.get("imageId"),
-                    url=item.data.get("url"),
-                    path=item.data.get("path"),
+    if not message:
+        return ToogleChain(message_list)
+    if isinstance(message, MessageChain):
+        for item in message: # type: ignore
+            if item.type == MessageType.PLAIN:
+                message_list.append(Plain(item.data["text"]))
+            elif item.type == MessageType.IMAGE:
+                message_list.append(
+                    Image(
+                        id=item.data.get("imageId"),
+                        url=item.data.get("url"),
+                        path=item.data.get("path"),
+                    )
                 )
-            )
-        elif item.type == MessageType.AT:
-            message_list.append(
-                At(
-                    target=item.data.get("target"),  # type: ignore
+            elif item.type == MessageType.AT:
+                message_list.append(
+                    At(
+                        target=item.data.get("target"),  # type: ignore
+                    )
                 )
-            )
-        elif item.type == MessageType.AT_ALL:
-            message_list.append(AtAll())
-        else:
-            message_list.append(Element())
+            elif item.type == MessageType.AT_ALL:
+                message_list.append(AtAll())
+            elif item.type == MessageType.FORWARD:
+                message_list.append(
+                    ForwardMessage(
+                        node_list=[
+                            {
+                                "sender": x.get("senderId"),
+                                "time": x.get("time"),
+                                "senderName": x.get("senderName"),
+                                "message": nb2toogle(x.get("messageChain")),
+                            }
+                            for x in item.data.get("nodeList") or []
+                        ],
+                        sender_id=item.data.get("senderLd"),
+                        time=item.data.get("time"),
+                        message=nb2toogle(item.data.get("message_chain")),
+                    )
+                )
+            else:
+                message_list.append(Element())
+    else:
+        for item in message:
+            if item['type'] == "Plain":
+                message_list.append(Plain(item.get("text")))
+            elif item['type'] == "Image":
+                message_list.append(
+                    Image(
+                        id=item.get("imageId"),
+                        url=item.get("url"),
+                        path=item.get("path"),
+                    )
+                )
+            elif item['type'] == "Forward":
+                message_list.append(
+                    ForwardMessage(
+                        node_list=[
+                            {
+                                "sender": x.get("senderId"),
+                                "time": x.get("time"),
+                                "senderName": x.get("senderName"),
+                                "message": nb2toogle(x.get("messageChain")),
+                            }
+                            for x in item.get("nodeList") or []
+                        ],
+                        sender_id=item.get("senderLd"),
+                        time=item.get("time"),
+                        message=nb2toogle(item.get("message_chain")),
+                    )
+                )
     return ToogleChain(message_list)
 
 

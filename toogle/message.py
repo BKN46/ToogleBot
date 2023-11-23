@@ -153,6 +153,26 @@ class Image(Element):
         return Image(path=path)
 
 
+class ForwardMessage(Element):
+    def __init__(
+        self,
+        node_list: Optional[list],
+        sender_id: Optional[int],
+        time: Optional[int],
+        message: 'MessageChain'
+    ) -> None:
+        self.node_list = node_list or []
+        self.sender_id = sender_id
+        self.time = time
+        self.message = message
+        print(repr(self.asDisplay()), file=open("debug.log", "a"))
+
+    def asDisplay(self) -> str:
+        msgs = ", ".join([x['message'].asDisplay() for x in self.node_list])
+
+        return f"[Forward origin from {self.sender_id} [{msgs}]]"
+
+
 class MessageChain:
     def __init__(self, message_list: Sequence[Element], no_interval=False) -> None:
         self.root = message_list
@@ -177,3 +197,6 @@ class MessageChain:
         if quote:
             return MessageChain([quote, Plain(text)], no_interval=no_interval)
         return MessageChain([Plain(text)], no_interval=no_interval)
+    
+    def __repr__(self) -> str:
+        return repr(self.root)
