@@ -190,7 +190,7 @@ def toogle2nb(
         elif isinstance(item, ForwardMessage):
             message_list.append(MessageSegment.plain("消息历史:\n"))
             for node in item.node_list:
-                message_list.append(MessageSegment.plain(f"{node['senderId']}:"))
+                message_list.append(MessageSegment.plain(f"{node['sender']}:"))
                 message_list.append(toogle2nb(node['message']))
 
     return MessageChain(message_list)

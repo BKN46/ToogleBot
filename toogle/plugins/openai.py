@@ -202,7 +202,7 @@ class GetOpenAIConversation(MessageHandler):
         end_date = date_now.strftime("%Y-%m-%d")
         start_date = (date_now - datetime.timedelta(days=day_count)).strftime("%Y-%m-%d")
         path = f"/dashboard/billing/usage?end_date={end_date}&start_date={start_date}"
-        res = requests.get(url + path, headers=header, timeout=30, proxies=proxies).json()
+        res = requests.get("https://api.openai.com" + path, headers=header, timeout=30, proxies=proxies).json()
         total_usage = res['total_usage']
         daily_cost = [
             sum([x['cost'] for x in day['line_items']])
@@ -216,7 +216,12 @@ class GetOpenAIConversation(MessageHandler):
             day = (date_now - datetime.timedelta(days=day_count-i)).strftime("%Y-%m-%d")
             res_text += f"{day} ${cost/100:<6.2f} {'#' * day_length}\n"
 
-        res_text += f"Total: {total_usage/100:.2f} usd\n"
+        res_text += f"Total: {total_usage/100:.2f} usd\n\n"
+
+        res = requests.get("https://api.openai.com/dashboard/billing/invoices?system=api", headers=header, timeout=30, proxies=proxies).json()
+        for invoices in res['data'][:3]:
+            time_str = datetime.datetime.fromtimestamp(invoices['created_at']).strftime("%Y-%m-%d")
+            res_text += f"Invoice: {time_str} ${invoices['total']/100:.2f}\n"
 
         return res_text
 
@@ -282,13 +287,13 @@ class ActiveAIConversation(ActiveHandler):
             return True
         elif len(message_content) < 5:
             return False
-        elif "大黄狗" in message_content and random.random() < 0.25:
+        elif "大黄狗" in message_content and random.random() < 0.15:
             nonebot.logger.success(f"Triggered [{self.name}]")  # type: ignore
             return True
-        elif message_content[-1] in ["?", "？", "吗", "嘛", "呢"] and random.random() < 0.05:
+        elif message_content[-1] in ["?", "？", "吗", "嘛", "呢"] and random.random() < 0.01:
             nonebot.logger.success(f"Triggered [{self.name}]")  # type: ignore
             return True
-        elif message_content.startswith("什么") or message_content.startswith("怎么") or message_content.startswith("为什么") and random.random() < 0.05:
+        elif message_content.startswith("什么") or message_content.startswith("怎么") or message_content.startswith("为什么") and random.random() < 0.01:
             nonebot.logger.success(f"Triggered [{self.name}]")  # type: ignore
             return True
         return False
