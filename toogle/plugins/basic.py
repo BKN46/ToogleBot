@@ -23,17 +23,20 @@ except Exception as e:
 
 class HelpMeSelect(MessageHandler):
     name = "随机选择"
-    trigger = r"^[是|应该](.*还是.*)"
+    trigger = r"(^(是|应该)(.+还是.+))|(^(.+)不\5.*)"
     readme = "随机选项"
     interval = 30
 
     async def ret(self, message: MessagePack) -> MessageChain:
         match_str = re.match(self.trigger, message.message.asDisplay())
-        if match_str:
-            proc_str = HelpMeSelect.str_prune(match_str.group(1))
+        if match_str and match_str.group(3):
+            proc_str = HelpMeSelect.str_prune(match_str.group(3))
             sel_list = proc_str.split("还是")
             common_prefix = HelpMeSelect.longestCommonPrefix(sel_list)
             return MessageChain.plain(random.choice(sel_list)[len(common_prefix) :])
+        elif match_str and match_str.group(5):
+            proc_str = HelpMeSelect.str_prune(match_str.group(5))
+            return MessageChain.plain(random.choice([proc_str, f"不{proc_str}"]))
         else:
             raise Exception("No match!")
 
