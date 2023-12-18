@@ -73,7 +73,9 @@ class PluginWrapper:
         if get_block(message_pack):
             return
         if not is_traffic_free(self.plugin, message_pack) and not is_admin(message_pack.member.id):
-            await matcher.send(get_traffic_time(self.plugin, message_pack))
+            traffic_str = get_traffic_time(self.plugin, message_pack)
+            if traffic_str:
+                await matcher.send(traffic_str)
             return
         await plugin_run(self.plugin, message_pack)
 
@@ -127,7 +129,9 @@ class LinearHandler:
         for plugin in self.plugins:
             if plugin.plugin.is_trigger(message_pack):
                 if not is_traffic_free(plugin.plugin, message_pack):
-                    await matcher.send(get_traffic_time(plugin.plugin, message_pack))
+                    traffic_str = get_traffic_time(plugin.plugin, message_pack)
+                    if traffic_str:
+                        await matcher.send(traffic_str)
                     return
                 await plugin_run(plugin.plugin, message_pack)
                 return
@@ -148,8 +152,10 @@ def get_block(message: MessagePack):
 
 def get_traffic_time(plugin: MessageHandler, message: MessagePack) -> str:
     tz = TRAFFIC_CTRL.get(plugin.name).get(str(message.group.id))  # type: ignore
+    if tz[0][1] - tz[0][0] == 24:  # type: ignore
+        return ""
     tz = ", ".join([f"{x[0]}:00 - {x[1]}:00" for x in tz])  # type: ignore
-    return f"管理员设置，该功能在 {tz} 时段禁用"
+    return f"管理员设置，{plugin.name} 功能在 {tz} 时段禁用"
 
 
 def is_traffic_free(plugin: MessageHandler, message: MessagePack) -> bool:
