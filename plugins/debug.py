@@ -1,6 +1,8 @@
+import io
 import json
 import random
 import re
+import tempfile
 import time
 from typing import Any, Tuple
 from datetime import datetime
@@ -12,6 +14,7 @@ from nonebot.plugin import on_message, on_regex
 from nonebot.matcher import Matcher
 from nonebot.adapters.mirai2.event.message import MessageEvent
 from nonebot.adapters.mirai2.event.message import MessageSource
+import shshsh
 
 from toogle.configs import config
 from toogle.message import MessageChain
@@ -20,6 +23,8 @@ from toogle.nonebot2_adapter import bot_get_all_group, bot_send_message, bot_exe
 from toogle.utils import get_main_groups, is_admin
 
 driver = get_driver()
+
+# Broadcast
 broadcast_matcher = on_regex("^broadcast (.*)$", rule=admin_user_checker)
 
 async def handle_broadcast(
@@ -34,6 +39,7 @@ async def handle_broadcast(
 broadcast_matcher.append_handler(handle_broadcast)
 
 
+# General debug
 debug_matcher = on_regex(r"^debug (.*)\|?(.*)$", rule=admin_user_checker)
 
 async def handle_debug(
@@ -52,6 +58,7 @@ async def handle_debug(
 debug_matcher.append_handler(handle_debug)
 
 
+# Shutdown
 shutdown_matcher = on_regex(r"^\.shutdown(.*)", rule=admin_user_checker)
 
 async def handle_shutdown(
@@ -64,6 +71,20 @@ async def handle_shutdown(
 shutdown_matcher.append_handler(handle_debug)
 
 
+# Shell exec
+sh_exec_matcher = on_regex(r"^\.sh(.*)", rule=admin_user_checker)
+
+async def handle_sh_exec(
+    foo: Tuple[Any, ...] = RegexGroup(),
+):
+    res = shshsh.I >> foo[0]
+    res.wait()
+    await sh_exec_matcher.send(res.stdout.read().decode("utf-8"))
+
+sh_exec_matcher.append_handler(handle_sh_exec)
+
+
+# History debug
 history_matcher = on_regex(r"^\.history(.*)", rule=admin_user_checker)
 
 async def handle_debug_history(
