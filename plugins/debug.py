@@ -77,8 +77,12 @@ sh_exec_matcher = on_regex(r"^\.sh(.*)", rule=admin_user_checker)
 async def handle_sh_exec(
     foo: Tuple[Any, ...] = RegexGroup(),
 ):
-    res = shshsh.I >> foo[0]
-    res.wait()
+    cmds = foo[0].split("|")
+    res = shshsh.I >> cmds[0]
+    if len(cmds) > 1:
+        for cmd in cmds[1:]:
+            res = res | cmd
+    res.wait(timeout=3)
     await sh_exec_matcher.send(res.stdout.read().decode("utf-8"))
 
 sh_exec_matcher.append_handler(handle_sh_exec)
