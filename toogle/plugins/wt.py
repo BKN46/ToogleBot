@@ -43,15 +43,19 @@ class WTDatamine(MessageHandler):
     name = "战雷拆包数据查询"
     trigger = r"^\.wt\s"
     thread_limit = True
-    readme = "战雷拆包数据查询"
+    readme = "战雷导弹拆包数据查询\n查询内容前加*可查看原始数据"
 
     async def ret(self, message: MessagePack) -> MessageChain:
         query = message.message.asDisplay()[3:].strip()
+        is_raw = False
+        if query.startswith("*"):
+            query = query[1:]
+            is_raw = True
         query_list = search(query)
         if isinstance(query_list, list):
             return MessageChain.plain(f"请精确查询:\n" + "\n".join(query_list))
         else:
-            res = get_missile_detail(query_list)
+            res = get_missile_detail(query_list, raw=is_raw)
             pic = list2img(
                 res,
                 word_size=13,

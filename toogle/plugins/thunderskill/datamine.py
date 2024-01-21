@@ -24,7 +24,7 @@ def cutoff_dict(input_dict):
     return res
 
 
-def missile_parse(file_path):
+def missile_parse(file_path, is_raw):
     DATA = json.load(open(file_path, "r"))
 
     def jdata(path, cal_val=False):
@@ -38,86 +38,89 @@ def missile_parse(file_path):
                 return None
         return res
 
-    res = {
-        "ID": file_path.split('/')[-1].replace('.blkx', ''),
-        "弹体ID": jdata("mesh"),
-        "参数ID": jdata("rocket.bulletName"),
-        "出生点": jdata("preset_cost"),
-        "口径": jdata("rocket.caliber") * 1000, # type: ignore
-        "质量": jdata("rocket.mass"),
-        "动力": {
-            "空阻系数": jdata("rocket.CxK"),
-            "一级动力段推力": jdata("rocket.force"),
-            "一级动力段时间": jdata("rocket.timeFire"),
-            "一级动力段平均推重比": jdata("rocket.force", cal_val=True)
-            / (jdata("rocket.mass", cal_val=True) + jdata("rocket.massEnd", cal_val=True)) # type: ignore
-            * 2,
-            "二级动力段推力": jdata("rocket.force1"),
-            "二级动力段时间": jdata("rocket.timeFire1"),
-            "二级动力段平均推重比": jdata("rocket.force1", cal_val=True)
-            / (jdata("rocket.massEnd", cal_val=True) + jdata("rocket.massEnd1", cal_val=True)) # type: ignore
-            * 2,
-            "最大射程": jdata("rocket.maxDistance"),
-            "末端速度": jdata("rocket.endSpeed"),
-        },
-        "机动": {
-            "尾翼最大攻角": f"{jdata('rocket.finsAoaHor', cal_val=True) * 90}° {jdata('rocket.finsAoaVer', cal_val=True) * 90}°",  # type: ignore
-            "矢量推力": jdata("rocket.thrustVectoringAngle"),
-            "机翼面积因子": jdata("rocket.wingAreaMult"),
-            "实际G值限制": jdata("rocket.guidance.guidanceAutopilot.reqAccelMax"),
-            "发射G值限制": jdata("rocket.loadFactorMax"),
-        },
-        "制导": {
-            "预热时间": jdata("rocket.guidance.warmUpTime"),
-            "发射窗口时间": jdata("rocket.guidance.workTime"),
-            "锁定目标后解锁引导头": jdata("rocket.guidance.uncageBeforeLaunch"),
-            "发射后重新锁定": jdata("rocket.guidance.lockAfterLaunch"),
-            "重新锁定最大尝试时间": jdata("rocket.guidance.breakLockMaxTime"),
-            "发射后进入制导时间": jdata("rocket.guidance.lockTimeOut"),
-            "红外制导": {
-                "后向锁定距离": jdata("rocket.guidance.irSeeker.rangeBand0"),
-                "全向锁定距离": jdata("rocket.guidance.irSeeker.rangeBand1"),
-                "热诱弹干扰距离": jdata("rocket.guidance.irSeeker.rangeBand2"),
-                "IRCM干扰距离": jdata("rocket.guidance.irSeeker.rangeBand3"),
-                "地面IRCM干扰距离": jdata("rocket.guidance.irSeeker.rangeBand4"),
-                "DIRCM干扰距离": jdata("rocket.guidance.irSeeker.rangeBand6"),
-                "导弹FoV": jdata("rocket.guidance.irSeeker.fov"),
-                "锁定FoV": jdata("rocket.guidance.irSeeker.lockAngleMax"),
-                "战斗锁定FoV": jdata("rocket.guidance.irSeeker.angleMax"),
-                "热源门限角度": jdata("rocket.guidance.irSeeker.gateWidth"),
-                "最小对日角": jdata("rocket.guidance.irSeeker.minAngleToSun"),
-                "屏蔽红外频段": jdata("rocket.guidance.irSeeker.bandMaskToReject"),
+    if is_raw:
+        res = DATA
+    else:
+        res = {
+            "ID": file_path.split('/')[-1].replace('.blkx', ''),
+            "弹体ID": jdata("mesh"),
+            "参数ID": jdata("rocket.bulletName"),
+            "出生点": jdata("preset_cost"),
+            "口径": jdata("rocket.caliber") * 1000, # type: ignore
+            "质量": jdata("rocket.mass"),
+            "动力": {
+                "空阻系数": jdata("rocket.CxK"),
+                "一级动力段推力": jdata("rocket.force"),
+                "一级动力段时间": jdata("rocket.timeFire"),
+                "一级动力段平均推重比": jdata("rocket.force", cal_val=True)
+                / (jdata("rocket.mass", cal_val=True) + jdata("rocket.massEnd", cal_val=True)) # type: ignore
+                * 2,
+                "二级动力段推力": jdata("rocket.force1"),
+                "二级动力段时间": jdata("rocket.timeFire1"),
+                "二级动力段平均推重比": jdata("rocket.force1", cal_val=True)
+                / (jdata("rocket.massEnd", cal_val=True) + jdata("rocket.massEnd1", cal_val=True)) # type: ignore
+                * 2,
+                "最大射程": jdata("rocket.maxDistance"),
+                "末端速度": jdata("rocket.endSpeed"),
             },
-            "惯性制导": {
-                "惯性制导偏移速度": jdata("rocket.guidance.inertialGuidance.inertialNavigationDriftSpeed"),
-                "数据链": jdata("rocket.guidance.inertialGuidance.datalink"),
+            "机动": {
+                "尾翼最大攻角": f"{jdata('rocket.finsAoaHor', cal_val=True) * 90}° {jdata('rocket.finsAoaVer', cal_val=True) * 90}°",  # type: ignore
+                "矢量推力": jdata("rocket.thrustVectoringAngle"),
+                "机翼面积因子": jdata("rocket.wingAreaMult"),
+                "实际G值限制": jdata("rocket.guidance.guidanceAutopilot.reqAccelMax"),
+                "发射G值限制": jdata("rocket.loadFactorMax"),
             },
-            "雷达制导": {
-                "雷达频段": jdata("rocket.guidance.radarSeeker.band"),
-                "主动雷达": jdata("rocket.guidance.radarSeeker.active"),
-                "波段屏蔽": jdata("rocket.guidance.radarSeeker.designationSourceTypeMask"),
-                "锁定FoV": jdata("rocket.guidance.radarSeeker.lockAngleMax"),
-                "战斗锁定FoV": jdata("rocket.guidance.radarSeeker.angleMax"),
-                "扫描率": jdata("rocket.guidance.radarSeeker.rateMax"),
-                "RCS": jdata("rocket.guidance.radarSeeker.receiver.rcs"),
-                "传输功率": jdata("rocket.guidance.radarSeeker.transmitter.power"),
-                "信号最大距离": jdata("rocket.guidance.radarSeeker.receiver.rangeMax"),
-                "多普勒频带宽度": jdata("rocket.guidance.radarSeeker.dopplerSpeed.width"),
-                "多普勒信号门": jdata("rocket.guidance.radarSeeker.dopplerSpeed.signalWidthMin"),
-                "多普勒速度门α": jdata("rocket.guidance.radarSeeker.dopplerSpeedGate.filterAlpha"),
-                "多普勒速度门β": jdata("rocket.guidance.radarSeeker.dopplerSpeedGate.filterBetta"),
-                "多普勒速度门范围": jdata("rocket.guidance.radarSeeker.dopplerSpeedGate.dopplerSpeedGateSearchRange"),
+            "制导": {
+                "预热时间": jdata("rocket.guidance.warmUpTime"),
+                "发射窗口时间": jdata("rocket.guidance.workTime"),
+                "锁定目标后解锁引导头": jdata("rocket.guidance.uncageBeforeLaunch"),
+                "发射后重新锁定": jdata("rocket.guidance.lockAfterLaunch"),
+                "重新锁定最大尝试时间": jdata("rocket.guidance.breakLockMaxTime"),
+                "发射后进入制导时间": jdata("rocket.guidance.lockTimeOut"),
+                "红外制导": {
+                    "后向锁定距离": jdata("rocket.guidance.irSeeker.rangeBand0"),
+                    "全向锁定距离": jdata("rocket.guidance.irSeeker.rangeBand1"),
+                    "热诱弹干扰距离": jdata("rocket.guidance.irSeeker.rangeBand2"),
+                    "IRCM干扰距离": jdata("rocket.guidance.irSeeker.rangeBand3"),
+                    "地面IRCM干扰距离": jdata("rocket.guidance.irSeeker.rangeBand4"),
+                    "DIRCM干扰距离": jdata("rocket.guidance.irSeeker.rangeBand6"),
+                    "导弹FoV": jdata("rocket.guidance.irSeeker.fov"),
+                    "锁定FoV": jdata("rocket.guidance.irSeeker.lockAngleMax"),
+                    "战斗锁定FoV": jdata("rocket.guidance.irSeeker.angleMax"),
+                    "热源门限角度": jdata("rocket.guidance.irSeeker.gateWidth"),
+                    "最小对日角": jdata("rocket.guidance.irSeeker.minAngleToSun"),
+                    "屏蔽红外频段": jdata("rocket.guidance.irSeeker.bandMaskToReject"),
+                },
+                "惯性制导": {
+                    "惯性制导偏移速度": jdata("rocket.guidance.inertialGuidance.inertialNavigationDriftSpeed"),
+                    "数据链": jdata("rocket.guidance.inertialGuidance.datalink"),
+                },
+                "雷达制导": {
+                    "雷达频段": jdata("rocket.guidance.radarSeeker.band"),
+                    "主动雷达": jdata("rocket.guidance.radarSeeker.active"),
+                    "波段屏蔽": jdata("rocket.guidance.radarSeeker.designationSourceTypeMask"),
+                    "锁定FoV": jdata("rocket.guidance.radarSeeker.lockAngleMax"),
+                    "战斗锁定FoV": jdata("rocket.guidance.radarSeeker.angleMax"),
+                    "扫描率": jdata("rocket.guidance.radarSeeker.rateMax"),
+                    "RCS": jdata("rocket.guidance.radarSeeker.receiver.rcs"),
+                    "传输功率": jdata("rocket.guidance.radarSeeker.transmitter.power"),
+                    "信号最大距离": jdata("rocket.guidance.radarSeeker.receiver.rangeMax"),
+                    "多普勒频带宽度": jdata("rocket.guidance.radarSeeker.dopplerSpeed.width"),
+                    "多普勒信号门": jdata("rocket.guidance.radarSeeker.dopplerSpeed.signalWidthMin"),
+                    "多普勒速度门α": jdata("rocket.guidance.radarSeeker.dopplerSpeedGate.filterAlpha"),
+                    "多普勒速度门β": jdata("rocket.guidance.radarSeeker.dopplerSpeedGate.filterBetta"),
+                    "多普勒速度门范围": jdata("rocket.guidance.radarSeeker.dopplerSpeedGate.dopplerSpeedGateSearchRange"),
+                },
             },
-        },
-        "战斗部": {
-            "近炸保险时间": jdata("rocket.proximityFuse.timeOut"),
-            "保险距离": jdata("rocket.armDistance"),
-            "近炸保险距离": jdata("rocket,proximityFuse.armDistance"),
-            "近炸半径": jdata("rocket.proximityFuse.radius"),
-            "爆炸当量": jdata("rocket.explosiveMass"),
-            "弹片爆炸半径": jdata("rocket.shutterDamageRadius"),
+            "战斗部": {
+                "近炸保险时间": jdata("rocket.proximityFuse.timeOut"),
+                "保险距离": jdata("rocket.armDistance"),
+                "近炸保险距离": jdata("rocket,proximityFuse.armDistance"),
+                "近炸半径": jdata("rocket.proximityFuse.radius"),
+                "爆炸当量": jdata("rocket.explosiveMass"),
+                "弹片爆炸半径": jdata("rocket.shutterDamageRadius"),
+            }
         }
-    }
 
     res = cutoff_dict(res)
     def parse(d, depth):
@@ -184,9 +187,9 @@ def missile_damage_module(file_path):
     return img_bytes.getvalue()
 
 
-def get_missile_detail(file_path):
+def get_missile_detail(file_path, raw=False):
     return [
-        missile_parse(file_path),
+        missile_parse(file_path, raw),
         "弹片散射区域:",
         missile_damage_module(file_path),
     ]
@@ -199,6 +202,6 @@ if __name__ == "__main__":
     if isinstance(query_list, list):
         print(query_list)
     else:
-        res = missile_parse(query_list)
+        res = missile_parse(query_list, False)
         print(res)
     pass
