@@ -1,3 +1,4 @@
+import asyncio
 import random
 import re
 import time
@@ -13,16 +14,16 @@ class MessageHistory:
         self.history = {}
         self.windows = windows
 
-    def add(self, id, message: "MessagePack"):
+    def add(self, id: int, message: "MessagePack"):
         if id not in self.history:
             self.history[id] = []
         self.history[id].append(message)
         if len(self.history[id]) > self.windows:
             self.history[id].pop(0)
 
-    def get(self, id, windows=10) -> Optional[List["MessagePack"]]:
+    def get(self, id: int, windows=10) -> List["MessagePack"]:
         if id not in self.history:
-            return None
+            return []
         return self.history[id][-windows:]
 
     def search(self, group_id: Optional[int]=None, msg_id: Optional[int]=None, text: Optional[str] = None) -> Optional["MessagePack"]:
@@ -133,6 +134,38 @@ class ActiveHandler:
         except Exception as e:
             nonebot.logger.error(f"[{self.name}]{repr(e)}") # type: ignore
             return 
+
+
+class WaitCommandHandler:
+    def __init__(self, group_id: int, member_id: int, hit_regex: str, start_time=0.0, timeout=30, sleep_interval=0.1) -> None:
+        self.group_id = group_id
+        self.member_id = member_id
+        self.hit_regex = hit_regex
+        self.timeout = timeout
+        if start_time == 0:
+            self.start_time = time.time()
+        else:
+            self.start_time = start_time
+        self.sleep_interval = sleep_interval
+
+    def is_trigger(self, message: MessagePack) -> bool:
+        message_str = message.message.asDisplay()
+        if message.group.id != self.group_id or message.member.id != self.member_id:
+            return False
+        return bool(re.search(self.hit_regex, message_str))
+
+    async def run(self):
+        while time.time() - self.start_time < self.timeout:
+            message = MESSAGE_HISTORY.get(self.group_id, 5)
+            for msg in message:
+                if msg.time < self.start_time:
+                    continue
+                if self.is_trigger(msg):
+                    return msg
+            await asyncio.sleep(self.sleep_interval)
+            # time.sleep(self.sleep_interval)
+        return None
+
 
 def get_user_name(message: MessagePack) -> str:
     return message.member.name or str(message.member.id)
