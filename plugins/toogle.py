@@ -1,4 +1,6 @@
+import asyncio
 from curses.ascii import isdigit
+import datetime
 import math
 import time
 import re
@@ -133,3 +135,11 @@ async def all_event_handler(event: Event):
     elif event.type == "MemberCardChangeEvent":
         # 成员群名片变动事件
         pass
+
+
+@nonebot.get_driver().on_bot_connect
+async def on_bot_connect(bot):
+    # send message when done module init
+    now_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    for admin in config.get('ADMIN_LIST', []):
+        await bot_send_message(int(admin), f"[{now_time}] Toogle已启动", friend=True)
