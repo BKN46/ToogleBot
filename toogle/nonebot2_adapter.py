@@ -319,10 +319,17 @@ async def bot_send_message(target: Union[int, MessagePack], message: Union[Toogl
     else:
         quote = None
         nb_message = message
+
+    # loop = asyncio.get_event_loop()
+    # loop.create_task(bot.send(
+    #     event=event,
+    #     message=nb_message,
+    #     quote = quote,
+    # ))
     await bot.send(
         event=event,
         message=nb_message,
-        quote = quote,
+        quote=quote,
     )
 
 

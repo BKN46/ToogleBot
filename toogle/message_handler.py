@@ -155,7 +155,8 @@ class WaitCommandHandler:
         return bool(re.search(self.hit_regex, message_str))
 
     async def run(self):
-        while time.time() - self.start_time < self.timeout:
+        wait_start_time = time.time()
+        while time.time() - wait_start_time < self.timeout:
             message = MESSAGE_HISTORY.get(self.group_id, 5)
             for msg in message:
                 if msg.time < self.start_time:
