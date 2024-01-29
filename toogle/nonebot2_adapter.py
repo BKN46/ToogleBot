@@ -415,12 +415,14 @@ async def thread_worker(index):
             if '误触发' not in repr(e):
                 print_err(e, plugin, message_pack)
 
+
 def worker_start(thread_num=THREAD_NUM):
     THREAD_POOL.clear()
     for i in range(thread_num):
         THREAD_POOL.append(threading.Thread(target=asyncio.run, args=[thread_worker(i)]))
     for x in THREAD_POOL:
         x.start()
+
 
 async def worker_shutdown(thread_num=THREAD_NUM):
     for i in range(thread_num * 2):

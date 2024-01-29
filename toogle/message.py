@@ -13,6 +13,24 @@ create_path('data/buffer')
 class Element:
     def asDisplay(self) -> str:
         return ""
+    
+    def to_dict(self) -> dict:
+        res = {}
+        for x in dir(self):
+            if not x.startswith("_") and not callable(getattr(self, x)) and getattr(self, x):
+                if isinstance(getattr(self, x), Element):
+                    res[x] = getattr(self, x).to_dict()
+                else:
+                    try:
+                        if len(getattr(self, x)) < 50:
+                            res[x] = getattr(self, x)
+                        else:
+                            res[x] = getattr(self, x)[:50] + "..."
+                    except Exception as e:
+                        res[x] = "[Error in parse]"
+
+        res.update({"type": self.__class__.__name__})
+        return res
 
 
 class Group:
@@ -20,11 +38,17 @@ class Group:
         self.id = id
         self.name = name
 
+    def to_dict(self) -> dict:
+        return {"id": self.id, "name": self.name}
+
 
 class Member:
     def __init__(self, id: int, name: str) -> None:
         self.id = id
         self.name = name
+
+    def to_dict(self) -> dict:
+        return {"id": self.id, "name": self.name}
 
 
 class Quote(Element):
@@ -61,11 +85,6 @@ class Plain(Element):
 
 
 class Image(Element):
-    id: Optional[str] = None
-    base64: Optional[str] = None
-    url: Optional[str] = None
-    path: Optional[str] = None
-
     def __init__(
         self,
         id: Optional[str] = None,
@@ -200,3 +219,6 @@ class MessageChain:
     
     def __repr__(self) -> str:
         return repr(self.root)
+    
+    def to_dict(self) -> dict:
+        return {"root": [x.to_dict() for x in self.root], "no_interval": self.no_interval}

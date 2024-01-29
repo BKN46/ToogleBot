@@ -30,9 +30,9 @@ def circle_corner(img, radii, trans):
 
 def max_resize(img, max_width=500, max_height=500):
     if img.size[0] >= img.size[1]:
-        return img.resize((max_width, int(img.size[1] * max_width/img.size[0])), Image.ANTIALIAS)
+        return img.resize((max_width, int(img.size[1] * max_width/img.size[0])), Image.ANTIALIAS) # type: ignore
     else:
-        return img.resize((int(img.size[0] * max_height / img.size[1]), max_height), Image.ANTIALIAS)
+        return img.resize((int(img.size[0] * max_height / img.size[1]), max_height), Image.ANTIALIAS) # type: ignore
 
 
 def get_setu():
@@ -124,7 +124,7 @@ def get_luck_text(member: Member):
         ]
     }
 
-    if 'name' in member.__dict__:
+    if 'name' in member.to_dict():
         return f"{member.name}的今日运势是:\n{luck_res}\n{random.choice(luck_detail[luck_res])}"
     else:
         return f"{member.id}的今日运势是:\n{luck_res}\n{random.choice(luck_detail[luck_res])}"

@@ -1,4 +1,7 @@
 import asyncio
+import json
+import os
+import pickle
 import random
 import re
 import time
@@ -40,6 +43,22 @@ class MessageHistory:
         if not self.history:
             return None
         return list(self.history.values())[-1]
+    
+    def save_str(self, path: str):
+        with open(path, "w") as f:
+            f.write(json.dumps({
+                k: [x.to_dict() for x in v]
+                for k, v in self.history.items()
+            }, indent=2, ensure_ascii=False))
+
+    def save(self, path: str):
+        with open(path, "wb") as f:
+            pickle.dump(self.history, f)
+    
+    def load(self, path: str):
+        if os.path.exists(path):
+            with open(path, "rb") as f:
+                self.history = pickle.load(f)
 
 
 MESSAGE_HISTORY = MessageHistory()
@@ -70,6 +89,16 @@ class MessagePack:
             group_id=self.group.id,
             message=self.message,
         )
+    
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "message": self.message.to_dict(),
+            "group": self.group.to_dict(),
+            "member": self.member.to_dict(),
+            "time": self.time,
+            **({"quote": self.quote.to_dict()} if self.quote else {}),
+        }
 
 
 class MessageHandler:

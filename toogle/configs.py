@@ -27,6 +27,7 @@ key_check = {
     "REQUEST_PROXY_HTTP": "部分需翻墙功能",
     "REQUEST_PROXY_HTTPS": "部分需翻墙功能",
     "HEALTHCARE_GROUP_LIST": "提肛喝水小助手",
+    "HISTORY_SAVE_PATH": "消息记录持久化路径",
 }
 
 for key in key_check.keys():

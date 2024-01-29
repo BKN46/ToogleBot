@@ -2,6 +2,7 @@ import asyncio
 from curses.ascii import isdigit
 import datetime
 import math
+import os
 import time
 import re
 from typing import Any, Tuple
@@ -135,6 +136,20 @@ async def all_event_handler(event: Event):
     elif event.type == "MemberCardChangeEvent":
         # 成员群名片变动事件
         pass
+
+
+@nonebot.get_driver().on_shutdown
+async def on_shutdown():
+    MESSAGE_HISTORY.save(config.get("HISTORY_SAVE_PATH", "data/history.pkl"))
+
+
+@nonebot.get_driver().on_startup
+async def on_startup():
+    try:
+        MESSAGE_HISTORY.load(config.get("HISTORY_SAVE_PATH", "data/history.pkl"))
+    except Exception as e:
+        nonebot.logger.warning(f"Something went wrong in loading history, reset history file: {repr(e)}") # type: ignore
+        MESSAGE_HISTORY.save(config.get("HISTORY_SAVE_PATH", "data/history.pkl"))
 
 
 @nonebot.get_driver().on_bot_connect
