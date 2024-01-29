@@ -7,7 +7,7 @@ import PIL.ImageColor
 import PIL.ImageDraw
 import PIL.ImageFont
 
-from toogle.plugins.compose.waifu import text_on_image, buffered_url_pic, max_resize
+from toogle.plugins.waifu_utils.waifu_random import text_on_image, buffered_url_pic, max_resize
 
 
 def width_resize(img, max_width, min_height):
@@ -433,7 +433,7 @@ def ranking_compose(waifu_data_list, highlight=0) -> bytes:
 
 
 if __name__ == "__main__":
-    from toogle.plugins.compose.waifu import get_random_anime_character
+    from toogle.plugins.waifu.waifu import get_random_anime_character
     res_pic_url, res_text, res_id, res_raw  = get_random_anime_character('f')
     pic_bytes = get_waifu_card(
         'BKN',

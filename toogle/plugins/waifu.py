@@ -6,11 +6,11 @@ import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
 
-import toogle.plugins.compose.waifu as Waifu
+import toogle.plugins.waifu_utils.waifu_random as Waifu
 from toogle.message import Image, Member, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack, get_user_name
-from toogle.plugins.compose.waifu_battle import Dice
-from toogle.plugins.compose.waifu_card import get_waifu_card, ranking_compose
+from toogle.plugins.waifu_utils.waifu_battle import Dice
+from toogle.plugins.waifu_utils.waifu_card import get_waifu_card, ranking_compose
 from toogle.sql import DatetimeUtils, SQLConnection
 from toogle.utils import draw_pic_text, text2img
 
