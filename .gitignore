@@ -142,5 +142,6 @@ dmypy.json
 data/
 test.py
 debug.py
+test/
 
 # End of https://www.toptal.com/developers/gitignore/api/python
