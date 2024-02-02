@@ -197,9 +197,9 @@ class WaitCommandHandler:
         return None
 
 try:
-    USER_INFO = json.load(open("data/user.json", "r"))
+    USER_INFO = json.load(open("data/user_info.json", "r"))
 except Exception as e:
     USER_INFO = {}
 
 def get_user_name(message: MessagePack) -> str:
-    return USER_INFO.get(message.group.id, {}).get(message.member.id, {}).get("nickname", None) or message.member.name or str(message.member.id)
+    return USER_INFO.get(str(message.group.id), {}).get(str(message.member.id), {}).get("nickname", None) or message.member.name or str(message.member.id)

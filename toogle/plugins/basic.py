@@ -342,22 +342,22 @@ class UpdatePersonalInfo(MessageHandler):
     """
     async def ret(self, message: MessagePack) -> MessageChain:
         info = message.message.asDisplay()[5:].strip().split("|")
-        if len(info) < 3:
+        if len(info) < 2:
             return MessageChain.create([Plain("格式错误")])
-        nickname = info[1]
-        place = info[2]
+        nickname = info[0]
+        place = info[1]
         member_id = message.member.id
         if is_admin(message.member.id) and len(info) >= 4:
-            member_id = info[3]
+            member_id = info[2]
         
         if message.group.id not in USER_INFO:
-            USER_INFO[message.group.id] = {}
+            USER_INFO[str(message.group.id)] = {}
 
-        USER_INFO[message.group.id][member_id] = {
+        USER_INFO[str(message.group.id)][str(member_id)] = {
             "id": member_id,
             "nickname": nickname,
             "place": place,
         }
 
-        json.dump(USER_INFO, open("data/user_info.json", "w"))
+        json.dump(USER_INFO, open("data/user_info.json", "w"), indent=2, ensure_ascii=False)
         return MessageChain.create([Plain("成功更新个人信息")])
