@@ -301,7 +301,7 @@ class GetRandomAnimeFemale(MessageHandler):
                 pos = [x for x in waifu_list if x["qq"] == str(message.member.id)]
                 if not pos:
                     return MessageChain.create(
-                        [Plain(f"{message.member.name}你还没有锁定老婆，请【随机老婆】后【锁定老婆】才能进入排行")]
+                        [Plain(f"{get_user_name(message)}你还没有锁定老婆，请【随机老婆】后【锁定老婆】才能进入排行")]
                     )
             else:
                 member_id = message_text.strip().split()[-1]

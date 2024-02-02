@@ -196,6 +196,10 @@ class WaitCommandHandler:
             # time.sleep(self.sleep_interval)
         return None
 
+try:
+    USER_INFO = json.load(open("data/user.json", "r"))
+except Exception as e:
+    USER_INFO = {}
 
 def get_user_name(message: MessagePack) -> str:
-    return message.member.name or str(message.member.id)
+    return USER_INFO.get(message.group.id, {}).get(message.member.id, {}).get("nickname", None) or message.member.name or str(message.member.id)

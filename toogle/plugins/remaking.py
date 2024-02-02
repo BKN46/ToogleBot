@@ -71,7 +71,7 @@ class GetRemake(MessageHandler):
             or user[1] > 5
         ):
             try:
-                res = get_remake(message.member.name)
+                res = get_remake(get_user_name(message))
                 SQLConnection.insert(
                     "remake_data",
                     {

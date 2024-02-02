@@ -1,4 +1,5 @@
 import datetime
+import json
 import os
 import pickle
 import random
@@ -8,8 +9,8 @@ import time
 from typing import Optional
 
 from toogle.message import At, MessageChain, Plain, Quote
-from toogle.message_handler import RECALL_HISTORY, MessageHandler, MessagePack
-from toogle.utils import create_path
+from toogle.message_handler import RECALL_HISTORY, USER_INFO, MessageHandler, MessagePack
+from toogle.utils import create_path, is_admin
 from toogle.configs import interval_limiter
 
 LOTTERY_PATH = "data/lottery/"
@@ -324,3 +325,39 @@ class SeeRecall(MessageHandler):
         
         return MessageChain.create(res)
 
+
+class UpdatePersonalInfo(MessageHandler):
+    name = "更新群聊个人信息"
+    trigger = r"^\.nick (.*)$"
+    white_list = False
+    thread_limit = False
+    readme = "更新群聊个人信息，包括昵称、所在地等\n格式：.nick 昵称|所在地\n例如：.nick BKN|北京"
+
+    """
+    {
+        "id": 0,
+        "nickname": "",
+        "place": "",  
+    }
+    """
+    async def ret(self, message: MessagePack) -> MessageChain:
+        info = message.message.asDisplay()[5:].strip().split("|")
+        if len(info) < 3:
+            return MessageChain.create([Plain("格式错误")])
+        nickname = info[1]
+        place = info[2]
+        member_id = message.member.id
+        if is_admin(message.member.id) and len(info) >= 4:
+            member_id = info[3]
+        
+        if message.group.id not in USER_INFO:
+            USER_INFO[message.group.id] = {}
+
+        USER_INFO[message.group.id][member_id] = {
+            "id": member_id,
+            "nickname": nickname,
+            "place": place,
+        }
+
+        json.dump(USER_INFO, open("data/user_info.json", "w"))
+        return MessageChain.create([Plain("成功更新个人信息")])
