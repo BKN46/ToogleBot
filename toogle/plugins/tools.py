@@ -88,8 +88,8 @@ class GetRainfallWeatherGraph(MessageHandler):
         
         rainfall_pic = "https://weather.cma.cn" + rainfall_pic.split("?")[0]
         pics = [
-            rainfall_pic.replace("130002400", x)
-            for x in ["130002400", "130004800", "130007200", "000009600", "000012000", "000014400", "000016800"]
+            rainfall_pic.replace("000002400", x)
+            for x in ["000002400", "000004800", "000007200", "000009600", "000012000", "000014400", "000016800"]
         ]
         try:
             gif_frames = [
