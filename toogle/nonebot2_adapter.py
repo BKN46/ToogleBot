@@ -412,7 +412,7 @@ async def thread_worker(index):
         except VisibleException as e:
             await bot_send_message(message_pack, f"{e.__str__()}")
         except Exception as e:
-            if '误触发' not in repr(e):
+            if '误触发' not in repr(e) and 'attached to a different loop' not in repr(e):
                 print_err(e, plugin, message_pack)
 
 
