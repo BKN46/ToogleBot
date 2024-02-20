@@ -2,6 +2,7 @@
 import datetime
 import io
 import os
+import re
 import time
 
 import requests
@@ -22,23 +23,35 @@ def get_rainfall_graph():
             if x.startswith("rainfall_"):
                 os.remove(f"data/{x}")
 
-    t = int(time.time() * 1000)
-    url = "https://weather.cma.cn/api/channel"
-    params = {
-        "id": "d3236549863e453aab0ccc4027105bad,339,92,45",
-        "_": t
-    }
-    res = requests.get(url, params=params)
-    try:
-        rainfall_pic = res.json()['data'][1]['image']
-    except Exception as e:
-        return "获取国家气象局预报数据失败"
+    # t = int(time.time() * 1000)
+    # url = "https://weather.cma.cn/api/channel"
+    # params = {
+    #     "id": "d3236549863e453aab0ccc4027105bad,339,92,45",
+    #     "_": t
+    # }
+    # res = requests.get(url, params=params)
+    # try:
+    #     rainfall_pic = res.json()['data'][1]['image']
+    # except Exception as e:
+    #     return "获取国家气象局预报数据失败"
+                
+    # rainfall_pic = "https://weather.cma.cn" + rainfall_pic.split("?")[0]
+    # pics = [
+    #     rainfall_pic.replace("000002400", x)
+    #     for x in ["000002400", "000004800", "000007200", "000009600", "000012000", "000014400", "000016800"]
+    # ]
     
-    rainfall_pic = "https://weather.cma.cn" + rainfall_pic.split("?")[0]
-    pics = [
-        rainfall_pic.replace("000002400", x)
-        for x in ["000002400", "000004800", "000007200", "000009600", "000012000", "000014400", "000016800"]
-    ]
+    pics = []
+    for x in range(339, 346):
+        res = requests.get(f"https://weather.cma.cn/web/channel-{x}.html").text
+        search_reg = r'(/file.*?")'
+        search_res = re.findall(search_reg, res)
+        if search_res:
+            res = "https://weather.cma.cn/" + search_res[0][:-1]
+            pics.append(res)
+    if not pics:
+        return "获取国家气象局预报数据失败"
+
     try:
         gif_frames = [
             Image.buffered_url_pic(x, return_PIL=True)
