@@ -293,7 +293,7 @@ class ActiveAIConversation(ActiveHandler):
         elif message_content[-1] in ["?", "？", "吗", "嘛", "呢"] and random.random() < 0.01:
             nonebot.logger.success(f"Triggered [{self.name}]")  # type: ignore
             return True
-        elif message_content.startswith("什么") or message_content.startswith("怎么") or message_content.startswith("为什么") and random.random() < 0.01:
+        elif (message_content.startswith("什么") or message_content.startswith("怎么") or message_content.startswith("为什么")) and random.random() < 0.01:
             nonebot.logger.success(f"Triggered [{self.name}]")  # type: ignore
             return True
         return False
