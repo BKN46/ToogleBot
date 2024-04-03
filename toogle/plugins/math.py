@@ -120,6 +120,7 @@ class Calculator(MessageHandler):
     name = "计算器"
     trigger = r"=$"
     readme = "计算器"
+    price = 2
 
     async def ret(self, message: MessagePack) -> MessageChain:
         text = message.message.asDisplay()
@@ -267,6 +268,7 @@ class UnitConversion(MessageHandler):
     trigger = f"(([1-9]\d*\.?\d*)|(0\.\d*[1-9]))({trans_reg_str})" # type: ignore
     white_list = False
     readme = "快速英/美制单位转换，方便跑团"
+    price = 2
 
     async def ret(self, message: MessagePack) -> MessageChain:
         message_content = message.message.asDisplay()

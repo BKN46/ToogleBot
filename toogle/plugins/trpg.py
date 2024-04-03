@@ -104,6 +104,7 @@ class DPRCalculator(MessageHandler):
 
         return MessageChain.create([Image(bytes=pic)])
 
+
 class Search5ECHM(MessageHandler):
     trigger = r"^dnd5e"
     white_list = False

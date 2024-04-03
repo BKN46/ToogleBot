@@ -42,5 +42,5 @@ def use_balance(user_id, amount):
 
 
 def chat_earn(user_id, message: str):
-    if len(message) > 5 and get_balance(user_id) < 30:
+    if len(message) >= 10 and get_balance(user_id) < 15:
         give_balance(user_id, 1)

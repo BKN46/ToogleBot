@@ -85,7 +85,7 @@ class GetQutu(MessageHandler):
                         break
                     from_image = PIL.Image.open(
                         IMAGES_PATH + image_names[IMAGE_COLUMN * (y - 1) + x - 1]
-                    ).resize((IMAGE_SIZE[0], IMAGE_SIZE[1]), PIL.Image.ANTIALIAS)
+                    ).resize((IMAGE_SIZE[0], IMAGE_SIZE[1]), PIL.Image.ANTIALIAS) # type: ignore
                     to_image.paste(
                         from_image, ((x - 1) * IMAGE_SIZE[0], (y - 1) * IMAGE_SIZE[1])
                     )
@@ -107,6 +107,7 @@ class LongTu(MessageHandler):
     thread_limit = True
     readme = "存龙图"
     interval = 30
+    price = 3
 
     async def ret(self, message: MessagePack) -> MessageChain:
         IMAGES_PATH = "data/long_img/"  # 图片集地址

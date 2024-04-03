@@ -16,6 +16,7 @@ class GetLuck(MessageHandler):
     # white_list = True
     thread_limit = True
     readme = "获取运势"
+    price = 5
 
     async def ret(self, message: MessagePack) -> MessageChain:
         user = SQLConnection.get_user(message.member.id)

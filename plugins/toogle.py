@@ -84,9 +84,12 @@ async def handle_help(
         res = []
         for mod in export_plugins:
             if content in mod.plugin.name or content in mod.plugin.trigger or content in mod.plugin.readme:
-                res.append(
-                    f"{mod.plugin.name}\n【触发正则】 {mod.plugin.trigger}\n【说明】 {mod.plugin.readme}"
-                )
+                line = f"{mod.plugin.name}\n【触发正则】 {mod.plugin.trigger}\n【说明】 {mod.plugin.readme}"
+                if mod.plugin.price > 0:
+                    line += f"\n【触发花费】 {mod.plugin.price}gb"
+                if mod.plugin.interval > 0:
+                    line += f"\n【触发间隔】 {mod.plugin.interval}秒"
+                res.append(line)
         return f"\n{'#'*15}\n".join(res)
 
     message_pack = PluginWrapper.get_message_pack(event, message)
