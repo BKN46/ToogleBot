@@ -208,6 +208,8 @@ class HistoryTu(MessageHandler):
             at = message.message.get(At)
             for image in pics:
                 image_file_name = f"{image.id}".replace("{", "").replace("}", "") # type: ignore
+                if os.path.exists(IMAGES_PATH + image_file_name):
+                    os.remove(IMAGES_PATH + image_file_name)
                 if at:
                     image_file_name = f"{at[0].target}|||{image_file_name}" # type: ignore
                 image.save(IMAGES_PATH + image_file_name) # type: ignore
