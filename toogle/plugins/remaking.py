@@ -17,6 +17,7 @@ class GetRemake(MessageHandler):
     trigger = r"^/remake"
     # white_list = True
     readme = "随机remake，数据来源自世界银行"
+    price = 5
 
     async def ret(self, message: MessagePack) -> MessageChain:
         # return MessageChain.create([Plain("由于敏感词封禁问题，remake暂时维护升级，未来会转换为图片形式")])

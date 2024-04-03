@@ -66,7 +66,7 @@ class PluginWrapper:
         if self.plugin.price > 0:
             balance = get_balance(message_pack.member.id)
             if balance < self.plugin.price:
-                await matcher.send(f"余额不足，本次操作需要{self.plugin.price}gb，您剩余{balance}gb")
+                await matcher.send(f"余额不足，{self.plugin.name}功能需要{self.plugin.price}gb，您剩余{balance}gb")
                 return
         if self.plugin.interval and not interval_limiter.user_interval(
             self.plugin.name, message_pack.member.id, interval=self.plugin.interval
@@ -142,7 +142,7 @@ class LinearHandler:
                 if plugin.plugin.price > 0:
                     balance = get_balance(message_pack.member.id)
                     if balance < plugin.plugin.price:
-                        await matcher.send(f"余额不足，本次操作需要{plugin.plugin.price}gb，您剩余{balance}gb")
+                        await matcher.send(f"余额不足，{plugin.plugin.name}功能需要{plugin.plugin.price}gb，您剩余{balance}gb")
                         return
                 await plugin_run(plugin.plugin, message_pack)
                 return
