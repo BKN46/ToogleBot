@@ -8,6 +8,7 @@ from toogle.message_handler import MessageHandler, MessagePack
 
 class CurrencyExchange(MessageHandler):
     name = "货币转换"
+    price = 2
     currency_map = {
         "USD": "usd",
         "usd": "usd",

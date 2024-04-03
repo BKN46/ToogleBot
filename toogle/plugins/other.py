@@ -413,6 +413,7 @@ class MagnetParse(MessageHandler):
     thread_limit = True
     interval = 3600
     readme = "尝试解析磁力链接内容"
+    price = 10
 
     async def ret(self, message: MessagePack) -> MessageChain:
         # res = do_magnet_parse(message.message.asDisplay())

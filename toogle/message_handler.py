@@ -109,6 +109,7 @@ class MessageHandler:
     thread_limit = False
     to_me_trigger = False
     interval = 0
+    price = 0
 
     def __init__(self) -> None:
         pass

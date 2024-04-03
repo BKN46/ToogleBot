@@ -31,6 +31,7 @@ from toogle.message import MessageChain as ToogleChain
 from toogle.message import Plain, Quote
 from toogle.message_handler import MessageHandler, MessagePack
 from toogle.utils import is_admin, is_admin_group, print_err
+from toogle.economy import get_balance, take_balance, has_balance
 
 # THREAD_SEM = Semaphore(1)
 warning = nonebot.logger.warning  # type: ignore
@@ -62,6 +63,11 @@ class PluginWrapper:
         if not message_pack.message.asDisplay():
             nonebot.logger.warning("不处理空消息传入") # type: ignore
             return
+        if self.plugin.price > 0:
+            balance = get_balance(message_pack.member.id)
+            if balance < self.plugin.price:
+                await matcher.send(f"余额不足，本次操作需要{self.plugin.price}gb，您剩余{balance}gb")
+                return
         if self.plugin.interval and not interval_limiter.user_interval(
             self.plugin.name, message_pack.member.id, interval=self.plugin.interval
         ) and not is_admin(message_pack.member.id) and not is_admin_group(message_pack.group.id):
@@ -133,6 +139,11 @@ class LinearHandler:
                     if traffic_str:
                         await matcher.send(traffic_str)
                     return
+                if plugin.plugin.price > 0:
+                    balance = get_balance(message_pack.member.id)
+                    if balance < plugin.plugin.price:
+                        await matcher.send(f"余额不足，本次操作需要{plugin.plugin.price}gb，您剩余{balance}gb")
+                        return
                 await plugin_run(plugin.plugin, message_pack)
                 return
 
@@ -396,6 +407,8 @@ async def thread_worker(index):
                 continue
             if plugin.interval and not res.no_interval:
                 interval_limiter.force_user_interval(plugin.name, message_pack.member.id, interval=plugin.interval)
+            if plugin.price > 0:
+                take_balance(message_pack.member.id, plugin.price)
             if len(res.root) > 0:
                 await bot_send_message(message_pack, res)
             use_time = int((time.time() - start_time) * 1000)

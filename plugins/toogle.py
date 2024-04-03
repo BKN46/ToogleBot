@@ -23,6 +23,7 @@ from toogle.configs import config
 from toogle.index import export_plugins, active_plugins
 from toogle.message_handler import MESSAGE_HISTORY, RECALL_HISTORY
 from toogle.nonebot2_adapter import PluginWrapper, bot_send_message
+from toogle.economy import chat_earn
 
 # ping trigger
 
@@ -113,6 +114,9 @@ async def message_post_process(event: GroupMessage, message: MessageChain = Even
             message_ret = await plugin.ret_wrapper(message_pack)
             if message_ret:
                 await bot_send_message(message_pack, message_ret)
+
+    # economy
+    chat_earn(message_pack.member.id, message_pack.message.asDisplay())
 
 
 @event_postprocessor

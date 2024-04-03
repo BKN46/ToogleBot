@@ -12,6 +12,7 @@ class RunPython(MessageHandler):
     name = "Python解释器"
     trigger = r"^#python#"
     readme = "简易python脚本运行，屏蔽敏感库(sys,os,dir,exec,eval等)"
+    price = 5
 
     async def ret(self, message: MessagePack) -> MessageChain:
         text = message.message.asDisplay()[8:]

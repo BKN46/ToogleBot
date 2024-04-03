@@ -27,6 +27,7 @@ class HelpMeSelect(MessageHandler):
     trigger = r"(^(是|应该)(.+还是.+))|(^(.+)不\5.*)"
     readme = "随机选项"
     interval = 30
+    price = 2
 
     async def ret(self, message: MessagePack) -> MessageChain:
         match_str = re.match(self.trigger, message.message.asDisplay())
