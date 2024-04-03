@@ -131,6 +131,7 @@ class Calculator(MessageHandler):
         opts = {
             "（": "(",
             "）": ")",
+            "x": "*",
             "^": "**",
             "√": "sqrt",
             "²": "**2",
@@ -139,6 +140,9 @@ class Calculator(MessageHandler):
             "w": "0000",
             "K": "000",
             "W": "0000",
+            "千": "000",
+            "万": "0000",
+            "亿": "00000000",
             "\n": "",
         }
         for k, v in opts.items():

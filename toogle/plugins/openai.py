@@ -70,6 +70,7 @@ class GetOpenAIConversation(MessageHandler):
     message_length_limit = 1000
 
     async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        return MessageChain.plain("成本原因，大黄狗GPT暂时关闭")
         match_group = re.match(self.trigger, message.message.asDisplay())
         if not match_group:
             if message.group.id == 0:
@@ -281,6 +282,7 @@ class ActiveAIConversation(ActiveHandler):
 
 
     def is_trigger_random(self, message: Optional[MessagePack] = None):
+        return False
         message_content = message.message.asDisplay() if message else ""
         if random.random() < 0.003:
             nonebot.logger.success(f"Triggered [{self.name}]")  # type: ignore

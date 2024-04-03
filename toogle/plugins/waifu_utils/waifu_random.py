@@ -248,13 +248,16 @@ def get_designated_search(sexual, search_list):
     }
     res = requests.get(req_url, headers=header, data=body, timeout=20)
     soup = bs4.BeautifulSoup(res.text, "html.parser")
-    page_links = soup.find("td", {"class": "pager_links"})
+    page_links = soup.find("div", {"class": "flexcontainer"})
     if page_links:
-        max_page = int(page_links.findAll("span")[-1].text.strip())
+        max_page = int(page_links.findAll("a", {"class": "flexitem pad"})[-1].text.strip()) # type: ignore
         req_url += f"&page={random.randint(1, max_page)}"
         res = requests.get(req_url, headers=header, data=body, timeout=20)
         soup = bs4.BeautifulSoup(res.text, "html.parser")
-    chara_list = soup.findAll("a", {"target": "_blank"})
+    chara_list = [
+        x for x in soup.findAll("a")
+        if 'href' in x.attrs and 'class' not in x.attrs
+    ]
     if len(chara_list) == 0:
         raise ACError("无符合条件角色，请至animecharactersdatabase确认")
     chara_id = random.choice(chara_list).attrs["href"].split("?id=")[-1]
@@ -273,12 +276,12 @@ def get_anime_src(src_id):
     soup = bs4.BeautifulSoup(res.text, "html.parser")
 
     def find_in_profile(key):
-        base = soup.find(id="besttable").find(text=key)
+        base = soup.find(id="besttable").find(text=key) # type: ignore
         if base:
-            if base.parent.name == "a":
-                return base.parent.parent.parent.td.text
+            if base.parent.name == "a": # type: ignore
+                return base.parent.parent.parent.td.text # type: ignore
             else:
-                return base.parent.parent.td.text
+                return base.parent.parent.td.text # type: ignore
         else:
             return ""
 
@@ -294,40 +297,40 @@ def parse_anime_db(res):
     profile_id = res.url.split("?id=")[1].replace("&more#extra", "")
 
     def find_in_profile(key):
-        base = soup.find(id="sidephoto").find(text=key)
+        base = soup.find(id="sidephoto").find(text=key) # type: ignore
         if base:
-            if base.parent.name == "a":
-                return base.parent.parent.parent.td.text
+            if base.parent.name == "a": # type: ignore
+                return base.parent.parent.parent.td.text # type: ignore
             else:
-                return base.parent.parent.td.text
+                return base.parent.parent.td.text # type: ignore
         else:
             return ""
 
     soup = bs4.BeautifulSoup(res.text, "html.parser")
-    profile_pic = soup.find(id="profileimage").attrs.get("src")
+    profile_pic = soup.find(id="profileimage").attrs.get("src") # type: ignore
     profile_name = (
         soup.find(id="mainframe1")
-        .find(text="Share ▼")
-        .parent.parent.text.split("|")[0]
+        .find(text="Share ▼") # type: ignore
+        .parent.parent.text.split("|")[0] # type: ignore
         .strip()
     ).split(", ")[0]
     profile_name = re.sub(r"(\(.*?\))|(（.*?）)", "", profile_name).strip()
-    en_name = soup.find(id="main1").find("a", {"class": "fgw"}).text
+    en_name = soup.find(id="main1").find("a", {"class": "fgw"}).text # type: ignore
     if len(profile_name) < 1 or profile_name == "\xa0":
         profile_name = en_name
     profile_heat = (
-        soup.find(id="main1").find("a", {"href": "seriesfinder3.php"}).text.split()[0]
+        soup.find(id="main1").find("a", {"href": "seriesfinder3.php"}).text.split()[0] # type: ignore
     )
-    profile_year = soup.find("a", {"href": "year_trivia.php"}).text.split()[0]
+    profile_year = soup.find("a", {"href": "year_trivia.php"}).text.split()[0] # type: ignore
     profile_src = (
         soup.find(id="sidephoto")
-        .find(text="From")
-        .parent.parent.find("a")
-        .attrs["href"]
+        .find(text="From") # type: ignore
+        .parent.parent.find("a") # type: ignore
+        .attrs["href"] # type: ignore
         .split("?id=")[-1]
     )
 
-    profile_vs_matches = soup.find(id="mainframe2").findAll(id="besttable")
+    profile_vs_matches = soup.find(id="mainframe2").findAll(id="besttable") # type: ignore
     profile_vs_result = []
     for vs in profile_vs_matches:
         against_chara_id = vs.find("td").findAll("a")[1].attrs["href"].split("?id=")[-1]
@@ -408,10 +411,10 @@ def bgm_search(object_str):
 
     item_list = [
         {
-            "id": x.a.attrs["href"].split("/")[-1],
+            "id": x.a.attrs["href"].split("/")[-1], # type: ignore
             "rate": parse_rate(x),
         }
-        for x in soup.find(id="browserItemList").contents
+        for x in soup.find(id="browserItemList").contents # type: ignore
     ]
     return sorted(item_list, key=lambda x: x["rate"], reverse=True)
 
@@ -430,7 +433,7 @@ def bgm_character_search(object_str):
             "id": x.a.attrs["href"].split("/")[-1],
             "popularity": x.find("small", {"class": "na"}).text[2:-1],
         }
-        for x in soup.find("div", {"id", "columnSearchB"}).findAll(
+        for x in soup.find("div", {"id", "columnSearchB"}).findAll( # type: ignore
             "div", {"class", "light_odd clearit"}
         )
     ]
@@ -448,22 +451,22 @@ def get_bgm_src_detail(id):
 
     soup = bs4.BeautifulSoup(res.text, "html.parser")
 
-    if soup.find("h2").text == "å\x91\x9cå\x92\x95ï¼\x8cå\x87ºé\x94\x99äº\x86":
+    if soup.find("h2").text == "å\x91\x9cå\x92\x95ï¼\x8cå\x87ºé\x94\x99äº\x86": # type: ignore
         return {"score": 0, "rank": 99999, "popularity": 0}
 
     def get_rank():
-        rank = soup.find("div", {"class": "global_score"}).find(
-            "small", {"class": "alarm"}
+        rank = soup.find("div", {"class": "global_score"}).find( # type: ignore
+            "small", {"class": "alarm"} # type: ignore
         )
         if rank:
-            return int(rank.text[1:])
+            return int(rank.text[1:]) # type: ignore
         else:
             return 99999
 
     res = {
-        "score": float(soup.find("span", {"property": "v:average"}).text),
+        "score": float(soup.find("span", {"property": "v:average"}).text), # type: ignore
         "rank": get_rank(),
-        "popularity": int(soup.find("span", {"property": "v:votes"}).text),
+        "popularity": int(soup.find("span", {"property": "v:votes"}).text), # type: ignore
     }
 
     return res
@@ -574,11 +577,11 @@ def calc_confirm():
     confirm_list = ["115747", "36120", "11804", "19352", "16460", "102632"]
     for chara in confirm_list:
         tmp = get_anime_character_popularity(acdb_id=chara)[2]
-        print(f"{tmp['name']} {tmp['score']} {tmp['rank']}")
+        print(f"{tmp['name']} {tmp['score']} {tmp['rank']}") # type: ignore
 
     for _ in range(5):
         tmp = get_anime_character_popularity()[2]
-        print(f"{tmp['name']} {tmp['score']} {tmp['rank']}")
+        print(f"{tmp['name']} {tmp['score']} {tmp['rank']}") # type: ignore
 
 
 BASE_PATH = ""
@@ -755,13 +758,14 @@ if __name__ == "__main__":
     # print(get_designated_search("f", ["红发", "轻小说"])[1])
     # calc_confirm()
 
-    data, url = get_designated_search("f", ["粉毛", "动漫", "2019年", "魔法少女"])
-    pic_url, text, profile_id, raw = data
-    pic = waifu_card(
-        pic_url, # type: ignore
-        raw['姓名'],
-        raw['来源'],
-        raw['类型'],
-        text
-    )
-    open('data/test.png', 'wb').write(pic)
+    data, url = get_designated_search("f", ["粉毛", "动漫"])
+    print(data, url)
+    # pic_url, text, profile_id, raw = data
+    # pic = waifu_card(
+    #     pic_url, # type: ignore
+    #     raw['姓名'],
+    #     raw['来源'],
+    #     raw['类型'],
+    #     text
+    # )
+    # open('data/test.png', 'wb').write(pic)
