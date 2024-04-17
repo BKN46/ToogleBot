@@ -65,8 +65,8 @@ class PluginWrapper:
             return
         if self.plugin.price > 0:
             balance = get_balance(message_pack.member.id)
-            if balance < self.plugin.price:
-                await matcher.send(f"余额不足，{self.plugin.name}功能需要{self.plugin.price}gb，您剩余{balance}gb")
+            if balance < self.plugin.price and str(message_pack.group.id) in config["ECO_GROUP"]:
+                await matcher.send(f"余额不足，{self.plugin.name}功能需要{self.plugin.price}gb，您剩余{balance}gb\n请通过正常日常聊天来获取gb")
                 return
         if self.plugin.interval and not interval_limiter.user_interval(
             self.plugin.name, message_pack.member.id, interval=self.plugin.interval
@@ -118,6 +118,7 @@ class PluginWrapper:
         return MessagePack(source_id, nb2toogle(message), group, member, quote)
 
 
+# deprecated
 class LinearHandler:
     def __init__(self, plugins: Sequence[PluginWrapper]) -> None:
         self.plugins = plugins
@@ -142,7 +143,7 @@ class LinearHandler:
                 if plugin.plugin.price > 0:
                     balance = get_balance(message_pack.member.id)
                     if balance < plugin.plugin.price:
-                        await matcher.send(f"余额不足，{plugin.plugin.name}功能需要{plugin.plugin.price}gb，您剩余{balance}gb")
+                        await matcher.send(f"余额不足，{plugin.plugin.name}功能需要{plugin.plugin.price}gb，您剩余{balance}gb\n请通过正常日常聊天来获取gb")
                         return
                 await plugin_run(plugin.plugin, message_pack)
                 return

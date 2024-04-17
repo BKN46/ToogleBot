@@ -293,6 +293,10 @@ class SeeRecall(MessageHandler):
 
     async def ret(self, message: MessagePack) -> Optional[MessageChain]:
         recall_history = RECALL_HISTORY.get(message.group.id)
+
+        if not is_admin(message.member.id):
+            return MessageChain.plain(f"你没有权限", quote=message.as_quote())
+
         if not recall_history:
             return MessageChain.create([Plain(f"最近没有撤回记录")])
 

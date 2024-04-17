@@ -8,8 +8,10 @@ from toogle.utils import is_admin
 
 class Balance(MessageHandler):
     name = "余额"
-    trigger = r"^/(balance|give_balance|take_balance)"
-    readme = "/balance 查询余额\n正常聊天可获取余额、部分功能需要消耗余额\n该功能仅为防止机器人滥用"
+    trigger = r"^/(give_balance|take_balance)"
+    # trigger = r"^/(balance|give_balance|take_balance)"
+    readme = "余额操作，不对外开放"
+    # readme = "/balance 查询余额\n正常聊天可获取余额、部分功能需要消耗余额\n该功能仅为防止机器人滥用"
 
     async def ret(self, message: MessagePack) -> Union[MessageChain, None]:
         cmd = message.message.asDisplay()[1:].strip()

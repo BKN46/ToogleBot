@@ -64,13 +64,13 @@ class GetOpenAIConversation(MessageHandler):
     name = "OpenAI对话"
     trigger = r"^\.gpt(\[.*?\]|)(all|context|bill|\+|)\s(.*)"
     thread_limit = True
-    to_me_trigger = True
+    # to_me_trigger = True
     readme = "OpenAI GPT-4 模型对话，使用例：\n.gpt 你好\n.gpt[JK] 你好"
     interval = 600
     message_length_limit = 1000
+    price = 8
 
     async def ret(self, message: MessagePack) -> Optional[MessageChain]:
-        return MessageChain.plain("成本原因，大黄狗GPT暂时关闭")
         match_group = re.match(self.trigger, message.message.asDisplay())
         if not match_group:
             if message.group.id == 0:

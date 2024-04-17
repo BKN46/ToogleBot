@@ -119,7 +119,7 @@ async def message_post_process(event: GroupMessage, message: MessageChain = Even
                 await bot_send_message(message_pack, message_ret)
 
     # economy
-    chat_earn(message_pack.member.id, message_pack.message.asDisplay())
+    chat_earn(message_pack.member.id, message_pack.message)
 
 
 @event_postprocessor
