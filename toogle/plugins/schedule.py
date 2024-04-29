@@ -11,29 +11,29 @@ from toogle.configs import config
 from toogle.utils import get_main_groups, is_admin, is_admin_group
 
 
-class DailyNews(ScheduleModule):
-    name="每日新闻"
-    hour=9
-    minute=30
-    second=0
+# class DailyNews(ScheduleModule):
+#     name="每日新闻"
+#     hour=9
+#     minute=30
+#     second=0
 
-    async def ret(self):
-        pic_path = download_daily()
-        message = MessageChain.create([Image(path=pic_path)])
-        for group in get_main_groups():
-            await bot_send_message(int(group), message)
+#     async def ret(self):
+#         pic_path = download_daily()
+#         message = MessageChain.create([Image(path=pic_path)])
+#         for group in get_main_groups():
+#             await bot_send_message(int(group), message)
 
 
-class HealthyTips(ScheduleModule):
-    name="提肛喝水小助手"
-    hour="10-21"
-    minute=0
-    second=0
+# class HealthyTips(ScheduleModule):
+#     name="提肛喝水小助手"
+#     hour="10-21"
+#     minute=0
+#     second=0
 
-    async def ret(self):
-        message = MessageChain.plain("提肛！喝水！拉伸！")
-        for group in config.get('HEALTHCARE_GROUP_LIST', []):
-            await bot_send_message(int(group), message)
+#     async def ret(self):
+#         message = MessageChain.plain("提肛！喝水！拉伸！")
+#         for group in config.get('HEALTHCARE_GROUP_LIST', []):
+#             await bot_send_message(int(group), message)
 
 
 # class ScheduleTest(ScheduleModule):
