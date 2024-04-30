@@ -77,7 +77,7 @@ class GetRainfallWeatherGraph(MessageHandler):
 
 class HealthCalculator(MessageHandler):
     name = "健康计算器"
-    trigger = r"^(\d{1,3}岁)?(男|m|M|女|f|F)?(\d{1,3}cm)(\d{1,3}kg)$"
+    trigger = r"^(\d{1,3}岁)?(男|m|M|女|f|F)?(\d{1,3}\.?\d{0,3}cm)(\d{1,3}\.?\d{0,3}kg)$"
     thread_limit = True
     interval = 600
     readme = "健康计算器" 
@@ -87,10 +87,10 @@ class HealthCalculator(MessageHandler):
         re_match = re.match(self.trigger, message_content)
         if re_match:
             age, sex, height, weight = re_match.groups()
-            age = int(age.replace('岁', '')) if age else 0
+            age = float(age.replace('岁', '')) if age else 0
             sex_is_male = True if sex in ['男', 'm', 'M'] else False
-            height = int(height[:-2])
-            weight = int(weight[:-2])
+            height = float(height[:-2])
+            weight = float(weight[:-2])
         else:
             return
 
