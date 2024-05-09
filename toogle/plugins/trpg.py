@@ -106,6 +106,7 @@ class DPRCalculator(MessageHandler):
 
 
 class Search5ECHM(MessageHandler):
+    name = "DND5E 天麟不全书查询"
     trigger = r"^dnd5e"
     white_list = False
     readme = "DND5E 天麟不全书查询"
