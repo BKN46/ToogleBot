@@ -108,6 +108,7 @@ class MessageHandler:
     white_list = False
     thread_limit = False
     to_me_trigger = False
+    ignore_quote = False
     interval = 0
     price = 0
 

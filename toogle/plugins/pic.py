@@ -140,10 +140,7 @@ class LongTu(MessageHandler):
             else:
                 return MessageChain.create([Plain(f"你也配？")])
         else:
-            if message.quote:
-                pics = message.quote.message.get(Image)
-            else:
-                pics = message.message.get(Image)
+            pics = message.message.get(Image)
             for image in pics:
                 image_file_name = f"{image.id}".replace("{", "").replace("}", "")  # type: ignore
                 image.save(IMAGES_PATH + image_file_name) # type: ignore
@@ -202,10 +199,7 @@ class HistoryTu(MessageHandler):
                 return MessageChain.plain(f"删黑历史失败: {e}\n{str(del_files)}")
 
         else:
-            if message.quote:
-                pics = message.quote.message.get(Image)
-            else:
-                pics = message.message.get(Image)
+            pics = message.message.get(Image)
             at = message.message.get(At)
             for image in pics:
                 image_file_name = f"{image.id}".replace("{", "").replace("}", "") # type: ignore

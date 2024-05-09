@@ -217,6 +217,9 @@ class MessageChain:
             return MessageChain([quote, Plain(text)], no_interval=no_interval)
         return MessageChain([Plain(text)], no_interval=no_interval)
     
+    def __add__(self, message: "MessageChain") -> "MessageChain":
+        return MessageChain(self.root + message.root, no_interval=self.no_interval) # type: ignore
+
     def __repr__(self) -> str:
         return repr(self.root)
     

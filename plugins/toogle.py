@@ -8,7 +8,6 @@ import re
 from typing import Any, Tuple
 
 import nonebot
-from nonebot.adapters import Message
 from nonebot.matcher import Matcher
 from nonebot.params import RegexGroup, EventMessage
 from nonebot.plugin import on_message, on_regex
@@ -106,7 +105,7 @@ get_help.append_handler(handle_help)
 
 
 @event_postprocessor
-async def message_post_process(event: GroupMessage, message: MessageChain = EventMessage()):
+async def message_post_process(event: MessageEvent, message: MessageChain = EventMessage()):
     # record history
     message_pack = PluginWrapper.get_message_pack(event, message)
     MESSAGE_HISTORY.add(message_pack.group.id, message_pack) # type: ignore
@@ -119,7 +118,7 @@ async def message_post_process(event: GroupMessage, message: MessageChain = Even
                 await bot_send_message(message_pack, message_ret)
 
     # economy
-    chat_earn(message_pack.member.id, message_pack.message)
+    chat_earn(message_pack)
 
 
 @event_postprocessor

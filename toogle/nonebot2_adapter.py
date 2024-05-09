@@ -29,7 +29,7 @@ from toogle.exceptions import VisibleException
 from toogle.message import At, AtAll, Element, ForwardMessage, Group, Image, Member
 from toogle.message import MessageChain as ToogleChain
 from toogle.message import Plain, Quote
-from toogle.message_handler import MessageHandler, MessagePack
+from toogle.message_handler import MESSAGE_HISTORY, MessageHandler, MessagePack
 from toogle.utils import is_admin, is_admin_group, print_err
 from toogle.economy import get_balance, take_balance, has_balance
 
@@ -57,6 +57,7 @@ class PluginWrapper:
         message: MessageChain = EventMessage(),
     ) -> None:
         message_pack = PluginWrapper.get_message_pack(event, message)
+        # block
         if not message_pack:
             await matcher.send("不支持该种聊天方式！")
             return
@@ -83,6 +84,12 @@ class PluginWrapper:
             if traffic_str:
                 await matcher.send(traffic_str)
             return
+        
+        # pre-run
+        if message_pack.quote and not self.plugin.ignore_quote:
+            message_pack.message += message_pack.quote.message # type: ignore
+            nonebot.logger.info(f"Afterward msg: {message_pack.message.asDisplay()}") # type: ignore
+
         await plugin_run(self.plugin, message_pack)
 
     @staticmethod
@@ -100,12 +107,13 @@ class PluginWrapper:
             return MessagePack(0, nb2toogle(message), Group(0, "Unkown"), Member(0, "Unkown"), None)
 
         if event.quote:
+            msg = MESSAGE_HISTORY.search(group_id=event.quote.group_id, msg_id=event.quote.id)
             quote = Quote(
                 event.quote.id,
                 event.quote.sender_id,
                 event.quote.target_id,
                 event.quote.group_id,
-                nb2toogle(event.quote.origin),
+                msg.message if msg else nb2toogle(event.quote.origin),
             )
         else:
             quote = None
