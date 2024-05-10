@@ -8,7 +8,7 @@ from toogle.scheduler import ScheduleModule, all_schedule, get_job_name, load_ma
 from toogle.plugins.compose.daily_news import download_daily
 from toogle.nonebot2_adapter import bot_send_message
 from toogle.configs import config
-from toogle.utils import get_main_groups, is_admin, is_admin_group
+from toogle.utils import SETU_RECORD_PATH, get_main_groups, is_admin, is_admin_group
 
 
 # class DailyNews(ScheduleModule):
@@ -34,6 +34,27 @@ from toogle.utils import get_main_groups, is_admin, is_admin_group
 #         message = MessageChain.plain("提肛！喝水！拉伸！")
 #         for group in config.get('HEALTHCARE_GROUP_LIST', []):
 #             await bot_send_message(int(group), message)
+
+
+class DailySetuRanking(ScheduleModule):
+    name="每日色图排行"
+    hour=0
+    minute=0
+    second=0
+
+    async def ret(self):
+        all_data = json.load(open(SETU_RECORD_PATH, 'r'))
+        for group in config.get('NSFW_LIST', []):
+            group_data = all_data.get(group, {})
+            if len(group_data) == 0:
+                continue
+            ranking = sorted(group_data.items(), key=lambda x: x[1], reverse=True)
+            message = MessageChain.plain("今日色图贡献排行榜：\n" + '\n'.join([
+                f"{i+1}. {k}: {v}张"
+                for i, (k, v) in enumerate(ranking)
+            ]))
+            await bot_send_message(int(group), message)
+        json.dump({}, open(SETU_RECORD_PATH, 'w'), indent=2, ensure_ascii=False)
 
 
 # class ScheduleTest(ScheduleModule):

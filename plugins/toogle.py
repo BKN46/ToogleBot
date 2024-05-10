@@ -22,7 +22,7 @@ from toogle.configs import config
 from toogle.index import export_plugins, active_plugins
 from toogle.message_handler import MESSAGE_HISTORY, RECALL_HISTORY
 from toogle.nonebot2_adapter import PluginWrapper, bot_send_message
-from toogle.economy import chat_earn
+from toogle.msg_proc import chat_earn
 
 # ping trigger
 
@@ -93,7 +93,9 @@ async def handle_help(
 
     message_pack = PluginWrapper.get_message_pack(event, message)
     search_content = re.search(get_help_regex, message_pack.message.asDisplay()).groups()[1].strip() # type: ignore
-    if not search_content:
+    if search_content == "--markdown":
+        res = '\n'.join([f"{mod.plugin_class}: {mod.plugin.name}" for mod in export_plugins])
+    elif not search_content:
         res = get_help_page(0)
     elif str.isdigit(search_content):
         res = get_help_page(int(search_content) - 1)
@@ -118,7 +120,7 @@ async def message_post_process(event: MessageEvent, message: MessageChain = Even
                 await bot_send_message(message_pack, message_ret)
 
     # economy
-    chat_earn(message_pack)
+    await chat_earn(message_pack)
 
 
 @event_postprocessor

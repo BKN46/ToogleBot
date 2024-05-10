@@ -14,7 +14,7 @@ from toogle.nonebot2_adapter import bot_send_message
 from toogle.plugins.others.magnet import do_magnet_parse, do_magnet_preview, parse_size
 from toogle.plugins.others.steam import source_server_info
 from toogle.sql import SQLConnection
-from toogle.utils import is_admin
+from toogle.utils import detect_pic_nsfw, is_admin
 from toogle.configs import config
 import toogle.plugins.others.racehorse as race_horse
 import toogle.plugins.others.csgo as CSGO
@@ -405,6 +405,42 @@ class Diablo4Tracker(MessageHandler):
     
     def time_near(self, time1, time2):
         return abs(time1 - time2) / 1000 / 60 < 5
+
+
+class NFSWorNot(MessageHandler):
+    name = "判断色图"
+    trigger = r"这个色不色"
+    thread_limit = True
+    interval = 0
+    readme = "图像识别判断NSFW"
+    price = 2
+
+    async def ret(self, message: MessagePack) -> MessageChain:
+        pics = message.message.get(Image)
+        if not pics:
+            return MessageChain.plain("没看到图", quote=message.as_quote())
+        res = ""
+        judge = lambda x: '不色' if x < 0.1 else '还行' if x < 0.25 else '色'
+        start_time = time.time()
+        safe, mod, nsfw = 0, 0, 0
+        for i, pic in enumerate(pics):
+            rate, repeat = detect_pic_nsfw(pic.getBytes(), output_repeat=True) # type: ignore
+            if rate < 0.1:
+                safe += 1
+            elif rate < 0.25:
+                mod += 1
+            else:
+                nsfw += 1
+            # res += f"pic{i+1} rate: {rate} ({judge(rate)})\n"
+        use_time = (time.time() - start_time) * 1000
+        # res += f"{len(pics)}张图片分析耗时: {use_time:.2f}ms"
+        if len(pics) == 1:
+            res = judge(rate)
+        else:
+            res += f"{safe}张不色 " if safe > 0 else ""
+            res += f"{mod}张还行 " if mod > 0 else ""
+            res += f"{nsfw}张色 " if nsfw > 0 else ""
+        return MessageChain.plain(res, quote=message.as_quote())
 
 
 class MagnetParse(MessageHandler):

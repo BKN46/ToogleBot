@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 
 from toogle.sql import SQLConnection
-from toogle.message import Image, MessageChain, Plain
+from toogle.configs import config
 
 def get_balance(user_id):
     res = SQLConnection.get_user(user_id)
@@ -39,11 +39,3 @@ def use_balance(user_id, amount):
             SQLConnection.update_user(user_id, f"credit=credit-{amount}")
     except Exception as e:
         pass
-
-
-def chat_earn(user_id, message: MessageChain):
-    if get_balance(user_id) < 15:
-        if len(MessageChain(message.get(Plain)).asDisplay()) >= 10:
-            give_balance(user_id, 1)
-        elif message.get(Image):
-            give_balance(user_id, 1)

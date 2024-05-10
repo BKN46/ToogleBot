@@ -1,11 +1,14 @@
 import base64
 import ctypes
 import datetime
+import hashlib
 import io
 import multiprocessing
 import os
+import pickle
 import re
 import signal
+import tempfile
 import threading
 import time
 import traceback
@@ -13,9 +16,11 @@ import urllib.parse
 from typing import List, Tuple, Union
 from xmlrpc.client import Boolean
 
+from PIL import UnidentifiedImageError
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
+import bloom_filter
 import requests
 
 import nonebot
@@ -23,6 +28,14 @@ import nonebot
 from toogle.configs import config
 from toogle.exceptions import VisibleException
 
+
+PIC_BLOOM = bloom_filter.BloomFilter(max_elements=10**6, error_rate=0.01, filename='data/pic_bloom')
+
+SETU_RECORD_PATH = "data/setu_record.json"
+
+if not os.path.exists(SETU_RECORD_PATH):
+    with open(SETU_RECORD_PATH, "w") as f:
+        f.write("{}")
 
 def read_base64_pic(jpeg_b64_str: str) -> bytes:
     content = base64.b64decode(jpeg_b64_str)
@@ -420,6 +433,25 @@ def draw_pic_text(
         return img_bytes.getvalue()
     else:
         return gen_image
+    
+
+def detect_pic_nsfw(pic: bytes, output_repeat=False):
+    pic_md5 = hashlib.md5(pic).hexdigest()
+    repeat = pic_md5 in PIC_BLOOM
+    PIC_BLOOM.add(pic_md5)
+
+    import opennsfw2
+    # temp file path
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        f.write(pic)
+        pic_path = f.name
+        try:
+            score = opennsfw2.predict_image(pic_path)
+        except UnidentifiedImageError as e:
+            score = -1
+    if output_repeat:
+        return score, repeat
+    return score # type: ignore
 
 
 def is_admin(id: int) -> Boolean:
