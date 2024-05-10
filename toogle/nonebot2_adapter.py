@@ -26,7 +26,7 @@ from urllib3.exceptions import HTTPError as UrllibError
 
 from toogle.configs import config, interval_limiter
 from toogle.exceptions import VisibleException
-from toogle.message import At, AtAll, Element, ForwardMessage, Group, Image, Member
+from toogle.message import At, AtAll, Element, ForwardMessage, Group, Image, Member, Xml
 from toogle.message import MessageChain as ToogleChain
 from toogle.message import Plain, Quote
 from toogle.message_handler import MESSAGE_HISTORY, MessageHandler, MessagePack
@@ -218,6 +218,8 @@ def toogle2nb(
             for node in item.node_list:
                 message_list.append(MessageSegment.plain(f"{node['sender']}:"))
                 message_list.append(toogle2nb(node['message']))
+        elif isinstance(item, Xml):
+            message_list.append(MessageSegment.xml(item.xml))
 
     return MessageChain(message_list)
 
@@ -391,8 +393,14 @@ async def bot_get_all_group():
 
 
 async def bot_exec(api, **data):
+    '''
+    check:
+    https://github.com/project-mirai/mirai-api-http/blob/master/docs/adapter/WebsocketAdapter.md
+    https://github.com/project-mirai/mirai-api-http/blob/master/docs/api/API.md
+    '''
+
     bot = nonebot.get_bot()
-    res = await bot.call_api(api=api, sessionKey=config.get("VERIFY_KEY", ""), **data)
+    res = await bot.call_api(api, sessionKey=config.get("VERIFY_KEY", ""), **data)
     return res
 
 

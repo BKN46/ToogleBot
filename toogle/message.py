@@ -184,13 +184,32 @@ class ForwardMessage(Element):
         self.sender_id = sender_id
         self.time = time
         self.message = message
-        print(repr(self.asDisplay()), file=open("debug.log", "a"))
+        # print(repr(self.asDisplay()), file=open("debug.log", "a"))
 
     def asDisplay(self) -> str:
         msgs = ", ".join([x['message'].asDisplay() for x in self.node_list])
 
         return f"[Forward origin from {self.sender_id} [{msgs}]]"
 
+
+class Xml(Element):
+    def __init__(self, xml: str) -> None:
+        self.xml = xml
+
+    def asDisplay(self) -> str:
+        return f"[xml message]"
+    
+    @staticmethod
+    def get_default_xml(title, content, brief="大黄狗卡片", pic_url="http://placekitten.com/100/100", url="www.baidu.com") -> "Xml":
+        template = f'''<?xml version="1.0" encoding="utf-8"?>
+<msg templateID="12345" action="web" brief="{brief}" serviceID="1" url="{url}">
+ <item layout="2">
+  <title>{title}</title>
+        <summary>{content}</summary>
+        <picture cover="{pic_url}"/>
+ </item>
+</msg>'''
+        return Xml(template)
 
 class MessageChain:
     def __init__(self, message_list: Sequence[Element], no_interval=False) -> None:

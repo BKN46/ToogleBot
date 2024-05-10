@@ -40,7 +40,7 @@ broadcast_matcher.append_handler(handle_broadcast)
 
 
 # General debug
-debug_matcher = on_regex(r"^debug (.*)\|?(.*)$", rule=admin_user_checker)
+debug_matcher = on_regex(r"^debug \[(.*)\](.*)$", rule=admin_user_checker)
 
 async def handle_debug(
     foo: Tuple[Any, ...] = RegexGroup(),
@@ -49,9 +49,10 @@ async def handle_debug(
     para = {}
     if foo[1]:
         para = {
-            x.split("=")[0]: x.split("=")[1]
+            x.split("=")[0]: x.split("=")[1] if not x.split("=")[1].isnumeric() else int(x.split("=")[1])
             for x in foo[1].split()
         }
+    await debug_matcher.send(f"Running: {content} with {para}")
     res = await bot_exec(content, **para)
     await debug_matcher.send(json.dumps(res, indent=2, ensure_ascii=False))
 
