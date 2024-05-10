@@ -35,14 +35,20 @@ accounts:
 
 ``` yml
 adapters: 
+  - http
   - ws
 debug: false
 enableVerify: true
 verifyKey: xxxxxxxx # mirai密码
-singleMode: false
+singleMode: true
 cacheSize: 4096
 persistenceFactory: 'built-in'
 adapterSettings:
+  http:
+    host: localhost
+    port: 5701
+    cors: [*]
+
   ws:
     host: localhost
     port: 5700
@@ -55,9 +61,10 @@ ENVIRONMENT=dev
 VERIFY_KEY= xxxxxxxxx         # mirai-api-http密钥
 driver=~fastapi+~websockets
 
-CONCURRENCY=false             # 是否matcher并行模式（同一消息多个触发）
+CONCURRENCY=true              # 是否matcher并行模式（同一消息多个触发）
 MIRAI_HOST=127.0.0.1          # mirai-api-http地址
-MIRAI_PORT=5700               # mirai-api-http端口
+MIRAI_HTTP_PORT=5700          # mirai-api-http http端口
+MIRAI_PORT=5700               # mirai-api-http ws端口
 MIRAI_QQ=["123456789"]        # 登陆QQ号
 SUPERUSERS=["123456789"]      # 管理员QQ号
 
