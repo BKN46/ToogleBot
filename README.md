@@ -88,45 +88,45 @@ TODO
 
 ## 功能
 
-- [x] 基础功能
-  - [x] Dice 带有期望计算的多功能骰子
-  - [ ] Markov 基于马尔可夫的对话机器人
-  - [x] CurrencyExchange 货币转换
-  - [x] GetHelp 帮助
-  - [x] RunPython Python运行时
-  - [x] Mathematica 数学画图
-  - [x] Wolfram Alpha 高等数学计算
-  - [x] HelpMeSelect 解决选择困难症
-  - [x] Swear 说藏话
-  - [x] Calculator 科学计算器
-  - [x] NowTime 世界时间
-  - [x] GetRemake 基于世界银行统计数据的科学Remake
-  - [x] Lottery 抽奖功能
-- [X] AI相关
-  - [x] ChatGPT OpenAI GPT接口调用
-  - [x] GetAICompose NovelAI AI画图
-- [x] DND功能
-  - [x] Search5EMagic 快速搜索DND5E魔法
-  - [x] Search5ECHM 快速搜索DND5E天麒不全书
-  - [x] FastPythagorean 快速计算勾股定理
-  - [x] UnitConversion 单位转换
-  - [x] FastFallCal 快速计算掉落时间
-  - [x] CustomDiceTable 自定义骰表
-  - [x] DPRCalculator DND5E每轮伤害期望计算器
-- [x] 图片相关
-  - [x] GetSetu 获取setu
-  - [x] GetQutu 获取趣图
-  - [x] GetLuck 获取每日运势
-  - [x] GetRandomAnimeFemale 获取随机动漫角色
-  - [x] LongTu 获取龙图
-  - [x] HistoryTu 记录黑历史
-- [x] 定时
-  - [x] SetScheduler 定时运行
-  - [x] DailyNews 每日新闻推送
-  - [x] HealthCare 提肛喝水小助手
-- [ ] 工具
-  - [x] ThunderSkill 战雷TS快速战绩查询
-  - [x] WTVehicleLine 战雷开线需求查询
-  - [x] WTWinRate 战雷当前胜率查询
-  - [x] WTDatamine 战雷数据挖掘
-  - [ ] ChatStatic 聊天统计信息
+> currencyExchange.CurrencyExchange:  货币转换
+> novelai.GetAICompose:  AI画图
+> dice.Dice:  骰子
+> remaking.GetRemake:  科学remake
+> runPython.RunPython:  Python解释器
+> waifu.GetRandomAnimeFemale:  随机ACG老婆
+> economy.Balance:  余额
+> tools.AStock:  A股详情查询
+> tools.BaiduIndex:  百度指数
+> tools.GetRainfallWeatherGraph:  全国降水天气预告图
+> tools.HealthCalculator:  健康计算器
+> other.CSGOBuff:  CSGO Buff饰品查询
+> other.CSGORandomCase:  CSGO开箱
+> other.Diablo4Tracker:  D4 event tracker
+> other.JokingHazard:  Joking Hazard
+> other.MagnetParse:  磁链内容解析
+> other.NFSWorNot:  判断色图
+> other.RaceHorse:  模拟赛马
+> other.RandomAlbum:  随机专辑
+> pic.HistoryTu:  黑历史
+> pic.LongTu:  随机龙图
+> wt.WTDatamine:  战雷拆包数据查询
+> wt.WTVehicleLine:  战雷开线资源查询
+> wt.WTWinRate:  战雷历史模式国家胜率查询
+> setu.GetLuck:  每日运势
+> debug.WitsAndWagers:  猜来猜趣简化版
+> trpg.CustomDiceTable:  创建自定义骰表
+> trpg.DPRCalculator:  DND5E DPR计算器
+> trpg.Search5ECHM:  DND5E 天麟不全书查询
+> trpg.Search5EMagic:  DND5E 魔法查询
+> schedule.CreateSchedule:  创建定时
+> math.Calculator:  计算器
+> math.FastFallCal:  快速坠落时间计算
+> math.FastPythagorean:  快速勾股计算
+> math.Mathematica:  数学绘图
+> math.UnitConversion:  单位转换
+> math.WolframAlpha:  Wolfram Alpha
+> basic.HelpMeSelect:  随机选择
+> basic.Lottery:  抽奖
+> basic.NowTime:  世界时间
+> basic.SeeRecall:  反撤回
+> basic.UpdatePersonalInfo:  更新群聊个人信息
