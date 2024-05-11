@@ -12,6 +12,8 @@ from toogle.utils import SETU_RECORD_PATH, detect_pic_nsfw
 POST_PROC_LOCK = threading.Lock()
 
 def update_setu_record(group_id, member_id, cnt):
+    group_id = str(group_id)
+    member_id = str(member_id)
     with POST_PROC_LOCK:
         with open(SETU_RECORD_PATH, "r") as f:
             record = json.load(f)

@@ -1,14 +1,15 @@
 import datetime
 import json
 import os
+from typing import Union
 
-from toogle.message import Image, MessageChain, Plain
+from toogle.message import Image, MessageChain, Plain, At
 from toogle.message_handler import MessageHandler, MessagePack
 from toogle.scheduler import ScheduleModule, all_schedule, get_job_name, load_manual_schedular, remove_job
 from toogle.plugins.compose.daily_news import download_daily
 from toogle.nonebot2_adapter import bot_send_message
 from toogle.configs import config
-from toogle.utils import SETU_RECORD_PATH, get_main_groups, is_admin, is_admin_group
+from toogle.utils import SETU_RECORD_PATH, get_main_groups, is_admin, is_admin_group, modify_json_file
 
 
 # class DailyNews(ScheduleModule):
@@ -42,18 +43,54 @@ class DailySetuRanking(ScheduleModule):
     minute=0
     second=0
 
-    async def ret(self):
+    trigger = r"^色图排行$"
+
+    async def ret(self, message: Union[MessagePack, None]):
         all_data = json.load(open(SETU_RECORD_PATH, 'r'))
+        if message:
+            if not is_admin(message.member.id):
+                return MessageChain.plain("没有权限", quote=message.as_quote())
+            group_data = all_data.get(str(message.group.id), {})
+            ranking = sorted(group_data.items(), key=lambda x: x[1], reverse=True)
+            message_list = [Plain("今日色图贡献排行榜：\n")]
+            for i, (k, v) in enumerate(ranking):
+                message_list += [
+                    Plain(f"{i+1}. "),
+                    At(k),
+                    Plain(f": {v}张\n"),
+                ]
+                if i >= 10:
+                    message_list += [Plain("...")]
+                    break
+            return MessageChain(message_list)
+
         for group in config.get('NSFW_LIST', []):
-            group_data = all_data.get(group, {})
+            group_data = all_data.get(str(group), {})
             if len(group_data) == 0:
                 continue
             ranking = sorted(group_data.items(), key=lambda x: x[1], reverse=True)
-            message = MessageChain.plain("今日色图贡献排行榜：\n" + '\n'.join([
-                f"{i+1}. {k}: {v}张"
-                for i, (k, v) in enumerate(ranking)
-            ]))
-            await bot_send_message(int(group), message)
+            message_list = [Plain("今日色图贡献排行榜：\n")]
+            for i, (k, v) in enumerate(ranking):
+                message_list += [
+                    Plain(f"{i+1}. "),
+                    At(k),
+                    Plain(f": {v}张\n"),
+                ]
+                if i >= 10:
+                    message_list += [Plain("...")]
+                    break
+            # message = MessageChain.plain("今日色图贡献排行榜：\n" + '\n'.join([
+            #     f"{i+1}. {k}: {v}张"
+            #     for i, (k, v) in enumerate(ranking)
+            # ]))
+            await bot_send_message(int(group), MessageChain(message_list))
+
+        with modify_json_file('setu_record_alltime') as alltime_data:
+            for group_id, group_data in all_data.items():
+                alltime_data[group_id] = {
+                    member_id: alltime_data.get(group_id, {}).get(member_id, 0) + member_cnt
+                    for member_id, member_cnt in group_data.items()
+                }
         json.dump({}, open(SETU_RECORD_PATH, 'w'), indent=2, ensure_ascii=False)
 
 

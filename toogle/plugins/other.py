@@ -412,7 +412,7 @@ class NFSWorNot(MessageHandler):
     trigger = r"这个色不色"
     thread_limit = True
     interval = 0
-    readme = "图像识别判断NSFW"
+    readme = "图像识别判断NSFW\n使用Open-NSFW2模型，为Keras实现Yahoo Open-NSFW\n模型为ResNet使用ImageNet 1000预训练后使用NSFW数据集finetune\nOpen-NSFW文章: https://yahooeng.tumblr.com/post/151148689421/open-sourcing-a-deep-learning-solution-for\nResNet论文: https://arxiv.org/pdf/1512.03385v1"
     price = 2
 
     async def ret(self, message: MessagePack) -> MessageChain:
