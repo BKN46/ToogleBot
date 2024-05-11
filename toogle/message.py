@@ -1,5 +1,6 @@
 import io
 import os
+import pickle
 from typing import List, Optional, Sequence
 
 import PIL.Image
@@ -184,12 +185,19 @@ class ForwardMessage(Element):
         self.sender_id = sender_id
         self.time = time
         self.message = message
+        # pickle.dump(self, open("debug_forward.pkl", "wb"))
         # print(repr(self.asDisplay()), file=open("debug.log", "a"))
 
     def asDisplay(self) -> str:
         msgs = ", ".join([x['message'].asDisplay() for x in self.node_list])
 
         return f"[Forward origin from {self.sender_id} [{msgs}]]"
+
+    def get(self, t):
+        res = []
+        for item in self.node_list:
+            res += item['message'].get(t)
+        return res
 
 
 class Xml(Element):
@@ -220,7 +228,13 @@ class MessageChain:
         return "".join(i.asDisplay() for i in self.root)
 
     def get(self, t):
-        return [item for item in self.root if isinstance(item, t)]
+        res = []
+        for item in self.root:
+            if isinstance(item, t):
+                res.append(item)
+            elif isinstance(item, ForwardMessage):
+                res += item.get(t)
+        return res
 
     def get_quote(self) -> Optional[int]:
         quotes = self.get(Quote)
