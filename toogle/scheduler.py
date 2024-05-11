@@ -2,6 +2,7 @@ import datetime
 import json
 import os
 import traceback
+from typing import Union
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from nonebot_plugin_apscheduler import scheduler as nonebot_scheduler
@@ -22,7 +23,10 @@ class ScheduleModule:
     readme = "这是一个BKN的机器人定时组件"
     white_list = False
     thread_limit = False
+    to_me_trigger = False
     interval = 0
+    ignore_quote = False
+    price = 0
 
     single_time = False
 
@@ -35,12 +39,12 @@ class ScheduleModule:
     minute = -1
     second = 0
 
-    async def ret(self):
+    async def ret(self, message_pack: Union[MessagePack, None]):
         pass
 
     async def ret_wrapper(self, **kwargs):
         try:
-            await self.ret()
+            await self.ret(None)
             if self.single_time:
                 remove_job(self.name)
                 json_path = 'data/schedule.json'
@@ -141,10 +145,10 @@ def load_manual_schedular(item):
         tmp_module.__setattr__(k, v)
 
     if not is_programmable:
-        async def ret():
+        async def ret(message_pack: Union[MessagePack, None]):
             await bot_send_message(send_group, text)
     else:
-        async def ret():
+        async def ret(message_pack: Union[MessagePack, None]):
             bot = nonebot.get_bot()
             nb_message = toogle2nb(MessageChain.plain(text))
             event = get_event(bot, send_group, creator_id, nb_message)

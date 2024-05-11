@@ -60,6 +60,9 @@ for index, plugin_name in enumerate(plugin_list):
         ]):
             schedule_module = tmp()
             schedule_plugins.append(schedule_module)
+            if schedule_module.trigger:
+                export_plugins.append(PluginWrapper(tmp))  # type: ignore
+                copied_plugin_list.append(PluginWrapper(tmp))  # type: ignore
             import_type = "Scheduled"
 
         import_time = (time.time() - start_time) * 1000
