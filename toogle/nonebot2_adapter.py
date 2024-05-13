@@ -214,11 +214,22 @@ def toogle2nb(
         elif isinstance(item, AtAll):
             message_list.append(MessageSegment.at_all())
         elif isinstance(item, ForwardMessage):
-            message_list.append(MessageSegment.plain("[消息历史]"))
-            # message_list.append(MessageSegment.plain("消息历史:\n"))
-            # for node in item.node_list:
-            #     message_list.append(MessageSegment.plain(f"{node['sender']}:"))
-            #     message_list.append(toogle2nb(node['message']))
+            message_list.append(MessageSegment.forward( # type: ignore
+                node_list=[ # type: ignore
+                    {
+                        "senderId": x["sender"],
+                        "time": x["time"],
+                        "senderName": x["senderName"],
+                        "messageChain": toogle2nb(x["message"]),
+                    }
+                    for x in item.node_list
+                ],
+                senderld=item.sender_id or 0,
+                sender_name=item.sender_name or '',
+                messageid=item.message_id or 0,
+                time=item.time or int(time.time()),
+                message_chain=toogle2nb(item.message),
+            ))
         elif isinstance(item, Xml):
             message_list.append(MessageSegment.xml(item.xml))
 
@@ -262,7 +273,9 @@ def nb2toogle(message: Union[MessageChain, list, None]) -> ToogleChain:
                             for x in item.data.get("nodeList") or []
                         ],
                         sender_id=item.data.get("senderLd"),
+                        sender_name=item.data.get("senderName"),
                         time=item.data.get("time"),
+                        message_id=item.data.get("messageId"),
                         message=nb2toogle(item.data.get("message_chain")),
                     )
                 )
@@ -293,7 +306,9 @@ def nb2toogle(message: Union[MessageChain, list, None]) -> ToogleChain:
                             for x in item.get("nodeList") or []
                         ],
                         sender_id=item.get("senderLd"),
+                        sender_name=item.get("senderName"),
                         time=item.get("time"),
+                        message_id=item.data.get("messageId"),
                         message=nb2toogle(item.get("message_chain")),
                     )
                 )

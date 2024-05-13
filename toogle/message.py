@@ -1,7 +1,8 @@
 import io
 import os
 import pickle
-from typing import List, Optional, Sequence
+import time
+from typing import List, Optional, Sequence, Tuple, Union
 
 import PIL.Image
 import requests
@@ -179,10 +180,14 @@ class ForwardMessage(Element):
         node_list: Optional[list],
         sender_id: Optional[int],
         time: Optional[int],
+        sender_name: Optional[str],
+        message_id: Optional[int],
         message: 'MessageChain'
     ) -> None:
         self.node_list = node_list or []
         self.sender_id = sender_id
+        self.sender_name = sender_name
+        self.message_id = message_id
         self.time = time
         self.message = message
         # pickle.dump(self, open("debug_forward.pkl", "wb"))
@@ -198,6 +203,39 @@ class ForwardMessage(Element):
         for item in self.node_list:
             res += item['message'].get(t)
         return res
+    
+    @staticmethod
+    def get_node_list(node_list: List[Tuple[int, int, str, 'MessageChain']]) -> List[dict]:
+        '''
+        param:
+            node_list: [(senderId, time, senderName, messageChain)]
+        '''
+        return [
+            {
+                "sender": x[0],
+                "time": x[1],
+                "senderName": x[2],
+                "message": x[3],
+            }
+            for x in node_list
+        ]
+    
+    @staticmethod
+    def get_quick_forward_message(message_list: List[Union['MessageChain', Tuple[int, str, 'MessageChain']]], people_name="QQ用户") -> "ForwardMessage":
+        if not isinstance(message_list[0], tuple):
+            message_list = [(0, people_name, x) for x in message_list] # type: ignore
+    
+        return ForwardMessage(
+            ForwardMessage.get_node_list([
+                (x[0], int(time.time()), x[1], x[2]) # type: ignore
+                for x in message_list
+            ]),
+            0,
+            int(time.time()),
+            "转发消息",
+            0,
+            MessageChain.plain("转发消息"),
+        )
 
 
 class Xml(Element):
