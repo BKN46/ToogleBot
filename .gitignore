@@ -143,5 +143,6 @@ data/
 test.py
 debug.py
 test/
+.vscode/
 
 # End of https://www.toptal.com/developers/gitignore/api/python
