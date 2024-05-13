@@ -1,8 +1,10 @@
 import base64
+from contextlib import contextmanager
 import ctypes
 import datetime
 import hashlib
 import io
+import json
 import multiprocessing
 import os
 import pickle
@@ -32,6 +34,8 @@ from toogle.exceptions import VisibleException
 PIC_BLOOM = bloom_filter.BloomFilter(max_elements=10**6, error_rate=0.01, filename='data/pic_bloom')
 
 SETU_RECORD_PATH = "data/setu_record.json"
+
+JSON_WRITE_LOCKS = {}
 
 if not os.path.exists(SETU_RECORD_PATH):
     with open(SETU_RECORD_PATH, "w") as f:
@@ -101,6 +105,26 @@ def set_timeout(num, callback):
 
 def handle_TLE():
     raise VisibleException("运行超时!")
+
+
+@contextmanager
+def modify_json_file(name: str):
+    if name.endswith('.json'):
+        name = name[:-5]
+
+    if name not in JSON_WRITE_LOCKS:
+        JSON_WRITE_LOCKS[name] = threading.Lock()
+
+    with JSON_WRITE_LOCKS[name]:
+        path = f"data/{name}.json"
+        if os.path.exists(path):
+            with open(path, "r") as f:
+                data = json.load(f)
+        else:
+            data = {}
+        yield data
+        with open(path, "w") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
 
 
 def filter_emoji(desstr, restr=""):
