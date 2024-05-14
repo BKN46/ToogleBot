@@ -459,7 +459,8 @@ async def thread_worker(index):
             await bot_send_message(message_pack, f"{e.__str__()}")
         except Exception as e:
             if '误触发' not in repr(e) and 'attached to a different loop' not in repr(e):
-                print_err(e, plugin, message_pack)
+                msg = print_err(e, plugin, message_pack)
+                await bot_send_message(int(config.get("ADMIN_LIST", [message_pack.member.id])[0]), msg, friend=True)
 
 
 def worker_start(thread_num=THREAD_NUM):

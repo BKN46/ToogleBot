@@ -500,14 +500,15 @@ def get_main_groups() -> List[int]:
 
 
 def print_err(e, plugin, message_pack):
-    print(
+    msg = (
         f"{'*'*20}\n[{datetime.datetime.now().strftime('%Y-%m-%d, %H:%M:%S')}]"
         f"[{plugin.name}] {repr(e)}\n"
         f"[{message_pack.group.id}][{message_pack.member.id}]{message_pack.message.asDisplay()}\n"
-        f"\n{'*'*20}\n{traceback.format_exc()}",
-        file=open("err.log", "a"),
+        f"\n{'*'*20}\n{traceback.format_exc()}"
     )
+    print(msg, file=open("err.log", "a"))
     nonebot.logger.error(f"[{plugin.name}] {repr(e)}")  # type: ignore
+    return msg
 
 
 if __name__ == "__main__":

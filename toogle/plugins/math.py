@@ -274,7 +274,7 @@ class UnitConversion(MessageHandler):
         message_content = message.message.asDisplay()
         matchs = re.search(self.trigger, message_content)
         if not matchs:
-            raise Exception(f"No matchs: {message_content}")
+            raise Exception(f"误触发: {message_content}")
         num, unit = matchs.group(1), matchs.group(4)
         cal_res = f"{self.trans_mapping[unit][1] * float(num):.3f}{self.trans_mapping[unit][0]}"
         return MessageChain.create([Plain(f"{matchs.group(0)} 折合 {cal_res}")])
