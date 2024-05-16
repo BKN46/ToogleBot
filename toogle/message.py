@@ -221,11 +221,11 @@ class ForwardMessage(Element):
         ]
     
     @staticmethod
-    def get_quick_forward_message(message_list: List[Union['MessageChain', Tuple[int, str, 'MessageChain']]], people_name="QQ用户") -> "ForwardMessage":
+    def get_quick_forward_message(message_list: List[Union['MessageChain', Tuple[int, str, 'MessageChain']]], people_name="QQ用户") -> "MessageChain":
         if not isinstance(message_list[0], tuple):
             message_list = [(0, people_name, x) for x in message_list] # type: ignore
     
-        return ForwardMessage(
+        res = MessageChain([ForwardMessage(
             ForwardMessage.get_node_list([
                 (x[0], int(time.time()), x[1], x[2]) # type: ignore
                 for x in message_list
@@ -235,7 +235,9 @@ class ForwardMessage(Element):
             "转发消息",
             0,
             MessageChain.plain("转发消息"),
-        )
+        )])
+
+        return res
 
 
 class Xml(Element):
@@ -296,3 +298,88 @@ class MessageChain:
     
     def to_dict(self) -> dict:
         return {"root": [x.to_dict() for x in self.root], "no_interval": self.no_interval}
+    
+    @staticmethod
+    def to_mirai(
+        message: 'MessageChain',
+        length_limit: int = 0,
+        depth_limit = 3,
+    ) -> List:
+        message_list = []
+        for item in message.root:
+            if isinstance(item, Plain):
+                message_list.append({
+                    "type": "Plain",
+                    "text": item.text
+                })
+            elif isinstance(item, Quote):
+                message_list.append({
+                    "type": "Quote",
+                    "id": item.id,
+                    "groupId": item.group_id,
+                    "senderId": item.sender_id,
+                    "targetId": item.target_id,
+                    "origin": MessageChain.to_mirai(item.message, length_limit=length_limit, depth_limit=depth_limit-1) if depth_limit > 0 else [{
+                        "type": "Plain",
+                        "text": "[引用消息]"
+                    }],
+                })
+            elif isinstance(item, Image):
+                if item.url:
+                    message_list.append({
+                        "type": "Image",
+                        "url": item.url,
+                    })
+                else:
+                    message_list.append({
+                        "type": "Image",
+                        "base64": item.getBase64(),
+                    })
+            elif isinstance(item, At):
+                message_list.append({
+                    "type": "At",
+                    "target": item.target,
+                })
+            elif isinstance(item, AtAll):
+                message_list.append({
+                    "type": "AtAll",
+                })
+            elif isinstance(item, ForwardMessage):
+                if depth_limit > 0:
+                    message_list.append({
+                        "type": "Forward",
+                        "display": {
+                            "title": "聊天记录",
+                            "brief": "[聊天记录]",
+                            "source": "聊天记录",
+                            "preview": [
+                                x["message"].asDisplay()
+                                for x in item.node_list[:4]
+                            ],
+                            "summary": f"查看{len(item.node_list)}条转发消息"
+                        },
+                        "nodeList": [
+                            {
+                                "senderId": int(x["sender"]),
+                                "time": int(x["time"]),
+                                "senderName": x["senderName"],
+                                "messageChain": MessageChain.to_mirai(x["message"], length_limit=length_limit, depth_limit=depth_limit-1),
+                            }
+                            for x in item.node_list
+                        ]
+                    })
+                else:
+                    message_list.append({
+                        "type": "Plain",
+                        "text": "[转发消息]"
+                    })
+            elif isinstance(item, Xml):
+                message_list.append({
+                    "type": "Xml",
+                    "xml": item.xml,
+                })
+
+        if length_limit:
+            return message_list[:length_limit]
+        else:
+            return message_list

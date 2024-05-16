@@ -4,7 +4,7 @@ import sys
 from typing import Union
 import requests
 
-from toogle.nonebot2_adapter import bot_exec
+# from toogle.nonebot2_adapter import bot_exec
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 # sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -83,8 +83,8 @@ def send_group_msg(group, msg):
             raise Exception(f"Failed to send message: {res.text}")
         
 
-async def send_group_nudge(group, target):
-    await bot_exec("send_nudge", target=int(target), subject=int(group), kind="Group")
+# async def send_group_nudge(group, target):
+#     await bot_exec("send_nudge", target=int(target), subject=int(group), kind="Group")
 
 
 def send_temp_message():

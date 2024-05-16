@@ -8,7 +8,7 @@ import threading
 import time
 import traceback
 from multiprocessing import Semaphore
-from typing import Any, Optional, Sequence, Tuple, Union
+from typing import Any, List, Optional, Sequence, Tuple, Union
 
 import nonebot
 from nonebot.adapters import Event
@@ -208,7 +208,10 @@ def toogle2nb(
                 )
             )
         elif isinstance(item, Image):
-            message_list.append(MessageSegment.image(base64=item.getBase64()))
+            if item.url:
+                message_list.append(MessageSegment.image(url=item.url))
+            else:
+                message_list.append(MessageSegment.image(base64=item.getBase64()))
         elif isinstance(item, At):
             message_list.append(MessageSegment.at(item.target))
         elif isinstance(item, AtAll):
@@ -221,6 +224,7 @@ def toogle2nb(
                         "time": x["time"],
                         "senderName": x["senderName"],
                         "messageChain": toogle2nb(x["message"]),
+                        # "messageChain": MessageSegment.plain("转发消息"),
                     }
                     for x in item.node_list
                 ],
@@ -308,7 +312,7 @@ def nb2toogle(message: Union[MessageChain, list, None]) -> ToogleChain:
                         sender_id=item.get("senderLd"),
                         sender_name=item.get("senderName"),
                         time=item.get("time"),
-                        message_id=item.data.get("messageId"),
+                        message_id=item.get("messageId"),
                         message=nb2toogle(item.get("message_chain")),
                     )
                 )

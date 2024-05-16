@@ -9,31 +9,35 @@ from typing import Any, Dict, List, Optional, Union
 
 import nonebot
 
-from toogle.message import Group, Member, MessageChain, Plain, Quote
+from toogle.message import Group, Member, MessageChain, Plain, Quote, ForwardMessage
 
 
 class MessageHistory:
-    def __init__(self, windows=100) -> None:
+    def __init__(self, windows=2000) -> None:
         self.history = {}
         self.windows = windows
 
-    def add(self, id: int, message: "MessagePack"):
+    def add(self, id, message: "MessagePack"):
         if id not in self.history:
             self.history[id] = []
         self.history[id].append(message)
         if len(self.history[id]) > self.windows:
             self.history[id].pop(0)
 
-    def get(self, id: int, windows=10) -> List["MessagePack"]:
+    def get(self, id, windows=10) -> List["MessagePack"]:
         if id not in self.history:
             return []
         return self.history[id][-windows:]
 
-    def search(self, group_id: Optional[int]=None, msg_id: Optional[int]=None, text: Optional[str] = None) -> Optional["MessagePack"]:
-        for group_id, messages in self.history.items():
+    def delete(self, id):
+        if id in self.history:
+            del self.history[id]
+
+    def search(self, group_id, msg_id: Optional[int]=None, text: Optional[str] = None) -> Optional["MessagePack"]:
+        for iter_group_id, messages in self.history.items():
+            if group_id and group_id != iter_group_id:
+                continue
             for message in messages:
-                if group_id and group_id != message.group.id:
-                    continue
                 if text and text in message.message.asDisplay():
                     return message
                 if msg_id and msg_id == message.id:
@@ -59,6 +63,20 @@ class MessageHistory:
         if os.path.exists(path):
             with open(path, "rb") as f:
                 self.history = pickle.load(f)
+
+    @staticmethod
+    def seq_as_forward(message_list: List["MessagePack"]) -> MessageChain:
+        return MessageChain([ForwardMessage(
+            ForwardMessage.get_node_list([
+                (msg.member.id, int(msg.time), msg.member.name, msg.message)
+                for msg in message_list
+            ]),
+            sender_id=0,
+            time=int(time.time()),
+            sender_name="历史消息",
+            message_id=0,
+            message=MessageChain.plain('历史消息'),
+        )])
 
 
 MESSAGE_HISTORY = MessageHistory()

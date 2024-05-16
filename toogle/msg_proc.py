@@ -4,7 +4,7 @@ import threading
 
 from toogle.economy import get_balance, give_balance
 from toogle.message import Image, MessageChain, Plain
-from toogle.message_handler import MessagePack
+from toogle.message_handler import MESSAGE_HISTORY, MessagePack
 from toogle.nonebot2_adapter import bot_send_message
 from toogle.configs import config
 from toogle.utils import SETU_RECORD_PATH, detect_pic_nsfw
@@ -44,3 +44,4 @@ async def chat_earn(message_pack: MessagePack):
             if cnt > 0:
                 give_balance(message_pack.member.id, cnt)
                 update_setu_record(message_pack.group.id, message_pack.member.id, cnt)
+                MESSAGE_HISTORY.add(f"setu_{message_pack.group.id}", message_pack)

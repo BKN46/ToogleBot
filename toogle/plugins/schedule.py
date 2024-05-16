@@ -4,7 +4,7 @@ import os
 from typing import Union
 
 from toogle.message import Image, MessageChain, Plain, At
-from toogle.message_handler import MessageHandler, MessagePack
+from toogle.message_handler import MESSAGE_HISTORY, MessageHandler, MessageHistory, MessagePack
 from toogle.scheduler import ScheduleModule, all_schedule, get_job_name, load_manual_schedular, remove_job
 from toogle.plugins.compose.daily_news import download_daily
 from toogle.nonebot2_adapter import bot_send_message
@@ -55,13 +55,14 @@ class DailySetuRanking(ScheduleModule):
             message_list = [Plain("今日色图贡献排行榜：\n")]
             for i, (k, v) in enumerate(ranking):
                 message_list += [
-                    Plain(f"{i+1}. "),
-                    At(k),
-                    Plain(f": {v}张\n"),
+                    Plain(f"{i+1}. {k}: {v}张\n"),
                 ]
                 if i >= 10:
                     message_list += [Plain("...")]
                     break
+            setu_list = MESSAGE_HISTORY.get(f"setu_{message.group.id}", windows=2000)
+            if setu_list:
+                await bot_send_message(int(message.group.id), MessageHistory.seq_as_forward(setu_list))
             return MessageChain(message_list)
 
         for group in config.get('NSFW_LIST', []):
@@ -79,11 +80,14 @@ class DailySetuRanking(ScheduleModule):
                 if i >= 10:
                     message_list += [Plain("...")]
                     break
-            # message = MessageChain.plain("今日色图贡献排行榜：\n" + '\n'.join([
-            #     f"{i+1}. {k}: {v}张"
-            #     for i, (k, v) in enumerate(ranking)
-            # ]))
-            await bot_send_message(int(group), MessageChain(message_list))
+
+            if len(ranking) > 0:
+                await bot_send_message(int(group), MessageChain(message_list))
+
+            setu_list = MESSAGE_HISTORY.get(f"setu_{group}", windows=2000)
+            if setu_list:
+                await bot_send_message(int(group), MessageHistory.seq_as_forward(setu_list))
+                MESSAGE_HISTORY.delete(f"setu_{group}")
 
         with modify_json_file('setu_record_alltime') as alltime_data:
             for group_id, group_data in all_data.items():
