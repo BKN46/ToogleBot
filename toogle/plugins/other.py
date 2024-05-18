@@ -13,6 +13,7 @@ from toogle.message_handler import MessageHandler, MessagePack
 from toogle.nonebot2_adapter import bot_send_message
 from toogle.plugins.others.magnet import do_magnet_parse, do_magnet_preview, parse_size
 from toogle.plugins.others.steam import source_server_info
+from toogle.plugins.others import tarkov as Tarkov
 from toogle.sql import SQLConnection
 from toogle.utils import detect_pic_nsfw, is_admin
 from toogle.configs import config
@@ -212,6 +213,27 @@ class CSGORandomCase(MessageHandler):
 
         res_pic = CSGO.compose_weapon_list(render_list)
         return MessageChain.create([message.as_quote(), Image(bytes=res_pic)])
+
+
+class TarkovSearch(MessageHandler):
+    name = "塔科夫查询"
+    trigger = r"^\.tarkov"
+    thread_limit = True
+    readme = "塔科夫查询"
+
+    async def ret(self, message: MessagePack) -> MessageChain:
+        search_content = message.message.asDisplay()[7:].strip()
+        if search_content.startswith("pve"):
+            pve = True
+            search_content = search_content[3:].strip()
+        elif search_content.startswith("help"):
+            return MessageChain.plain(Tarkov.get_sites())
+        elif search_content.startswith("q"):
+            return MessageChain.plain(Tarkov.search_quest(search_content[1:].strip()))
+        else:
+            pve = False
+        res = Tarkov.search_item(search_content, pve=pve)
+        return MessageChain.plain(res)
 
 
 class ToogleCSServer(MessageHandler):
