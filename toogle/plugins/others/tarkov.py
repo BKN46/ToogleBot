@@ -1,7 +1,9 @@
 import datetime
 import json
 import os
+import re
 import sys
+import bs4
 import requests
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
@@ -54,6 +56,69 @@ HIDEOUT_CN_NAMES = {
     "Hall of Fame": "展示台",
 }
 
+MAP_INFO = {
+    "海关": {
+        "Wiki": "https://escapefromtarkov.fandom.com/wiki/Customs",
+        "互动地图": "https://escapefromtarkov.fandom.com/wiki/Map:Customs",
+        "定位地图": "https://tarkov-market.com/maps/customs",
+        "AIPMC地图": "https://i0.hdslb.com/bfs/new_dyn/c2dd213723a23abf5ae372912948e2fd1967931.jpg@.webp",
+    },
+    "立交桥": {
+        "Wiki": "https://escapefromtarkov.fandom.com/wiki/Interchange",
+        "互动地图": "https://escapefromtarkov.fandom.com/wiki/Map:Interchange",
+        "定位地图": "https://tarkov-market.com/maps/interchange",
+        "AIPMC地图": "https://i0.hdslb.com/bfs/new_dyn/c9b5124b9da631a773a1faefbfa2e1241967931.jpg@.webp",
+    },
+    "森林": {
+        "Wiki": "https://escapefromtarkov.fandom.com/wiki/Woods",
+        "互动地图": "https://escapefromtarkov.fandom.com/wiki/Map:Woods",
+        "定位地图": "https://tarkov-market.com/maps/woods",
+        "AIPMC地图": "https://i0.hdslb.com/bfs/new_dyn/779ac0c5fe3561a1b82bea3bfbede8231967931.jpg@.webp",
+    },
+    "工厂": {
+        "Wiki": "https://escapefromtarkov.fandom.com/wiki/Factory",
+        "互动地图": "https://escapefromtarkov.fandom.com/wiki/Map:Factory",
+        "定位地图": "https://tarkov-market.com/maps/factory",
+        "AIPMC地图": "https://i0.hdslb.com/bfs/new_dyn/228b884c2b2aa2fb9e1c9acfbfd384281967931.jpg@.webp",
+    },
+    "海岸线": {
+        "Wiki": "https://escapefromtarkov.fandom.com/wiki/Shoreline",
+        "互动地图": "https://escapefromtarkov.fandom.com/wiki/Map:Shoreline",
+        "定位地图": "https://tarkov-market.com/maps/shoreline",
+        "AIPMC地图": "https://i0.hdslb.com/bfs/new_dyn/b2d92b9ed2fba150c203c2793d5535421967931.jpg@.webp",
+    },
+    "街区": {
+        "Wiki": "https://escapefromtarkov.fandom.com/wiki/Streets_of_Tarkov",
+        "互动地图": "https://escapefromtarkov.fandom.com/wiki/Map:Streets_of_Tarkov",
+        "定位地图": "https://tarkov-market.com/maps/streets",
+        "AIPMC地图": "https://i0.hdslb.com/bfs/new_dyn/ab2a05493d6a0e06dc605fe1136423001967931.jpg@.webp",
+    },
+    "储备站": {
+        "Wiki": "https://escapefromtarkov.fandom.com/wiki/Reserve",
+        "互动地图": "https://escapefromtarkov.fandom.com/wiki/Map:Reserve",
+        "定位地图": "https://tarkov-market.com/maps/reserve",
+        "AIPMC地图": "https://i0.hdslb.com/bfs/new_dyn/8062bb93650e3dfca73f40cfcf03bd6f1967931.jpg@.webp",
+    },
+    "灯塔": {
+        "Wiki": "https://escapefromtarkov.fandom.com/wiki/Lighthouse",
+        "互动地图": "https://escapefromtarkov.fandom.com/wiki/Map:Lighthouse",
+        "定位地图": "https://tarkov-market.com/maps/lighthouse",
+        "AIPMC地图": "https://i0.hdslb.com/bfs/new_dyn/b94fa55e7f0eecc6bcdea3a530ca373d1967931.jpg@.webp",
+    },
+    "实验室": {
+        "Wiki": "https://escapefromtarkov.fandom.com/wiki/The_Lab",
+        "互动地图": "https://escapefromtarkov.fandom.com/wiki/Map:The_Lab",
+        "定位地图": "https://tarkov-market.com/maps/lab",
+        "AIPMC地图": "https://i0.hdslb.com/bfs/new_dyn/d9c06366a7e58d76fa27d5e0bfb239831967931.jpg@.webp",
+    },
+    "中心区": {
+        "Wiki": "https://escapefromtarkov.fandom.com/wiki/Ground_Zero",
+        "互动地图": "https://escapefromtarkov.fandom.com/wiki/Map:Ground_Zero",
+        "定位地图": "https://tarkov-market.com/maps/ground-zero",
+        "AIPMC地图": "https://i0.hdslb.com/bfs/new_dyn/9b1013f278fa172b7761aaf300a5b9c81967931.jpg@.webp",
+    },
+}
+
 
 def get_sites():
     return f"[交互地图]https://escapefromtarkov.fandom.com/wiki/Map:Customs#"\
@@ -75,7 +140,6 @@ def query_tarkov_dev(query):
     return requests.post(url, json=data, proxies=proxies).json()["data"]
 
 
-
 def get_tarkov_meta_data():
     res = {
         **query_tarkov_dev("query TarkovDevCrafts {\n            crafts(lang: zh) {\n                station {\n                    id\n                    normalizedName\n                }\n                level\n                duration\n                rewardItems {\n                    item {\n                        id\n                    }\n                    count\n                }\n                requiredItems {\n                    item {\n                        id\n                    }\n                    count\n                    attributes {\n                        type\n                        name\n                        value\n                    }\n                }\n                taskUnlock {\n                    id\n                }\n            }\n        }"),
@@ -90,6 +154,32 @@ def get_tarkov_meta_data():
     return res
 
 
+def get_tarkov_goons():
+    res = requests.get('https://tarkovpal.com/home')
+    bs = bs4.BeautifulSoup(res.text, 'html.parser')
+    res = ["最近10次Goons目击:"]
+    for find_card in bs.findAll('div', {"class": "card-body"})[1:11]:
+        location = find_card.find('h5').text.strip()
+        detailed_location = find_card.findAll('p')[1].text.strip()
+        report_time = find_card.findAll('p')[2].script.text.strip()
+        report_time_str = re.search(r"thetime = '(.*?)'", report_time).group(1) # type: ignore
+        report_time_zone = int(re.search(r"utcOffset\((.*?),", report_time).group(1)) # type: ignore
+        time_re_group = re.search(r"(.*?) (\d+), (\d+), (\d+):(\d+) (pm|am)", report_time_str)
+        report_time = datetime.datetime(
+            year = int(time_re_group.group(3)), # type: ignore
+            month = datetime.datetime.strptime(time_re_group.group(1), '%B').month, # type: ignore
+            day = int(time_re_group.group(2)), # type: ignore
+            hour = int(time_re_group.group(4)) + (12 if time_re_group.group(6) == 'pm' else 0), # type: ignore
+            minute = int(time_re_group.group(5)), # type: ignore
+        )
+        if report_time.hour == 12 and time_re_group.group(6) == 'am': # type: ignore
+            report_time = report_time.replace(hour=0)
+        report_time = report_time + datetime.timedelta(hours=8-report_time_zone)
+        game_mode = find_card.findAll('p')[-1].text.strip()
+        res.append(f"{location}({detailed_location}) - {report_time} - {game_mode}")
+    return '\n'.join(res)
+
+
 if os.path.exists(TARKOV_DATA_PATH):
     with open(TARKOV_DATA_PATH, "r") as f:
         TARKOV_DATA = json.load(f)
@@ -101,30 +191,33 @@ else:
 
 class Item:
     def __init__(self, item_data):
-        self.uid = item_data["uid"]
-        self.name = item_data["name"]
-        self.banned_on_flea = item_data["bannedOnFlea"]
-        self.have_market_data = item_data["haveMarketData"]
-        self.short_name = item_data["shortName"]
-        self.price = item_data["price"]
-        self.avg24h_price = item_data["avg24hPrice"]
-        self.avg7d_price = item_data["avg7daysPrice"]
-        self.trader_name = item_data["traderName"]
-        self.trader_price = item_data["traderPrice"]
-        self.trader_price_cur = item_data["traderPriceCur"]
-        self.trader_price_rub = item_data["traderPriceRub"]
-        self.updated = datetime.datetime.fromisoformat(item_data["updated"][:-1])
-        self.slots = item_data["slots"]
-        self.diff24h = item_data["diff24h"]
-        self.diff7days = item_data["diff7days"]
-        self.icon = item_data["icon"]
-        self.link = item_data["link"]
-        self.wiki_link = item_data["wikiLink"]
-        self.img_url = item_data["img"]
-        self.img_big_url = item_data["imgBig"]
-        self.bsg_id = item_data["bsgId"]
-        self.is_functional = item_data["isFunctional"]
-        self.reference = item_data["reference"]
+        self.uid = item_data.get("uid", "0")
+        self.name = item_data.get("name", "未知物品")
+        self.banned_on_flea = item_data.get("bannedOnFlea", False)
+        self.have_market_data = item_data.get("haveMarketData", False)
+        self.short_name = item_data.get("shortName", self.name)
+        self.price = item_data.get("price", 0)
+        self.avg24h_price = item_data.get("avg24hPrice", self.price)
+        self.avg7d_price = item_data.get("avg7daysPrice", self.price)
+        self.trader_name = item_data.get("traderName", "")
+        self.trader_price = item_data.get("traderPrice", self.price)
+        self.trader_price_cur = item_data.get("traderPriceCur", self.price)
+        self.trader_price_rub = item_data.get("traderPriceRub", self.price)
+        try:
+            self.updated = datetime.datetime.fromisoformat(item_data["updated"][:-1])
+        except Exception as e:
+            self.updated = datetime.datetime.now()
+        self.slots = item_data.get("slots", 1)
+        self.diff24h = item_data.get("diff24h", 0)
+        self.diff7days = item_data.get("diff7days", 0)
+        self.icon = item_data.get("icon", '')
+        self.link = item_data.get("link", '')
+        self.wiki_link = item_data.get("wikiLink", '')
+        self.img_url = item_data.get("img", '')
+        self.img_big_url = item_data.get("imgBig", '')
+        self.bsg_id = item_data.get("bsgId", item_data.get('id', ''))
+        self.is_functional = item_data.get("isFunctional", True)
+        self.reference = item_data.get("reference", '')
 
 
 def get_market_item(item_name, pve=False):
@@ -157,7 +250,6 @@ def get_market_item(item_name, pve=False):
 
 
 def search_item_quest_use(item_bsg_id):
-    
     res = []
     for task in TARKOV_DATA['tasks']:
         for obj in task.get('objectives', []):
@@ -167,6 +259,8 @@ def search_item_quest_use(item_bsg_id):
                 tmp_name = TRADER_CN_NAMES.get(task['trader']['name'], task['trader']['name'])
                 tmp_str = f"[{tmp_name}][Lv.{task['minPlayerLevel']}][{task['name']}] {obj['description']} x{obj['count']}"
                 res.append(tmp_str)
+    if len(res) > 10:
+        res = res[:10] + ['...']
     return "\n".join(res)
 
 
@@ -179,11 +273,81 @@ def search_item_hideout_use(item_bsg_id):
                     tmp_name = HIDEOUT_CN_NAMES.get(station['name'], station['name'])
                     tmp_str = f"[{tmp_name}][Lv.{level['level']}] {item['item']['name']} x{item['quantity']}"
                     res.append(tmp_str)
+                    break
     return "\n".join(res)
 
 
-def search_item(item_name_cn, pve=False):
-    items = get_market_item(item_name_cn, pve=pve)
+def search_item_barter(item_bsg_id):
+    res = []
+    for barter in TARKOV_DATA['barters']:
+        for item in barter['requiredItems']:
+            if item['item']['id'] == item_bsg_id:
+                tmp_name = TRADER_CN_NAMES.get(barter['trader']['name'], barter['trader']['name'])
+                tmp_str = f"[{tmp_name}][Lv.{barter['level']}]"
+                if barter.get('taskUnlock'):
+                    tmp_str += f"[完成:{barter['taskUnlock']['name']}] "
+                for ritem in barter['requiredItems']:
+                    item_detail = get_item(ritem['item']['id'])
+                    tmp_str += f"{item_detail['name']}x{ritem['count']} "
+                tmp_str += f"-> "
+                for reward_item in barter['rewardItems']:
+                    reward_item_detail = get_item(reward_item['item']['id'])
+                    tmp_str += f"{reward_item_detail['name']} x{reward_item['count']} "
+                res.append(tmp_str)
+                break
+    if len(res) > 10:
+        res = res[:10] + ['...']
+    return "\n".join(res)
+
+
+def search_item_from_barter(item_bsg_id):
+    res = []
+    for barter in TARKOV_DATA['barters']:
+        for reward_item in barter['rewardItems']:
+            if reward_item['item']['id'] == item_bsg_id:
+                tmp_name = TRADER_CN_NAMES.get(barter['trader']['name'], barter['trader']['name'])
+                tmp_str = f"[{tmp_name}][Lv.{barter['level']}]"
+                if barter.get('taskUnlock'):
+                    tmp_str += f"[完成:{barter['taskUnlock']['name']}] "
+                for item in barter['requiredItems']:
+                    item_detail = get_item(item['item']['id'])
+                    tmp_str += f"{item_detail['name']}x{item['count']} "
+                    # tmp_str += f" x{item['count']} -> {item_detail['name']} x{item['count']}"
+                tmp_str += f" -> {get_item(item_bsg_id)['name']} x{reward_item['count']}"
+                res.append(tmp_str)
+                break
+    if len(res) > 10:
+        res = res[:10] + ['...']
+    return "\n".join(res)
+
+
+def search_item_trader_buy(item_bsg_id):
+    item = get_item(item_bsg_id)
+    res = []
+    for trade in item['buyFor']:
+        vender = trade.get('vendor', {}) # type: ignore
+        vender_name = TRADER_CN_NAMES.get(vender['name'], vender['name'])
+        if vender_name == "跳蚤市场":
+            continue
+        loyalty_level = vender.get('minTraderLevel', 1)
+        tmp_str = f"[{vender_name}][Lv.{loyalty_level}]"
+        task = vender.get('taskUnlock')
+        if task:
+            tmp_str += f"[完成:{task['name']}] "
+        tmp_str += f"{trade['price']} {trade['currency']}" # type: ignore
+        res.append(tmp_str)
+    return '\n'.join(res)
+
+
+def search_item(item_name_cn, market=True, pve=False):
+    if market:
+        items = get_market_item(item_name_cn, pve=pve)
+    else:
+        items = [Item(x) for x in search_item_json(item_name_cn)]
+        for item in items:
+            if item.name == item_name_cn:
+                items = [item]
+                break
     if len(items) == 0:
         return "未找到该物品"
     elif len(items) > 1:
@@ -199,16 +363,19 @@ def search_item(item_name_cn, pve=False):
         return "\n".join(res)
     else:
         item = items[0]
-        res = f"{item.name} - {item.price} RUB ({item.diff24h}% in 24h / {item.diff7days}% in 7d)"
-        if item.banned_on_flea:
-            res += f"\n[不可跳蚤交易]"
-        elif not item.have_market_data:
-            res += f"\n[无市场数据]"
+        if market:
+            res = f"{item.name} - {item.price} RUB ({item.diff24h}% in 24h / {item.diff7days}% in 7d)"
+            if item.banned_on_flea:
+                res += f"\n[不可跳蚤交易]"
+            elif not item.have_market_data:
+                res += f"\n[无市场数据]"
+            else:
+                res += f"\n市场24H均价: {item.avg24h_price} RUB | 市场7日均价: {item.avg7d_price} RUB"
+            trader_name = TRADER_CN_NAMES.get(item.trader_name, item.trader_name)
+            res += f"\n{trader_name}收购价: {item.trader_price}{item.trader_price_cur}"
+            res += f"\n更新时间: {item.updated}"
         else:
-            res += f"\n市场24H均价: {item.avg24h_price} RUB | 市场7日均价: {item.avg7d_price} RUB"
-        trader_name = TRADER_CN_NAMES.get(item.trader_name, item.trader_name)
-        res += f"\n{trader_name}收购价: {item.trader_price}{item.trader_price_cur}"
-        res += f"\n更新时间: {item.updated}"
+            res = f"{item.name}"
         res += f"\nWiki: {item.wiki_link}"
 
         quest_data = search_item_quest_use(item.bsg_id)
@@ -220,14 +387,57 @@ def search_item(item_name_cn, pve=False):
         craft_data = search_craft(item.bsg_id)
         if craft_data:
             res += f"\n\n合成配方:\n{craft_data}"
+        craft_from_data = search_craft_from(item.bsg_id)
+        if craft_from_data:
+            res += f"\n\n合成来源:\n{craft_from_data}"
+        barter_data = search_item_barter(item.bsg_id)
+        if barter_data:
+            res += f"\n\n交易配方:\n{barter_data}"
+        barter_from_data = search_item_from_barter(item.bsg_id)
+        buy_from_data = search_item_trader_buy(item.bsg_id)
+        if barter_from_data or buy_from_data:
+            sep = "\n" if barter_from_data and buy_from_data else ""
+            res += f"\n\n商人来源:\n{barter_from_data}{sep}{buy_from_data}"
         return res
 
 
-def search_item_json(item_name):
+def search_item_json(item_name: str, blur=True):
     res = []
+    def search(target_item, blur=blur):
+        if blur:
+            if item_name in target_item['name']:
+                return True
+            elif item_name in target_item['shortName']:
+                return True
+            elif item_name in target_item['normalizedName']:
+                return True
+            elif item_name.lower() in target_item['name'].replace(' ','').replace('.', '').lower():
+                return True
+        else:
+            return item_name in item['name']
     for item in TARKOV_DATA['items']:
-        if item_name in item['name']:
+        if search(item):
             res.append(item)
+    return res
+
+
+def search_ammo(ammo_name):
+    res = ""
+    ammos = sorted([
+        item for item in search_item_json(ammo_name, blur=True)
+        if 'ammo' in item['types'] and item['properties']
+    ], key=lambda x: x['properties']['penetrationPower'], reverse=True)
+    for item in ammos[:10]:
+        res += f"[{item['name']}]".ljust(25)
+        res += f"{item['properties']['damage']}" + (f"x{item['properties']['projectileCount']}" if item['properties']['projectileCount'] > 1 else "") + "伤"
+        res += f" {item['properties']['penetrationPower']}穿"
+        res += f" - 基准价格: {item['basePrice']} RUB"
+        res += "(禁跳蚤)" if 'noFlea' in item['types'] else ""
+        res += "\n"
+    if len(ammos) > 10:
+        res += "..."
+    if not res:
+        return "未找到该弹药"
     return res
 
 
@@ -266,6 +476,8 @@ def search_quest(quest_name):
         for quest in quests:
             tmp_str = f"[{TRADER_CN_NAMES.get(quest['trader']['name'], quest['trader']['name'])}][Lv.{quest['minPlayerLevel']}] {quest['name']}"
             res.append(tmp_str)
+        if len(res) > 10:
+            res = res[:10] + ['...']
         return '\n'.join(res)
     else:
         quest = quests[0]
@@ -292,15 +504,59 @@ def search_craft(item_bsg_id):
         for item in craft['requiredItems']:
             if item['item']['id'] == item_bsg_id:
                 tmp_str = f"[{get_station(craft['station']['id'])['name']}][Lv.{craft['level']}]"
+                for item in craft['requiredItems']:
+                    if [x for x in item['attributes'] if x['type'] == 'tool']:
+                        tmp_str += f"*"
+                    tmp_str += f"{get_item(item['item']['id'])['name']}x{item['count']} "
+                tmp_str += f"-> "
                 for reward_item in craft['rewardItems']:
-                    tmp_str += f" x{item['count']} -> {get_item(reward_item['item']['id'])['name']} x{reward_item['count']}"
+                    tmp_str += f"{get_item(reward_item['item']['id'])['name']} x{reward_item['count']} "
                 res.append(tmp_str)
                 break
+    if len(res) > 10:
+        res = res[:10] + ['...']
+    return "\n".join(res)
+
+
+def search_craft_from(item_bsg_id, from_bsg_id=None):
+    res = []
+    for craft in TARKOV_DATA['crafts']:
+        for reward_item in craft['rewardItems']:
+            if reward_item['item']['id'] == item_bsg_id:
+                if from_bsg_id and not any([item['item']['id'] == from_bsg_id for item in craft['requiredItems']]):
+                    continue
+                tmp_str = f"[{get_station(craft['station']['id'])['name']}][Lv.{craft['level']}] "
+                for item in craft['requiredItems']:
+                    if [x for x in item['attributes'] if x['type'] == 'tool']:
+                        tmp_str += f"*"
+                    tmp_str += f"{get_item(item['item']['id'])['name']}x{item['count']} "
+                tmp_str += f"-> {get_item(item_bsg_id)['name']} x{reward_item['count']}"
+                res.append(tmp_str)
+                break
+    if len(res) > 10:
+        res = res[:10] + ['...']
+    return "\n".join(res)
+
+
+def search_quest_reward(item_bsg_id):
+    res = []
+    for task in TARKOV_DATA['tasks']:
+        for obj in task.get('finishRewards', {}).get('items', []):
+            if obj['item']['id'] == item_bsg_id:
+                tmp_str = f"[{TRADER_CN_NAMES.get(task['trader']['name'], task['trader']['name'])}][Lv.{task['minPlayerLevel']}] {task['name']}"
+                res.append(tmp_str)
+                break
+    if len(res) > 10:
+        res = res[:10] + ['...']
     return "\n".join(res)
 
 
 if __name__ == "__main__":
-    print(search_item("热成像", pve=False))
+    # print(search_item("马宝路香烟", market=False, pve=False))
+    # print(search_craft("57347c5b245977448d35f6e1"))
+    # print(search_craft_from("5c0530ee86f774697952d952"))
+    print(search_item_barter("5c12620d86f7743f8b198b72"))
     # print(search_item_json("5.56")[0]['id'])
     # print(search_craft(get_market_item('火药')[0].bsg_id))
     # print(search_quest("奢靡人生"))
+    # print(search_item_trader_buy('5c093e3486f77430cb02e593'))

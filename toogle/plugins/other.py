@@ -1,9 +1,11 @@
 import datetime
 import io
 import json
+import os
 import pickle
 import random
 import time
+from typing import Union
 
 import PIL.Image
 import requests
@@ -217,23 +219,56 @@ class CSGORandomCase(MessageHandler):
 
 class TarkovSearch(MessageHandler):
     name = "塔科夫查询"
-    trigger = r"^\.tarkov"
+    trigger = r"^\.tarkov|^tk |^tkq |^tkm |^tka |^tkhelp|^tkgoons"
     thread_limit = True
-    readme = "塔科夫查询"
+    readme = f"塔科夫查询\n"\
+        f".tarkov #物品名# 查询物品\n"\
+        f".tarkovpve #物品名# 查询PVE物品\n"\
+        f"tk #物品名# 快速查询PVE物品\n"\
+        f"tkq #任务名# 查询任务\n"\
+        f"tka #弹药名# 查询弹药\n"\
+        f"tkm #地图名# 查询地图\n"\
+        f"tkhelp 相关网站\n"\
+        f"tkgoons 查询三狗位置"
 
-    async def ret(self, message: MessagePack) -> MessageChain:
-        search_content = message.message.asDisplay()[7:].strip()
-        if search_content.startswith("pve"):
-            pve = True
-            search_content = search_content[3:].strip()
-        elif search_content.startswith("help"):
+    async def ret(self, message: MessagePack) -> Union[MessageChain, None]:
+        message_content = message.message.asDisplay()
+        if message_content.startswith("tk "):
+            search_content = message_content[3:].strip()
+            res = Tarkov.search_item(search_content, market=True, pve=True)
+            return MessageChain.plain(res)
+        elif message_content.startswith("tkq "):
+            search_content = message_content[4:].strip()
+            res = Tarkov.search_quest(search_content)
+            return MessageChain.plain(res)
+        elif message_content.startswith("tka "):
+            search_content = message_content[4:].strip()
+            res = Tarkov.search_ammo(search_content)
+            return MessageChain.plain(res)
+        elif message_content.startswith("tkhelp"):
             return MessageChain.plain(Tarkov.get_sites())
-        elif search_content.startswith("q"):
-            return MessageChain.plain(Tarkov.search_quest(search_content[1:].strip()))
-        else:
-            pve = False
-        res = Tarkov.search_item(search_content, pve=pve)
-        return MessageChain.plain(res)
+        elif message_content.startswith("tkgoons"):
+            return MessageChain.plain(Tarkov.get_tarkov_goons())
+        elif message_content.startswith("tkm "):
+            search_content = message_content[4:].strip()
+            search_map = Tarkov.MAP_INFO.get(search_content)
+            if search_map:
+
+                return MessageChain.create([
+                    # Image(url=search_map['AIPMC地图']),
+                    Plain('\n'.join([f"{k}: {v}" for k, v in search_map.items()])),
+                ])
+            else:
+                return MessageChain.plain("未找到地图信息")
+        elif message_content.startswith(".tarkov"):
+            search_content = message_content[7:].strip()
+            if search_content.startswith("pve"):
+                pve = True
+                search_content = search_content[3:].strip()
+            else:
+                pve = False
+            res = Tarkov.search_item(search_content, pve=pve)
+            return MessageChain.plain(res)
 
 
 class ToogleCSServer(MessageHandler):
