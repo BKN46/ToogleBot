@@ -86,7 +86,7 @@ class DailySetuRanking(ScheduleModule):
 
             setu_list = MESSAGE_HISTORY.get(f"setu_{group}", windows=2000)
             if setu_list:
-                await bot_send_message(int(group), MessageHistory.seq_as_forward(setu_list))
+                # await bot_send_message(int(group), MessageHistory.seq_as_forward(setu_list))
                 MESSAGE_HISTORY.delete(f"setu_{group}")
 
         with modify_json_file('setu_record_alltime') as alltime_data:
