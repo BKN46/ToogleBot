@@ -1,5 +1,6 @@
 import datetime
 import json
+import math
 import os
 import re
 import sys
@@ -61,61 +62,61 @@ MAP_INFO = {
         "Wiki": "https://escapefromtarkov.fandom.com/wiki/Customs",
         "互动地图": "https://escapefromtarkov.fandom.com/wiki/Map:Customs",
         "定位地图": "https://tarkov-market.com/maps/customs",
-        "AIPMC地图": "https://i0.hdslb.com/bfs/new_dyn/c2dd213723a23abf5ae372912948e2fd1967931.jpg@.webp",
+        "AIPMC地图": "https://i1.hdslb.com/bfs/new_dyn/244790a1016c1b7bf08a946803d8b11e1967931.jpg@1192w.avif",
     },
     "立交桥": {
         "Wiki": "https://escapefromtarkov.fandom.com/wiki/Interchange",
         "互动地图": "https://escapefromtarkov.fandom.com/wiki/Map:Interchange",
         "定位地图": "https://tarkov-market.com/maps/interchange",
-        "AIPMC地图": "https://i0.hdslb.com/bfs/new_dyn/c9b5124b9da631a773a1faefbfa2e1241967931.jpg@.webp",
+        "AIPMC地图": "https://i1.hdslb.com/bfs/new_dyn/e8f19f64fb69005e96931db77085549c1967931.jpg@1192w.avif",
     },
     "森林": {
         "Wiki": "https://escapefromtarkov.fandom.com/wiki/Woods",
         "互动地图": "https://escapefromtarkov.fandom.com/wiki/Map:Woods",
         "定位地图": "https://tarkov-market.com/maps/woods",
-        "AIPMC地图": "https://i0.hdslb.com/bfs/new_dyn/779ac0c5fe3561a1b82bea3bfbede8231967931.jpg@.webp",
+        "AIPMC地图": "https://i1.hdslb.com/bfs/new_dyn/23e23f8cd88914554626a1f54a4556041967931.jpg@1192w.avif",
     },
     "工厂": {
         "Wiki": "https://escapefromtarkov.fandom.com/wiki/Factory",
         "互动地图": "https://escapefromtarkov.fandom.com/wiki/Map:Factory",
         "定位地图": "https://tarkov-market.com/maps/factory",
-        "AIPMC地图": "https://i0.hdslb.com/bfs/new_dyn/228b884c2b2aa2fb9e1c9acfbfd384281967931.jpg@.webp",
+        "AIPMC地图": "https://i1.hdslb.com/bfs/new_dyn/58ebd45babefe0b3226e8625d670c0021967931.jpg@1192w.avif",
     },
     "海岸线": {
         "Wiki": "https://escapefromtarkov.fandom.com/wiki/Shoreline",
         "互动地图": "https://escapefromtarkov.fandom.com/wiki/Map:Shoreline",
         "定位地图": "https://tarkov-market.com/maps/shoreline",
-        "AIPMC地图": "https://i0.hdslb.com/bfs/new_dyn/b2d92b9ed2fba150c203c2793d5535421967931.jpg@.webp",
+        "AIPMC地图": "https://i1.hdslb.com/bfs/new_dyn/1258676a34a088a4a1c6c2e659876f111967931.jpg@1192w.avif",
     },
     "街区": {
         "Wiki": "https://escapefromtarkov.fandom.com/wiki/Streets_of_Tarkov",
         "互动地图": "https://escapefromtarkov.fandom.com/wiki/Map:Streets_of_Tarkov",
         "定位地图": "https://tarkov-market.com/maps/streets",
-        "AIPMC地图": "https://i0.hdslb.com/bfs/new_dyn/ab2a05493d6a0e06dc605fe1136423001967931.jpg@.webp",
+        "AIPMC地图": "https://i1.hdslb.com/bfs/new_dyn/ad351164be157bca946f32cf9b1d9c741967931.jpg@1192w.avif",
     },
     "储备站": {
         "Wiki": "https://escapefromtarkov.fandom.com/wiki/Reserve",
         "互动地图": "https://escapefromtarkov.fandom.com/wiki/Map:Reserve",
         "定位地图": "https://tarkov-market.com/maps/reserve",
-        "AIPMC地图": "https://i0.hdslb.com/bfs/new_dyn/8062bb93650e3dfca73f40cfcf03bd6f1967931.jpg@.webp",
+        "AIPMC地图": "https://i1.hdslb.com/bfs/new_dyn/0495e807735dc3495dd265c04f2785c51967931.jpg@1192w.avif",
     },
     "灯塔": {
         "Wiki": "https://escapefromtarkov.fandom.com/wiki/Lighthouse",
         "互动地图": "https://escapefromtarkov.fandom.com/wiki/Map:Lighthouse",
         "定位地图": "https://tarkov-market.com/maps/lighthouse",
-        "AIPMC地图": "https://i0.hdslb.com/bfs/new_dyn/b94fa55e7f0eecc6bcdea3a530ca373d1967931.jpg@.webp",
+        "AIPMC地图": "https://i1.hdslb.com/bfs/new_dyn/1b98c5bd34088aa52fcd44aad321e6e91967931.jpg@1192w.avif",
     },
     "实验室": {
         "Wiki": "https://escapefromtarkov.fandom.com/wiki/The_Lab",
         "互动地图": "https://escapefromtarkov.fandom.com/wiki/Map:The_Lab",
         "定位地图": "https://tarkov-market.com/maps/lab",
-        "AIPMC地图": "https://i0.hdslb.com/bfs/new_dyn/d9c06366a7e58d76fa27d5e0bfb239831967931.jpg@.webp",
+        "AIPMC地图": "https://i1.hdslb.com/bfs/new_dyn/3491ae801f6ba5f22f72c49a97990b301967931.jpg@1192w.avif",
     },
     "中心区": {
         "Wiki": "https://escapefromtarkov.fandom.com/wiki/Ground_Zero",
         "互动地图": "https://escapefromtarkov.fandom.com/wiki/Map:Ground_Zero",
         "定位地图": "https://tarkov-market.com/maps/ground-zero",
-        "AIPMC地图": "https://i0.hdslb.com/bfs/new_dyn/9b1013f278fa172b7761aaf300a5b9c81967931.jpg@.webp",
+        "AIPMC地图": "https://i1.hdslb.com/bfs/new_dyn/15c96d6dbd68a6aa614aee8be84fc4f01967931.jpg@1192w.avif",
     },
 }
 
@@ -127,6 +128,7 @@ def get_sites():
     f"\n[任务跟踪]https://tarkov-market.com/"\
     f"\n[子弹信息]https://www.eft-ammo.com/"\
     f"\n[弹道计算]https://tarkov-ballistics.com/"\
+    f"\n[在线配装]https://www.totovbuilder.com/build"\
     f"\n[其他数据]https://tarkov.dev/"\
 
 
@@ -551,12 +553,83 @@ def search_quest_reward(item_bsg_id):
     return "\n".join(res)
 
 
+def calc_tarkov_tax(
+        sell_price,
+        base_price,
+        quantity,
+        offer_once=False,
+        base_price_ratio=0.5,
+    ):
+    if base_price_ratio:
+        base_price = base_price * base_price_ratio
+    q = 1 if offer_once else quantity
+    v_o = base_price * quantity / q
+    v_r = sell_price * quantity / q
+    p_o = math.log(v_r / v_o, 10)
+    if v_r >= v_o:
+        p_o = 1.08 ** p_o
+    p_r = math.log(v_o / v_r, 10)
+    if v_o >= v_r:
+        p_r = 1.08 ** p_r
+    t_i, t_r = 0.03, 0.03
+    tax = round(v_o * t_i * 4 ** p_o * q + v_r * t_r * 4 ** p_r * q)
+    return tax
+
+
+def profit_calculate(
+    base_price,
+    sell_price,
+    quantity,
+):
+    tax = calc_tarkov_tax(sell_price, base_price, quantity, base_price_ratio=0.4)
+    profit = sell_price * quantity - base_price * quantity - tax
+    require_cover = math.ceil((base_price * quantity + tax) / quantity)
+    return profit, tax, require_cover
+
+def parse_calculator(msg):
+    re_str = r"^tkc (\d*) (\d*)(u|e|)(\/| )(\d*)"
+    re_group = re.search(re_str, msg)
+    if not re_group:
+        return "参数错误"
+    sell_price = int(re_group.group(1))
+    base_price = int(re_group.group(2))
+    unit = re_group.group(3)
+    divided = re_group.group(4) == '/'
+    quantity = int(re_group.group(5) or 1)
+
+    if unit == 'u':
+        base_price = base_price * 142
+    elif unit == 'e':
+        base_price = base_price * 158
+
+    if divided:
+        base_price = base_price / quantity
+    
+    profit, tax, require_cover = profit_calculate(base_price, sell_price, quantity)
+    return f"大致利润: {round(profit):,d} RUB\n大致税: {round(tax):,d} RUB\n回本需要售出: {require_cover:,d}个\n利润率: {round(profit / (base_price * quantity) * 100, 2)}%"
+
+
+def get_tieba_main(name='逃离塔科夫'):
+    url = f"http://c.tieba.baidu.com/f?kw={name}&ie=utf-8"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+    }
+    res = requests.get(url, headers=headers)
+
+    re_str = r'title="(.*?)" target="_blank" class="j_th_tit "'
+    contents = re.findall(re_str, res.text)
+
+    return "贴吧最近消息：\n" + f"\n".join(contents[1:15])
+
+
 if __name__ == "__main__":
     # print(search_item("马宝路香烟", market=False, pve=False))
     # print(search_craft("57347c5b245977448d35f6e1"))
     # print(search_craft_from("5c0530ee86f774697952d952"))
-    print(search_item_barter("5c12620d86f7743f8b198b72"))
+    # print(search_item_barter("5c12620d86f7743f8b198b72"))
     # print(search_item_json("5.56")[0]['id'])
     # print(search_craft(get_market_item('火药')[0].bsg_id))
     # print(search_quest("奢靡人生"))
     # print(search_item_trader_buy('5c093e3486f77430cb02e593'))
+    print(calc_tarkov_tax(343, 2*142, 1000, base_price_ratio=0.4), 18274)
+    print(calc_tarkov_tax(9998, 5*142, 150, base_price_ratio=0.4), 7964)
