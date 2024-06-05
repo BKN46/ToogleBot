@@ -31,6 +31,11 @@ from toogle.configs import config
 from toogle.exceptions import VisibleException
 
 
+if not os.path.exists("log"):
+    os.makedirs("log")
+if not os.path.exists("data"):
+    os.makedirs("data")
+
 PIC_BLOOM = bloom_filter.BloomFilter(max_elements=10**6, error_rate=0.01, filename='data/pic_bloom')
 
 SETU_RECORD_PATH = "data/setu_record.json"
@@ -506,7 +511,7 @@ def print_err(e, plugin, message_pack):
         f"[{message_pack.group.id}][{message_pack.member.id}]{message_pack.message.asDisplay()}\n"
         f"\n{'*'*20}\n{traceback.format_exc()}"
     )
-    print(msg, file=open("err.log", "a"))
+    print(msg, file=open("log/err.log", "a"))
     nonebot.logger.error(f"[{plugin.name}] {repr(e)}")  # type: ignore
     return msg
 

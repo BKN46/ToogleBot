@@ -63,7 +63,7 @@ class ScheduleModule:
                 f"{'*'*20}\n[{datetime.datetime.now().strftime('%Y-%m-%d, %H:%M:%S')}]"
                 f"[{self.name}] {repr(e)}\n"
                 f"\n{'*'*20}\n{traceback.format_exc()}",
-                file=open("schedule_err.log", "a"),
+                file=open("log/schedule_err.log", "a"),
             )
 
     def regist(self):
