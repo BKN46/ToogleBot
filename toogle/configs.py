@@ -18,7 +18,9 @@ config = {
 
 key_check = {
     "NovelAISecret": "NovelAI作图相关功能",
-    "OpenAISecret": "OpenAI相关功能",
+    "GPTSecret": "GPT相关功能",
+    "GPTModel": "GPT相关功能",
+    "GPTUrl": "GPT相关功能",
     "BLACK_LIST": "黑名单",
     "GROUP_LIST": "每日新闻",
     "DISABLED_MODULE": "禁用功能",

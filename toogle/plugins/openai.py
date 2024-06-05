@@ -3,7 +3,7 @@ import json
 import math
 import random
 import re
-from typing import Optional, Union
+from typing import List, Optional, Union
 import nonebot
 import requests
 import time
@@ -14,13 +14,12 @@ from toogle.message import Image, MessageChain, Plain
 from toogle.message_handler import MESSAGE_HISTORY, MessageHandler, MessagePack, ActiveHandler
 from toogle.sql import DatetimeUtils, SQLConnection
 
-api_key = config.get("OpenAISecret")
+api_key = config.get("GPTSecret")
 header = {"Authorization": f"Bearer {api_key}"}
-url = "https://api.openai.com/v1"
 
 proxies = {
-    'http': config.get('REQUEST_PROXY_HTTP', ''),
-    'https': config.get('REQUEST_PROXY_HTTPS', ''),
+    # 'http': config.get('REQUEST_PROXY_HTTP', ''),
+    # 'https': config.get('REQUEST_PROXY_HTTPS', ''),
 }
 
 default_settings = {
@@ -65,10 +64,10 @@ class GetOpenAIConversation(MessageHandler):
     trigger = r"^\.gpt(\[.*?\]|)(all|context|bill|\+|)\s(.*)"
     thread_limit = True
     # to_me_trigger = True
-    readme = "OpenAI GPT-4 模型对话，使用例：\n.gpt 你好\n.gpt[JK] 你好"
+    readme = "GPT 模型对话，使用例：\n.gpt 你好\n.gpt[JK] 你好"
     interval = 600
     message_length_limit = 1000
-    price = 8
+    price = 5
 
     async def ret(self, message: MessagePack) -> Optional[MessageChain]:
         match_group = re.match(self.trigger, message.message.asDisplay())
@@ -91,25 +90,24 @@ class GetOpenAIConversation(MessageHandler):
         max_time, context_content = 45, []
         if extra=='all':
             max_time = 600
-        elif extra=='bill':
-            return MessageChain.plain(GetOpenAIConversation.get_openai_usage())
 
         pics = message.message.get(Image)
         if pics:
-            model = "gpt-4-vision-preview"
+            return MessageChain.plain("deepseek暂不支持多模态对话", quote=message.as_quote(), no_interval=True)
+            model = config.get("GPTModel", "")
             message_content = [
                 {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{x.getBase64()}" }} if isinstance(x, Image) 
                 else {"type": "text", "text": x.asDisplay()}
                 for x in message.message.root
             ]
         elif extra=="+":
-            model = "gpt-4-1106-preview"
+            model = config.get("GPTModel", "")
             history_context = MESSAGE_HISTORY.get(message.group.id)
             if not history_context:
                 return MessageChain.plain("无记录聊天历史", no_interval=True)
             context_content = GetOpenAIConversation.parse_history_context(history_context)
         else:
-            model = "gpt-4-1106-preview"
+            model = config.get("GPTModel", "")
 
         if setting:
             setting = setting[1:-1]
@@ -123,9 +121,10 @@ class GetOpenAIConversation(MessageHandler):
                 model=model,
                 other_history=context_content,
                 max_time=max_time,
-                settings=default_settings.get(setting, '')
+                settings=default_settings.get(setting, ''),
+                url=config.get("GPTUrl", ""),
             )
-            return MessageChain.plain(res)
+            return MessageChain.plain(res, quote=message.as_quote())
         except ReadTimeout as e:
             return MessageChain.plain("请求OpenAI GPT模型超时，请稍后尝试", no_interval=True)
         except Exception as e:
@@ -133,11 +132,15 @@ class GetOpenAIConversation(MessageHandler):
             return MessageChain.plain(f"OpenAI GPT模型服务可能出错，请稍后尝试\n{repr(e)}", no_interval=True)
 
     @staticmethod
-    def get_completion(text: str) -> str:
+    def get_completion(
+        text: str,
+        model="gpt-4",
+        url = "https://api.openai.com/v1",
+    ) -> str:
         path = "/completions"
         text = f"You: {text}\nAssistant: "
         body = {
-            "model": "text-davinci-003",
+            "model": model,
             "prompt": text,
             "max_tokens": 512,
             "temperature": 0.5,
@@ -154,20 +157,45 @@ class GetOpenAIConversation(MessageHandler):
             return res.text
 
     @staticmethod
-    def get_chat(text: str, model="gpt-4") -> str:
+    def get_chat(
+        text: str,
+        json_output: bool=False,
+        raw_output: bool=False,
+        settings: str = "",
+        other_history: list = [],
+        model="gpt-4",
+        url = "https://api.openai.com/v1",
+    ) -> str:
         path = "/chat/completions"
         body = {
             "model": model,
             "messages": [{"role": "user", "content": text}]
         }
+        if other_history:
+            body['messages'] = [{"role": "user", "content": x} for x in other_history] + (body['messages'] if text else [])
+        if settings:
+            body['messages'] = [{"role": "system", "content": settings}] + body['messages']
+        if json_output:
+            body['response_format'] = {"type": "json_object"}
         res = requests.post(url + path, headers=header, json=body, timeout=15, proxies=proxies, verify=False)
         try:
-            return res.json()["choices"][0]["message"]["content"].strip()
+            if raw_output:
+                return res.json()
+            else:
+                return res.json()["choices"][0]["message"]["content"].strip()
         except Exception as e:
             return res.text
 
     @staticmethod
-    def get_chat_stream(text: Union[str, list], max_time=30, settings: str = "", other_history: list = [], model="gpt-4", max_tokens=1000) -> str:
+    def get_chat_stream(
+        text: Union[str, list],
+        max_time=30,
+        settings: str = "",
+        other_history: list = [],
+        model="gpt-4",
+        max_tokens=1000,
+        url = "https://api.openai.com/v1",
+    ) -> str:
         path = "/chat/completions"
         body = {
             "model": model,
@@ -196,36 +224,6 @@ class GetOpenAIConversation(MessageHandler):
                 res_text += "\n[由于时长限制后续生成直接截断]"
                 break
         return res_text.strip()
-
-    @staticmethod
-    def get_openai_usage(day_count=30):
-        date_now = datetime.datetime.now()
-        end_date = date_now.strftime("%Y-%m-%d")
-        start_date = (date_now - datetime.timedelta(days=day_count)).strftime("%Y-%m-%d")
-        path = f"/dashboard/billing/usage?end_date={end_date}&start_date={start_date}"
-        res = requests.get("https://api.openai.com" + path, headers=header, timeout=30, proxies=proxies).json()
-        total_usage = res['total_usage']
-        daily_cost = [
-            sum([x['cost'] for x in day['line_items']])
-            for day in res['daily_costs']
-        ]
-
-        res_text = ""
-        max_day, max_length = 300, 15
-        for i, cost in enumerate(daily_cost):
-            day_length = math.ceil(min(cost, max_day) / max_day * max_length)
-            day = (date_now - datetime.timedelta(days=day_count-i)).strftime("%Y-%m-%d")
-            res_text += f"{day} ${cost/100:<6.2f} {'#' * day_length}\n"
-
-        res_text += f"Total: {total_usage/100:.2f} usd\n\n"
-
-        res = requests.get("https://api.openai.com/dashboard/billing/invoices?system=api", headers=header, timeout=30, proxies=proxies).json()
-        for invoices in res['data'][:3]:
-            time_str = datetime.datetime.fromtimestamp(invoices['created_at']).strftime("%Y-%m-%d")
-            res_text += f"Invoice: {time_str} ${invoices['total']/100:.2f}\n"
-
-        return res_text
-
 
     @staticmethod
     def parse_history_context(history: list[MessagePack]) -> list:
@@ -276,15 +274,14 @@ class ActiveAIConversation(ActiveHandler):
             other_history=context_content,
             max_time=60,
             max_tokens=150,
-            settings="你是一个名叫大黄狗的智能AI，请继续话题讨论，不要介绍自己、不要使用语气词、不要提问题，保持简洁自然亲切友善，使用粤语，100字以内"
+            settings="请继续话题讨论，不要介绍自己、不要使用语气词、不要提问题，保持简洁自然亲切，使用地道北京话，100字以内"
         )
         return MessageChain.plain(res)
 
 
     def is_trigger_random(self, message: Optional[MessagePack] = None):
-        return False
         message_content = message.message.asDisplay() if message else ""
-        if random.random() < 0.003:
+        if random.random() < 0.005:
             nonebot.logger.success(f"Triggered [{self.name}]")  # type: ignore
             return True
         elif len(message_content) < 5:
@@ -299,3 +296,22 @@ class ActiveAIConversation(ActiveHandler):
             nonebot.logger.success(f"Triggered [{self.name}]")  # type: ignore
             return True
         return False
+
+
+def gpt_censor(msg_list: List[Union[MessagePack, str]]):
+    msg_list = [(x.message.asDisplay() if isinstance(x, MessagePack) else x) for x in msg_list]
+    res = GetOpenAIConversation.get_chat(
+        "",
+        settings="你是一个审查机器人，对话题中的政治内容含量进行判断并输出打分（范围0-100）以及敏感内容，输出json格式为{value: #value#, sensitive_content: #sensitive_content#}",
+        other_history=msg_list,
+        json_output=True,
+        raw_output=True,
+        model="gpt-3.5-turbo-0125",
+    )
+    score = json.loads(res['choices'][0]['message']['content']).get("value", 0) # type: ignore
+    content = json.loads(res['choices'][0]['message']['content']).get("sensitive_content", 'null') # type: ignore
+    cost = res['usage']['prompt_tokens'] * 0.0000001 * 0.5 + res['usage']['completion_tokens'] * 0.0000001 * 1.5 # type: ignore
+    datetime_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{datetime_str}]OpenAPI Censor usage [score: {score}] ${cost:10f}", file=open("log/openai.log", "a"))
+    # print(json.dumps(res, ensure_ascii=False, indent=2))
+    return score, content, cost
