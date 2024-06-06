@@ -14,6 +14,7 @@ from toogle.message import Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack
 from toogle.plugins.compose.stock import get_search, render_report
 from toogle.plugins.others import baidu_index
+from toogle.plugins.others.pcbench import get_compairison as get_pcbench_compairison
 from toogle.plugins.others.weather import get_rainfall_graph
 from toogle.utils import is_admin
 
@@ -116,3 +117,14 @@ class HealthCalculator(MessageHandler):
             res_str += f"估算体脂率: {est_bodyfat_rate:.2f}%\n"
 
         return MessageChain.plain(res_str)
+
+
+class PCBenchCompare(MessageHandler):
+    name = "PC硬件对比"
+    trigger = r"^\.it (.*?)(vs|$)(.*?)$"
+    thread_limit = True
+    readme = "PC硬件对比" 
+
+    async def ret(self, message: MessagePack) -> MessageChain:
+        return MessageChain.plain(get_pcbench_compairison(message.message.asDisplay()))
+
