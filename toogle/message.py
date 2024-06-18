@@ -270,12 +270,12 @@ class MessageChain:
     def asDisplay(self) -> str:
         return "".join(i.asDisplay() for i in self.root)
 
-    def get(self, t):
+    def get(self, t, ignore_forawrd=False):
         res = []
         for item in self.root:
             if isinstance(item, t):
                 res.append(item)
-            elif isinstance(item, ForwardMessage):
+            elif isinstance(item, ForwardMessage) and not ignore_forawrd:
                 res += item.get(t)
         return res
 
