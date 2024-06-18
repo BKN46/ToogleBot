@@ -37,7 +37,7 @@ class CurrencyExchange(MessageHandler):
         # "RUB": "rub",
         # "rub": "rub",
         "卢布": "rub",
-        "卢比": "idr",
+        "卢比": "inr",
         "ARS": "ars",
         # "ars": "ars",
         "阿根廷比索": "ars",

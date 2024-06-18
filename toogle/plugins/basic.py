@@ -118,9 +118,9 @@ class NowTime(MessageHandler):
         "泰国": 7,
         "越南": 7,
         "老挝": 7,
-        "北京": 8,
-        "台湾": 8,
-        "香港": 8,
+        # "北京": 8,
+        # "台湾": 8,
+        # "香港": 8,
         "新加坡": 8,
         "伊尔库茨克": 8,
         "菲律宾": 8,
@@ -136,17 +136,20 @@ class NowTime(MessageHandler):
         "新西兰": 12,
     }
     tz_direct_mapping = {
-        # "GMT": 0,
-        # "PST": -8,
-        # "MST": -7,
-        # "CST": -6,
-        # "EST": -5,
-        # "AST": -4,
+        "GMT": 0,
+        "PDT": -7,
+        "PST": -8,
+        "BST": 1,
+        "CET": 1,
+        "MST": -7,
+        "CST": -6,
+        "EST": -5,
+        "AST": -4,
         **{f"UTC{'+' if i>0 else ''}{i if i!= 0 else ''}": i for i in range(-12, 13)}
     }
     tz_reg_list = "|".join([f"{k}" for k, v in time_mapping.items()])
     tz_direct_reg_list = "|".join([f"{k}" for k, v in tz_direct_mapping.items()])
-    trigger = f".*({tz_reg_list})时间.*"
+    trigger = f".*({tz_reg_list}|{tz_direct_reg_list})时间.*"
     readme = "快速查询世界当前时间"
 
     async def ret(self, message: MessagePack) -> MessageChain:
