@@ -10,7 +10,7 @@ from typing import Optional
 
 from toogle.message import At, MessageChain, Plain, Quote
 from toogle.message_handler import RECALL_HISTORY, USER_INFO, MessageHandler, MessagePack
-from toogle.utils import create_path, is_admin
+from toogle.utils import create_path, is_admin, modify_json_file
 from toogle.configs import interval_limiter
 
 LOTTERY_PATH = "data/lottery/"
@@ -332,6 +332,85 @@ class SeeRecall(MessageHandler):
             res += x
         
         return MessageChain.create(res)
+
+
+class Vote(MessageHandler):
+    name = "投票"
+    trigger = r"^(发起投票|查看投票|结束投票|所有投票)( .+)|^[【\[](.*?)[】\]]我投(.+)"
+    white_list = False
+    thread_limit = False
+    readme = "投票"
+
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        message_content = message.message.asDisplay()
+        reg_group = re.match(self.trigger, message_content).groups() # type: ignore
+        if reg_group[0]:
+            cmd = reg_group[0]
+            vote_name = reg_group[1].strip() if reg_group[1] else ""
+            if cmd == "发起投票":
+                with modify_json_file(f"vote/{message.group.id}") as d:
+                    if vote_name in d and d[vote_name]["open"]:
+                        return MessageChain.create([Plain(f"[{vote_name}]投票已存在且开启")])
+                    d[vote_name] = {
+                        "creator": message.member.id,
+                        "open": True,
+                        "options": {},
+                    }
+                return MessageChain.plain(f"发起投票成功!\n输入以下内容参与投票:\n[{vote_name}]我投xxx")
+            elif cmd == "所有投票":
+                with modify_json_file(f"vote/{message.group.id}") as d:
+                    res = "所有投票：\n" + "\n".join(d.keys())
+                return MessageChain.create([Plain(res)])
+            elif cmd == "查看投票":
+                with modify_json_file(f"vote/{message.group.id}") as d:
+                    if vote_name not in d:
+                        return MessageChain.create([Plain(f"[{vote_name}]投票不存在")])
+                    vote_dict = d[vote_name]
+                res = (
+                    f"[{vote_name}]由{vote_dict['creator']}创建\n"
+                    f"{'参与方式: [' + vote_name + ']我投xxx' if vote_dict['open'] else '(已关闭)'}\n"
+                    f"投票选项：\n" + Vote.render_result(vote_dict["options"])
+                )
+                return MessageChain.create([Plain(res)])
+            elif cmd == "结束投票":
+                with modify_json_file(f"vote/{message.group.id}") as d:
+                    if vote_name not in d:
+                        return MessageChain.create([Plain(f"[{vote_name}]投票不存在")])
+                    vote_dict = d[vote_name]
+                    if vote_dict["creator"] != message.member.id:
+                        return MessageChain.create([Plain(f"你不是[{vote_name}]投票的创建人")])
+                    if not vote_dict["open"]:
+                        return MessageChain.create([Plain(f"[{vote_name}]投票已结束")])
+                    res = (
+                        f"[{vote_name}]投票已结束\n"
+                        f"最终投票选项：\n" + Vote.render_result(vote_dict["options"])
+                    )
+                    d[vote_name]["open"] = False
+                return MessageChain.create([Plain(res)])
+        else:
+            vote_name = reg_group[2].strip()
+            vote_option = reg_group[3].strip()
+            with modify_json_file(f"vote/{message.group.id}") as d:
+                if vote_name not in d or not d[vote_name]["open"]:
+                    return MessageChain.create([Plain(f"[{vote_name}]投票不存在或已结束")])
+                if vote_option not in d[vote_name]["options"]:
+                    d[vote_name]["options"][vote_option] = []
+                if str(message.member.id) in d[vote_name]["options"][vote_option]:
+                    return MessageChain.create([Plain(f"你已经投过票了")])
+                d[vote_name]["options"][vote_option].append(str(message.member.id))
+            return MessageChain.create([Plain(f"投票成功")])
+        return MessageChain.plain(f"未知错误{reg_group}")
+
+
+    @staticmethod
+    def render_result(options) -> str:
+        res = ""
+        options = {k: v for k, v in sorted(options.items(), key=lambda x: len(x[1]), reverse=True)}
+        for k, v in options.items():
+            res += f"【{k}】{len(v)}人\n"
+            res += "    " + ", ".join(v) + "\n"
+        return res
+
 
 
 class UpdatePersonalInfo(MessageHandler):
