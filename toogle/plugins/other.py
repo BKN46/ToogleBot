@@ -542,10 +542,16 @@ class MagnetParse(MessageHandler):
                 combined_pic.save(io_buf, format="PNG")
                 imgs = [Image(bytes=io_buf.getvalue())]
             except Exception as e:
-                imgs = [Image(url=x).compress(max_height=400) for x in pics_url]
+                # imgs = [Image(url=x).compress(max_height=400) for x in pics_url]
+                imgs = []
 
-            res_message = MessageChain([
+            if not imgs:
+                return MessageChain([
                 message.as_quote(),
-                Plain(f"磁链内容解析成功：\n名称: {resource_name}\n大小: {resource_size}\n文件数: {resource_count}\n预览:\n"),
-            ] + imgs)
-            return res_message
+                Plain(f"磁链内容解析成功：\n名称: {resource_name}\n大小: {resource_size}\n文件数: {resource_count}\n预览加载失败")
+                ])
+            else:
+                return MessageChain([
+                    message.as_quote(),
+                    Plain(f"磁链内容解析成功：\n名称: {resource_name}\n大小: {resource_size}\n文件数: {resource_count}\n预览:\n"),
+                ] + imgs)

@@ -170,7 +170,7 @@ def get_anime_character(id):
     return parse_anime_db(res)
 
 
-def get_designated_search(sexual, search_list):
+def get_designated_search(sexual, search_list, retry=3):
     total_score, total_cost = 10, 0
     # key value cost
     params = {
@@ -261,7 +261,14 @@ def get_designated_search(sexual, search_list):
     if len(chara_list) == 0:
         raise ACError("无符合条件角色，请至animecharactersdatabase确认")
     chara_id = random.choice(chara_list).attrs["href"].split("?id=")[-1]
-    return get_anime_character(chara_id), req_url
+    while retry > 0:
+        try:
+            return get_anime_character(chara_id), req_url
+        except Exception as e:
+            chara_id = random.choice(chara_list).attrs["href"].split("?id=")[-1]
+            if retry == 0:
+                raise ACError("获取角色信息失败，请至animecharactersdatabase确认")
+        retry -= 1
 
 
 def get_anime_src(src_id):
@@ -758,7 +765,7 @@ if __name__ == "__main__":
     # print(get_designated_search("f", ["红发", "轻小说"])[1])
     # calc_confirm()
 
-    data, url = get_designated_search("f", ["粉毛", "动漫"])
+    data, url = get_designated_search("f", ["粉毛", "动漫"]) # type: ignore
     print(data, url)
     # pic_url, text, profile_id, raw = data
     # pic = waifu_card(

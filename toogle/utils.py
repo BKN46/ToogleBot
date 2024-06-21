@@ -122,6 +122,7 @@ def modify_json_file(name: str):
 
     with JSON_WRITE_LOCKS[name]:
         path = f"data/{name}.json"
+        # os.makedirs(os.path.dirname(path), exist_ok=True)
         if os.path.exists(path):
             with open(path, "r") as f:
                 data = json.load(f)
