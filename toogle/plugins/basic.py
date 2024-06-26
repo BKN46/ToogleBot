@@ -339,7 +339,13 @@ class Vote(MessageHandler):
     trigger = r"^(发起投票|查看投票|结束投票|所有投票)( .+)|^[【\[](.*?)[】\]]我投(.+)"
     white_list = False
     thread_limit = False
-    readme = "投票"
+    readme = (
+        f"使用方式:\n"
+        f"发起投票 xxx\n"
+        f"[xxx]我投xxx"
+        f"查看投票 xxx\n"
+        f"结束投票 xxx\n"
+    )
 
     async def ret(self, message: MessagePack) -> Optional[MessageChain]:
         message_content = message.message.asDisplay()
@@ -411,6 +417,81 @@ class Vote(MessageHandler):
             res += "    " + ", ".join(v) + "\n"
         return res
 
+
+class EatWhat(MessageHandler):
+    name = "吃什么"
+    trigger = r"^(早上|早餐|午餐|中午|晚上|晚餐|今晚|)吃(什么|了.{1,200})$"
+    white_list = False
+    thread_limit = False
+    readme = (
+        f"随机选择吃什么\n"
+        f"例如: \"早上吃什么\" 或是 \"吃什么\"\n"
+        f"可以通过例如 \"吃了面包\" 或是 \"早上吃了热干面 甜豆腐脑\""
+        f"\n来记录饮食，增加选项，可通过空格同时记录多个\n"
+        f"重复记录会调整出现权重"
+    )
+
+    meal_dict = {
+        "早上": "breakfast",
+        "早餐": "breakfast",
+        "中午": "lunch",
+        "午餐": "lunch",
+        "晚餐": "dinner",
+        "今晚": "dinner",
+        "晚上": "dinner",
+        "": "default",
+    }
+    
+    censor_content = [
+        "屎", "粪", "尿", "大便", "精液", "精", "屁", "屌", "逼", "鸡巴", "鸡鸡", "垃圾"
+    ]
+
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        message_content = message.message.asDisplay()
+        meal = re.match(self.trigger, message_content).group(1) # type: ignore
+        food = re.match(self.trigger, message_content).group(2) # type: ignore
+        id_str = str(message.member.id)
+        with modify_json_file(f"eat_what.json") as d:
+            if id_str not in d:
+                d[id_str] = {}
+                for k, v in EatWhat.meal_dict.items():
+                     d[id_str][v] = []
+
+            if food != "什么":
+                if not meal:
+                    return
+                foods = [x.strip() for x in food[1:].split(" ")]
+                for censor in EatWhat.censor_content:
+                    if censor in foods:
+                        # return MessageChain.create([message.as_quote(), Plain(f"你{meal}吃{censor}?")])
+                        return MessageChain.create([message.as_quote(), Plain(f"已成功记史")])
+
+                d[id_str][EatWhat.meal_dict[meal]] += foods
+                food_str = "、".join(foods)
+                return MessageChain.create([message.as_quote(), Plain(f"成功记录{meal}吃了{food_str}")])
+            else:
+                all_food = []
+                if meal:
+                    all_food = [
+                        *d[id_str][EatWhat.meal_dict[meal]],
+                        *d[id_str]["default"],
+                        *d["default"][EatWhat.meal_dict[meal]],
+                        *d["default"]["default"],
+                    ]
+                else:
+                    all_food = [
+                        *d[id_str]["breakfast"],
+                        *d[id_str]["lunch"],
+                        *d[id_str]["dinner"],
+                        *d[id_str]["default"],
+                        *d["default"]["breakfast"],
+                        *d["default"]["lunch"],
+                        *d["default"]["dinner"],
+                        *d["default"]["default"],
+                    ]
+
+                eat_food = random.sample(all_food, 2 if len(all_food) > 2 else 1)
+                return MessageChain.create([message.as_quote(), Plain(f"{meal}吃{'或者'.join(eat_food)}")])
 
 
 class UpdatePersonalInfo(MessageHandler):
