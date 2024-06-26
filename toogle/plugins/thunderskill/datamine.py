@@ -190,8 +190,8 @@ def missile_damage_module(file_path):
 def get_missile_detail(file_path, raw=False):
     return [
         missile_parse(file_path, raw),
-        "弹片散射区域:",
-        missile_damage_module(file_path),
+        # "弹片散射区域:",
+        # missile_damage_module(file_path),
     ]
 
 
