@@ -210,8 +210,8 @@ def toogle2nb(
         elif isinstance(item, Image):
             if item.url:
                 message_list.append(MessageSegment.image(url=item.url))
-            elif item.path:
-                message_list.append(MessageSegment.image(path=item.path))
+            # elif item.path:
+            #     message_list.append(MessageSegment.image(path=item.path))
             else:
                 message_list.append(MessageSegment.image(base64=item.getBase64()))
         elif isinstance(item, At):
