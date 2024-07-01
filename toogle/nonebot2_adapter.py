@@ -44,6 +44,7 @@ else:
 WORK_QUEUE:"queue.Queue[Tuple[MessageHandler, MessagePack, bool]]" = queue.Queue()
 THREAD_NUM = 10
 THREAD_POOL: list[threading.Thread] = []
+BOT = None
 
 class PluginWrapper:
     def __init__(self, plugin: MessageHandler) -> None:
@@ -326,7 +327,9 @@ async def admin_user_checker(event: Event) -> bool:
 
 
 async def bot_send_message(target: Union[int, MessagePack], message: Union[ToogleChain, MessageChain, str], friend=False):
-    bot = nonebot.get_bot()
+    global BOT
+    if not BOT:
+        BOT = nonebot.get_bot()
 
     if isinstance(target, MessagePack):
         if target.group.id:
@@ -346,14 +349,14 @@ async def bot_send_message(target: Union[int, MessagePack], message: Union[Toogl
             id=target_id,
         )
         event = FriendMessage(
-            self_id=int(bot.self_id),
+            self_id=int(BOT.self_id),
             type="FriendMessage",
             source=source,
             sender=sender,
             messageChain=MessageChain(""),
         )
     else:
-        event = get_event(bot, target_id, 100000, MessageChain(""))
+        event = get_event(BOT, target_id, 100000, MessageChain(""))
     if isinstance(message, ToogleChain):
         quote = message.get_quote()
         nb_message = toogle2nb(message)
@@ -367,7 +370,7 @@ async def bot_send_message(target: Union[int, MessagePack], message: Union[Toogl
     threading.Thread(
         target=asyncio.run,
         args=[
-            bot.send(
+            BOT.send(
                 event=event,
                 message=nb_message,
                 quote=quote
