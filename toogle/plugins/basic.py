@@ -370,7 +370,11 @@ class Vote(MessageHandler):
             elif cmd == "查看投票":
                 with modify_json_file(f"vote/{message.group.id}") as d:
                     if vote_name not in d:
-                        return MessageChain.create([Plain(f"[{vote_name}]投票不存在")])
+                        fuzz_match = [x for x in d if vote_name in x]
+                        if len(fuzz_match) == 1:
+                            vote_name = fuzz_match[0]
+                        else:
+                            return MessageChain.create([Plain(f"[{vote_name}]投票不存在")])
                     vote_dict = d[vote_name]
                 res = (
                     f"[{vote_name}]由{vote_dict['creator']}创建\n"
