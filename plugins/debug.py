@@ -17,10 +17,12 @@ from nonebot.adapters.mirai2.event.message import MessageSource
 import shshsh
 
 from toogle.configs import config
+from toogle.index import reload_plugins, export_plugins
 from toogle.message import MessageChain
 from toogle.message_handler import MESSAGE_HISTORY
 from toogle.nonebot2_adapter import bot_get_all_group, bot_send_message, bot_exec, PluginWrapper, admin_user_checker, worker_shutdown
 from toogle.utils import get_main_groups, is_admin
+from plugins.load import MATCHERS, load_plugins
 
 driver = get_driver()
 
@@ -38,6 +40,17 @@ async def handle_broadcast(
 
 broadcast_matcher.append_handler(handle_broadcast)
 
+# Reload plugin
+reload_plugin_matcher = on_regex("^\.reload$", rule=admin_user_checker)
+
+async def handle_reload_plugin(
+    foo: Tuple[Any, ...] = RegexGroup(),
+):
+    use_time = reload_plugins()
+    load_plugins()
+    await reload_plugin_matcher.send(f"Reloaded {len(export_plugins)} export modules ({len(MATCHERS)} in matcher) in {use_time:.2f}ms")
+
+reload_plugin_matcher.append_handler(handle_reload_plugin)
 
 # General debug
 debug_matcher = on_regex(r"^debug \[(.*)\](.*)$", rule=admin_user_checker)

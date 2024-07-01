@@ -1,9 +1,6 @@
-import asyncio
 from curses.ascii import isdigit
 import datetime
 import math
-import os
-import time
 import re
 from typing import Any, Tuple
 
@@ -11,7 +8,6 @@ import nonebot
 from nonebot.matcher import Matcher
 from nonebot.params import RegexGroup, EventMessage
 from nonebot.plugin import on_message, on_regex
-from nonebot.rule import to_me
 from nonebot.message import event_postprocessor
 
 from nonebot.adapters.mirai2.event.message import MessageEvent, GroupMessage
@@ -23,40 +19,20 @@ from toogle.index import export_plugins, active_plugins
 from toogle.message_handler import MESSAGE_HISTORY, RECALL_HISTORY
 from toogle.nonebot2_adapter import PluginWrapper, bot_send_message
 from toogle.msg_proc import chat_earn
+from plugins.load import load_plugins
 
 # ping trigger
-
 echo = on_regex("^22222$")
 
 async def handle_echo(foo: Tuple[Any, ...] = RegexGroup()):
     await echo.send("22222")
 
-
 echo.append_handler(handle_echo)
 
-# main part
-
-from toogle.index import export_plugins, linear_handler
-
-if config.get("CONCURRENCY") == 'true':
-    for plugin in export_plugins:
-        try:
-            matcher = on_regex(plugin.plugin.trigger)
-            matcher.append_handler(plugin.ret)
-            if plugin.plugin.to_me_trigger:
-                to_me_matcher = on_message(rule=to_me())
-                to_me_matcher.append_handler(plugin.ret)
-                nonebot.logger.success(f"[{plugin.plugin.name}] Also loaded as to_me trigger")  # type: ignore
-        except Exception as e:
-            nonebot.logger.error(f"[{plugin.plugin.name}] failed to add matcher/handler: {repr(e)}") # type: ignore
-
-else:
-    matcher = on_message()
-    matcher.append_handler(linear_handler.ret)
-
+# load plugins
+load_plugins()
 
 # /help
-
 get_help_regex = f"^(#help#|\.help|/help|@{config['MIRAI_QQ'][0]})(.*)" # type: ignore
 get_help = on_regex(get_help_regex)
 
