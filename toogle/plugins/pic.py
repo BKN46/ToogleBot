@@ -1,6 +1,7 @@
 import math
 import os
 import random
+from typing import Optional
 
 import PIL.FontFile
 import PIL.Image
@@ -153,7 +154,7 @@ class HistoryTu(MessageHandler):
     thread_limit = True
     readme = "群史官"
 
-    async def ret(self, message: MessagePack) -> MessageChain:
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
         group_id = str(message.group.id)
         IMAGES_PATH = f"data/history_img/"  # 图片集地址
         if group_id not in os.listdir(IMAGES_PATH):
@@ -178,7 +179,10 @@ class HistoryTu(MessageHandler):
                     GetQutu.get_all_pic(IMAGES_PATH, text_filter=text_filter, x_size=200, y_size=100),
                 ])
             else:
-                num = int(message.message.asDisplay().strip().split()[-1])
+                try:
+                    num = int(message.message.asDisplay().strip().split()[-1])
+                except Exception as e:
+                    return
                 files = [IMAGES_PATH + x for x in os.listdir(IMAGES_PATH) if text_filter in x]
                 file = files[num]
                 return MessageChain.create([Image.fromLocalFile(file)])

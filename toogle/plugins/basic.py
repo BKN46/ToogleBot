@@ -424,7 +424,7 @@ class Vote(MessageHandler):
 
 class EatWhat(MessageHandler):
     name = "吃什么"
-    trigger = r"^(早上|早餐|午餐|中午|晚上|晚餐|今晚|)吃(什么|了.{1,200})$"
+    trigger = r"^今?天?(早上|早餐|午餐|中午|晚上|晚餐|今晚|)吃(什么|了.{1,200})$"
     white_list = False
     thread_limit = False
     readme = (
@@ -447,7 +447,7 @@ class EatWhat(MessageHandler):
     }
     
     censor_content = [
-        "屎", "粪", "尿", "大便", "精液", "精", "屁", "屌", "逼", "鸡巴", "鸡鸡", "垃圾"
+        "屎", "粪", "尿", "史", "大便", "精液", "精", "屁", "屌", "逼", "鸡巴", "鸡鸡", "鸡儿", "垃圾"
     ]
 
     async def ret(self, message: MessagePack) -> Optional[MessageChain]:

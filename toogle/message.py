@@ -201,10 +201,10 @@ class ForwardMessage(Element):
 
         return f"[Forward origin from {self.sender_id} [{msgs}]]"
 
-    def get(self, t):
+    def get(self, t, forward_layer=-1):
         res = []
         for item in self.node_list:
-            res += item['message'].get(t)
+            res += item['message'].get(t, forward_layer=forward_layer)
         return res
     
     @staticmethod
@@ -270,13 +270,13 @@ class MessageChain:
     def asDisplay(self) -> str:
         return "".join(i.asDisplay() for i in self.root)
 
-    def get(self, t, ignore_forawrd=False):
+    def get(self, t, ignore_forawrd=False, forward_layer=-1):
         res = []
         for item in self.root:
             if isinstance(item, t):
                 res.append(item)
-            elif isinstance(item, ForwardMessage) and not ignore_forawrd:
-                res += item.get(t)
+            elif isinstance(item, ForwardMessage) and not ignore_forawrd and forward_layer != 0:
+                res += item.get(t, forward_layer=forward_layer-1)
         return res
 
     def get_quote(self) -> Optional[int]:
