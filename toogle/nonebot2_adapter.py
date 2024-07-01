@@ -433,7 +433,7 @@ def thread_put_job(handler: MessageHandler, message_pack: "MessagePack"):
 async def thread_worker(index):
     while True:
         try:
-            plugin, message_pack, kill = WORK_QUEUE.get(timeout=30)
+            plugin, message_pack, kill = WORK_QUEUE.get(timeout=5)
             if kill:
                 break
         except queue.Empty:
@@ -444,14 +444,20 @@ async def thread_worker(index):
             res = await plugin.ret(message_pack)
             if not res:
                 continue
+            exec_time = (time.time() - start_time) * 1000
             if plugin.interval and not res.no_interval:
                 interval_limiter.force_user_interval(plugin.name, message_pack.member.id, interval=plugin.interval)
             if plugin.price > 0:
                 take_balance(message_pack.member.id, plugin.price)
             if len(res.root) > 0:
                 await bot_send_message(message_pack, res)
-            use_time = int((time.time() - start_time) * 1000)
-            nonebot.logger.success(f"{plugin.name} in worker {index} running complete. ({use_time}ms)") # type: ignore
+            use_time = (time.time() - start_time) * 1000
+            if exec_time < 10 * 1000:
+                nonebot.logger.success(f"{plugin.name} in worker {index} running complete. ({exec_time:.2f}/{use_time:.2f}ms)") # type: ignore
+            else:
+                nonebot.logger.warning(f"{plugin.name} in worker {index} running complete. ({exec_time:.2f}/{use_time:.2f}ms)") # type: ignore
+                print(f"{datetime.datetime.now()}\t{plugin.name}\t{exec_time:.2f}\t{use_time:.2f}", file=open("log/slow.tsv", "a"))
+
         except (
             UrllibError,
             RequestsError,
