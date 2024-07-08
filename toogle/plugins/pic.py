@@ -12,6 +12,7 @@ from toogle.message import At, Image, Member, MessageChain, Plain, Quote
 from toogle.message_handler import MessageHandler, MessagePack
 from toogle.sql import SQLConnection
 from toogle.utils import create_path, is_admin
+import toogle.plugins.compose.tarrot as tarrot
 
 create_path('data/qutu')
 create_path('data/long_img')
@@ -57,7 +58,7 @@ class GetQutu(MessageHandler):
             ".mirai",
         ]  # 图片格式
         IMAGE_SAVE_PATH = "data/tmp.jpg"  # 图片转换后的地址
-        font_path = "toogle/plugins/compose/AaRunXing.ttf"
+        font_path = "toogle/plugins/compose/fonts/AaRunXing.ttf"
         font = PIL.ImageFont.truetype(font_path, 15)
 
         # 获取图片集地址下的所有图片名称
@@ -213,3 +214,45 @@ class HistoryTu(MessageHandler):
                     image_file_name = f"{at[0].target}|||{image_file_name}" # type: ignore
                 image.save(IMAGES_PATH + image_file_name) # type: ignore
             return MessageChain.create([Plain(f"搞定, 存了{len(pics)}张黑历史")])
+
+
+class Tarrot(MessageHandler):
+    name = "塔罗牌"
+    trigger = r"^塔罗 (.*)"
+    thread_limit = True
+    readme = "随机塔罗牌"
+    interval = 60
+    price = 5
+
+    async def ret(self, message: MessagePack) -> MessageChain:
+        tarrot_spread = message.message.asDisplay()[3:].strip()
+        if not tarrot_spread:
+            return MessageChain.create([Plain("请描述你想要占卜的，或直接指定牌阵：\n" + ", ".join(tarrot.TARROT_SPREADS.keys()))])
+        if tarrot_spread not in tarrot.TARROT_SPREADS:
+            for spread in tarrot.TARROT_SPREADS:
+                if spread in tarrot_spread:
+                    tarrot_spread = spread
+                    break
+            else:
+                if any([i in tarrot_spread for i in ["运势", "运气"]]):
+                    tarrot_spread = "身心灵"
+                elif any([i in tarrot_spread for i in ["恋爱", "爱情", "喜欢", "对象"]]):
+                    tarrot_spread = "恋爱圣三角"
+                elif any([i in tarrot_spread for i in ["不", "还是"]]):
+                    tarrot_spread = "圣三角"
+                elif any([i in tarrot_spread for i in ["之后", "之前", "过去", "未来", "今", "人生"]]):
+                    tarrot_spread = "时间之箭"
+                elif any([i in tarrot_spread for i in ["简单"]]):
+                    tarrot_spread = "单张"
+                elif any([i in tarrot_spread for i in ["应该", "怎么"]]):
+                    tarrot_spread = "二则一"
+                elif any([i in tarrot_spread for i in ["指引", "指导"]]):
+                    tarrot_spread = "四元素"
+                elif any([i in tarrot_spread for i in ["成绩", "结果"]]):
+                    tarrot_spread = "大十字"
+                else:
+                    tarrot_spread = "万能"
+        header = f"{message.member.name} {message.message.asDisplay()[3:].strip()}[{tarrot_spread}]"
+
+        pic_bytes = tarrot.get_tarrot(tarrot_spread, header).getvalue()
+        return MessageChain.create([message.as_quote(), Image(bytes=pic_bytes)])
