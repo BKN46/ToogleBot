@@ -12,6 +12,7 @@ from matplotlib import pyplot as plt
 from toogle.configs import config
 from toogle.message import Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack
+from toogle.plugins.compose.anime_calendar import save_anime_list
 from toogle.plugins.compose.stock import get_search, render_report
 from toogle.plugins.others import baidu_index
 from toogle.plugins.others.pcbench import get_compairison as get_pcbench_compairison
@@ -127,4 +128,19 @@ class PCBenchCompare(MessageHandler):
 
     async def ret(self, message: MessagePack) -> MessageChain:
         return MessageChain.plain(get_pcbench_compairison(message.message.asDisplay()))
+
+
+class AnimeSchedule(MessageHandler):
+    name = "当季新番"
+    trigger = r"^当季新番$"
+    thread_limit = True
+    interval = 600
+    readme = "查看当季新番，来源长门有C" 
+
+    async def ret(self, message: MessagePack) -> MessageChain:
+        try:
+            pic_path = save_anime_list()
+        except Exception as e:
+            return MessageChain.plain(f"获取失败: {e}")
+        return MessageChain.create([Image(path=pic_path)])
 
