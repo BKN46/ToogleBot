@@ -6,7 +6,7 @@ from typing import List, Union
 from matplotlib import pyplot as plt
 import PIL.Image, PIL.ImageDraw, PIL.ImageFont
 
-FONT_PATH = "toogle/plugins/compose/Arial Unicode MS Font.ttf"
+FONT_PATH = "toogle/plugins/compose/fonts/Arial Unicode MS Font.ttf"
 FONT = PIL.ImageFont.truetype(FONT_PATH, 20)
 
 

@@ -15,7 +15,7 @@ import PIL.ImageFont
 import requests
 
 SAVE_PATH = "data/waifu_rank.png"
-FONT_TYPE = "toogle/plugins/compose/Arial Unicode MS Font.ttf"
+FONT_TYPE = "toogle/plugins/compose/fonts/Arial Unicode MS Font.ttf"
 
 PARAM_KEYWORD = {
     "黑发": ["hair_color", 1, 1],

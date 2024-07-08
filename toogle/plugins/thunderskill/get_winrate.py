@@ -21,7 +21,7 @@ except Exception as e:
 metajson_url = "https://controlnet.space/wt-data-project.data/metadata.json"
 data_path = "https://controlnet.space/wt-data-project.data/joined/"
 full_data_url = "https://controlnet.space/wt-data-project.data/rb_ranks_1.csv"
-font_path = "toogle/plugins/compose/DejaVuSansMono-Bold.ttf"
+font_path = "toogle/plugins/compose/fonts/DejaVuSansMono-Bold.ttf"
 
 proxies = { "http": None, "https": None}
 
@@ -107,7 +107,7 @@ def draw_winrate_n_text():
     # print(output_text)
     return text2img(
         output_text,
-        font_path="toogle/plugins/compose/DejaVuSansMono-Bold.ttf",
+        font_path="toogle/plugins/compose/fonts/DejaVuSansMono-Bold.ttf",
         word_size=15,
         max_size=(2000, 8000),
         font_height_adjust=4,

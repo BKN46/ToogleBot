@@ -118,7 +118,7 @@ def get_waifu_card(
     src_type: str,
     desc: str,
     cv: str,
-    font_path: str = 'toogle/plugins/compose/FangZhengKaiTi-GBK-1.ttf',
+    font_path: str = 'toogle/plugins/compose/fonts/FangZhengKaiTi-GBK-1.ttf',
     is_new: bool = True,
     is_female: bool = True,
     waifu_score: float = 0,
@@ -356,7 +356,7 @@ def get_waifu_card(
 
 
 def ranking_compose(waifu_data_list, highlight=0) -> bytes:
-    FONT_TYPE = "toogle/plugins/compose/Arial Unicode MS Font.ttf"
+    FONT_TYPE = "toogle/plugins/compose/fonts/Arial Unicode MS Font.ttf"
     SIZE = [1500, 4000]
     PIC_SIZE = [350, int(SIZE[1] / 10)]
     BG_COLOR = [
@@ -366,7 +366,7 @@ def ranking_compose(waifu_data_list, highlight=0) -> bytes:
     ]
 
     SIZE[1] = PIC_SIZE[1] * len(waifu_data_list)
-    gen_image = PIL.Image.new("RGBA", tuple(SIZE), (255, 255, 255))
+    gen_image = PIL.Image.new("RGBA", tuple(SIZE), (255, 255, 255)) # type: ignore
 
     bg_num_font = PIL.ImageFont.truetype(FONT_TYPE, 200)
     name_font = PIL.ImageFont.truetype(FONT_TYPE, 60)
@@ -433,7 +433,7 @@ def ranking_compose(waifu_data_list, highlight=0) -> bytes:
 
 
 if __name__ == "__main__":
-    from toogle.plugins.waifu.waifu import get_random_anime_character
+    from toogle.plugins.waifu.waifu import get_random_anime_character # type: ignore
     res_pic_url, res_text, res_id, res_raw  = get_random_anime_character('f')
     pic_bytes = get_waifu_card(
         'BKN',

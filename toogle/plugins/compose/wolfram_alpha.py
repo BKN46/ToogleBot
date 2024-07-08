@@ -12,7 +12,7 @@ import PIL.ImageFont
 
 from toogle.utils import list2img
 
-font_path = "toogle/plugins/compose/Arial Unicode MS Font.ttf"
+font_path = "toogle/plugins/compose/fonts/Arial Unicode MS Font.ttf"
 
 async def wolfram_alpha_query(query):
     init = {

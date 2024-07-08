@@ -65,7 +65,7 @@ def save_anime_list(buffer_path: str = "data/anime/", ignore_cache: bool = False
     img = Image.new("RGB", size, (14, 102, 85))
     pic_size = (120, 150)
     draw = ImageDraw.Draw(img)
-    font = ImageFont.truetype("/root/repos/ToogleBot/toogle/plugins/compose/Arial Unicode MS Font.ttf", 12)
+    font = ImageFont.truetype("toogle/plugins/compose/fonts/Arial Unicode MS Font.ttf", 12)
     for anime in anime_list:
         idx = anime_list.index(anime)
         row = idx // per_row

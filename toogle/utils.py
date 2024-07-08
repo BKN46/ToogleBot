@@ -173,7 +173,7 @@ def get_font_wrap(text: str, font: PIL.ImageFont.ImageFont, box_width: int):
 
 def text2img(
     text: str,
-    font_path: str = "toogle/plugins/compose/Arial Unicode MS Font.ttf",
+    font_path: str = "toogle/plugins/compose/fonts/Arial Unicode MS Font.ttf",
     word_size: int = 20,
     max_size: Tuple[int, int] = (500, 1000),
     padding: Tuple[int, int] = (20, 20),
@@ -208,7 +208,7 @@ def text2img(
 
 def list2img(
     input_list: List[Union[str, bytes]],
-    font_path: str = "toogle/plugins/compose/Arial Unicode MS Font.ttf",
+    font_path: str = "toogle/plugins/compose/fonts/Arial Unicode MS Font.ttf",
     word_size: int = 20,
     max_size: Tuple[int, int] = (500, 1000),
     padding: Tuple[int, int] = (20, 20),
@@ -288,7 +288,7 @@ def draw_rich_text(
     bg_color: Tuple[int, int, int] = (255, 255, 255),
     font_color: Tuple[int, int, int] = (20, 20, 20),
     word_size: int = 20,
-    font_path: str = "toogle/plugins/compose/Arial Unicode MS Font.ttf",
+    font_path: str = "toogle/plugins/compose/fonts/Arial Unicode MS Font.ttf",
     byte_mode: bool = True,
     src_img: Union[None, PIL.Image.Image] = None,
     position: Tuple[int, int] = (0, 0),
@@ -425,7 +425,7 @@ def pic_max_resize(
 def draw_pic_text(
     pic: PIL.Image.Image,
     text: str,
-    font_path: str = "toogle/plugins/compose/Arial Unicode MS Font.ttf",
+    font_path: str = "toogle/plugins/compose/fonts/Arial Unicode MS Font.ttf",
     word_size: int = 17,
     pic_size: Tuple[int, int] = (300, 460),
     max_size: Tuple[int, int] = (1000, 500),

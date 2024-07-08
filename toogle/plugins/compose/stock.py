@@ -6,7 +6,7 @@ import PIL.ImageDraw
 import PIL.ImageFont
 import requests
 
-font_path = "toogle/plugins/compose/TW-Sung-98-1-2.ttf"
+font_path = "toogle/plugins/compose/fonts/TW-Sung-98-1-2.ttf"
 chn_space = chr(12288)
 divide = "-" * 70 + "\n"
 
@@ -384,7 +384,7 @@ def get_text_size(font, text):
 
 def text2img(
     text: str,
-    font_path: str = "toogle/plugins/compose/Arial Unicode MS Font.ttf",
+    font_path: str = "toogle/plugins/compose/fonts/Arial Unicode MS Font.ttf",
     word_size: int = 20,
     max_size: Tuple[int, int] = (500, 1000),
     padding: Tuple[int, int] = (20, 20),

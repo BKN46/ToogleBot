@@ -62,7 +62,7 @@ def draw_dpr(dpr_list: List[Tuple[str, list]], ac_range:list=[12, 26]):
     plt.title(f'DRP graph')
     plt.xlabel("Enemy AC") 
     plt.ylabel("Estimated Damage Per Round") 
-    plt.rcParams["font.sans-serif"]=["toogle/plugins/compose/Arial Unicode MS Font.ttf"]
+    plt.rcParams["font.sans-serif"]=["toogle/plugins/compose/fonts/Arial Unicode MS Font.ttf"]
     plt.xticks(range(*ac_range), range(*ac_range))
 
     y_max = max([max(i[1]) for i in dpr_list])
