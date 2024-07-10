@@ -467,7 +467,8 @@ async def thread_worker(index):
             requests.exceptions.ReadTimeout,
             requests.exceptions.ConnectTimeout,
             requests.exceptions.HTTPError
-        ):
+        ) as e:
+            msg = print_err(e, plugin, message_pack)
             await bot_send_message(message_pack, f"爬虫网络连接错误，请稍后尝试")
         except VisibleException as e:
             await bot_send_message(message_pack, f"{e.__str__()}")
