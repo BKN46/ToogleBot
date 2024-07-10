@@ -41,6 +41,10 @@ def reload_plugins():
         for x in dir(plugin_module):
             tmp = getattr(plugin_module, x)
             import_type = "None"
+            if inspect.isclass(tmp) and [
+                x for x in export_plugins if x.plugin_class.__name__ == tmp.__name__  # type: ignore
+            ]:
+                continue
             # Normal plugin
             if inspect.isclass(tmp) and all([
                 tmp.__name__ != 'MessageHandler',
