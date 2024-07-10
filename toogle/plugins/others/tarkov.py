@@ -9,14 +9,11 @@ import requests
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
-from toogle.configs import config
+from toogle.configs import config, proxies
 
 TARKOV_DATA_PATH = "data/tarkov.json"
 TARKOV_MARKET_SECRET = config.get("TARKOV_MARKET_SECRET")
-proxies = {
-    'http': config.get('REQUEST_PROXY_HTTP', ''),
-    'https': config.get('REQUEST_PROXY_HTTPS', ''),
-}
+
 
 TRADER_CN_NAMES = {
     "Prapor": "俄商Prapor",

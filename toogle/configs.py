@@ -16,6 +16,11 @@ config = {
     if len(line) > 1
 }
 
+proxies = {
+    'http': config.get('REQUEST_PROXY_HTTP', ''),
+    'https': config.get('REQUEST_PROXY_HTTPS', ''),
+}
+
 key_check = {
     "NovelAISecret": "NovelAI作图相关功能",
     "GPTSecret": "GPT相关功能",

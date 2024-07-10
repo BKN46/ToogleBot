@@ -9,7 +9,7 @@ import requests
 import PIL.Image, PIL.ImageDraw, PIL.ImageFont
 from matplotlib import pyplot as plt
 
-from toogle.configs import config
+from toogle.configs import config, proxies
 from toogle.message import Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack
 from toogle.plugins.compose.anime_calendar import save_anime_list
@@ -18,11 +18,6 @@ from toogle.plugins.others import baidu_index
 from toogle.plugins.others.pcbench import get_compairison as get_pcbench_compairison
 from toogle.plugins.others.weather import get_rainfall_graph
 from toogle.utils import is_admin
-
-proxies = {
-    'http': config.get('REQUEST_PROXY_HTTP', ''),
-    'https': config.get('REQUEST_PROXY_HTTPS', ''),
-}
 
 
 class AStock(MessageHandler):

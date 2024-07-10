@@ -11,15 +11,11 @@ import PIL.Image
 from mysql import connector
 from matplotlib import pyplot as plt
 
-from toogle.configs import config
+from toogle.configs import config, proxies
 from toogle.message import Image
 from toogle.utils import draw_pic_text, pic_max_resize, text2img
 from toogle.sql import SQLConnection
 
-proxies = {
-    "http": config.get("REQUEST_PROXY_HTTP", ""),
-    "https": config.get("REQUEST_PROXY_HTTPS", ""),
-}
 
 thread_lock = threading.Lock()
 
