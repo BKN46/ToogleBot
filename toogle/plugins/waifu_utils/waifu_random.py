@@ -269,6 +269,7 @@ def get_designated_search(sexual, search_list, retry=3):
             if retry == 0:
                 raise ACError("获取角色信息失败，请至animecharactersdatabase确认")
         retry -= 1
+    raise ACError("获取角色信息失败")
 
 
 def get_anime_src(src_id):

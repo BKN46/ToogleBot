@@ -29,7 +29,7 @@ class HelpMeSelect(MessageHandler):
     interval = 30
     price = 2
 
-    async def ret(self, message: MessagePack) -> MessageChain:
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
         match_str = re.match(self.trigger, message.message.asDisplay())
         if match_str and match_str.group(3):
             proc_str = HelpMeSelect.str_prune(match_str.group(3))
@@ -38,6 +38,8 @@ class HelpMeSelect(MessageHandler):
             return MessageChain.plain(random.choice(sel_list)[len(common_prefix) :])
         elif match_str and match_str.group(5):
             proc_str = HelpMeSelect.str_prune(match_str.group(5))
+            if proc_str in ["时", "贱", "烦", "好"]:
+                return
             return MessageChain.plain(random.choice([proc_str, f"不{proc_str}"]))
         else:
             raise Exception("No match!")
