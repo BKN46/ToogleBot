@@ -4,11 +4,15 @@ import io
 import json
 import os
 import random
+import sys
 
 import PIL.Image
 import PIL.ImageColor
 import PIL.ImageDraw
 import PIL.ImageFont
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 
 FONT_PATH = "/root/repos/ToogleBot/toogle/plugins/compose/fonts/zixiaohun.ttf"
 TARROT_DATA_PATH = "/root/repos/ToogleBot/data/tarrot.json"
@@ -44,19 +48,20 @@ TARROT_SPREADS = {
 
 TARROT_SIZE = (300, 500)
 TABLE_MARGIN = 100
-TARROT_MARGIN = 40
-CARD_FONT_SIZE = 27
+TARROT_MARGIN = 70
+CARD_FONT_SIZE = 30
 
 def random_low_sat_dark_color():
     color = PIL.ImageColor.getrgb(f"hsl({random.randint(0, 360)}, {random.randint(20, 100)}%, {random.randint(10, 30)}%)")
     return color
 
 
-def get_tarrot(spread_name: str, header=""):
+def get_tarrot(spread_name: str, header="", return_deck=False):
     spread = TARROT_SPREADS.get(spread_name, [])
     if not spread:
         raise Exception("未知塔罗牌阵")
     draw = random.sample(TARROT_DATA, len(spread))
+    detail = [spread_name]
     random.shuffle(draw)
 
     max_h, max_v = max([x[0] for x in spread]) + 1, max([x[1] for x in spread]) + 1
@@ -120,31 +125,32 @@ def get_tarrot(spread_name: str, header=""):
         )
 
         card_text = card["name"].split(".")[0]
+        while card_text[0].isdigit():
+            card_text = card_text[1:]
         if card_reverse:
             card_text += "（逆位）"
+        detail.append(card_text)
 
         pic_draw.text(
             (
                 card_pos[0],
-                card_pos[1] - CARD_FONT_SIZE - 2,
+                card_pos[1] - CARD_FONT_SIZE - 5,
             ),
             card_text,
             fill="#FFFFFF",
             font=font,
         )
 
-        if card['can_reverse']:
-            if card_reverse:
-                desc = card["meaning"][1]
-            else:
-                desc = card["meaning"][0]
+        if card_reverse:
+            desc = card["meaning"][1]
         else:
-            desc = "-".join(card["meaning"])
+            desc = card["meaning"][0]
+
         desc = desc[:30] + "..." if len(desc) > 30 else desc
         pic_draw.text(
             (
                 card_pos[0],
-                card_pos[1] + TARROT_SIZE[1],
+                card_pos[1] + TARROT_SIZE[1] - 5,
             ),
             desc,
             fill="#FFFFFF",
@@ -154,10 +160,13 @@ def get_tarrot(spread_name: str, header=""):
     output_bytes = io.BytesIO()
     table.save(output_bytes, format="PNG")
     # output_bytes.seek(0)
-    return output_bytes
+
+    if return_deck:
+        return output_bytes.getvalue(), detail
+    return output_bytes.getvalue()
 
 
 if __name__ == "__main__":
     test = get_tarrot("身心灵")
     with open("test.png", "wb") as f:
-        f.write(test.getvalue())
+        f.write(test) # type: ignore

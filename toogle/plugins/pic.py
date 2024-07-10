@@ -10,9 +10,12 @@ import PIL.ImageFont
 
 from toogle.message import At, Image, Member, MessageChain, Plain, Quote
 from toogle.message_handler import MessageHandler, MessagePack
+from toogle.nonebot2_adapter import bot_send_message
 from toogle.sql import SQLConnection
 from toogle.utils import create_path, is_admin
 import toogle.plugins.compose.tarrot as tarrot
+from toogle.plugins.openai import GetOpenAIConversation
+from toogle.configs import config
 
 create_path('data/qutu')
 create_path('data/long_img')
@@ -221,11 +224,12 @@ class Tarrot(MessageHandler):
     trigger = r"^塔罗 (.*)"
     thread_limit = True
     readme = "随机塔罗牌"
-    interval = 60
-    price = 5
+    interval = 600
+    price = 10
 
     async def ret(self, message: MessagePack) -> MessageChain:
-        tarrot_spread = message.message.asDisplay()[3:].strip()
+        tarrot_question = message.message.asDisplay()[3:].strip()
+        tarrot_spread = tarrot_question
         if not tarrot_spread:
             return MessageChain.create([Plain("请描述你想要占卜的，或直接指定牌阵：\n" + ", ".join(tarrot.TARROT_SPREADS.keys()))])
         if tarrot_spread not in tarrot.TARROT_SPREADS:
@@ -252,7 +256,14 @@ class Tarrot(MessageHandler):
                     tarrot_spread = "大十字"
                 else:
                     tarrot_spread = "万能"
-        header = f"{message.member.name} {message.message.asDisplay()[3:].strip()}[{tarrot_spread}]"
+        header = f"{message.member.name} {tarrot_question}[{tarrot_spread}]"
 
-        pic_bytes = tarrot.get_tarrot(tarrot_spread, header).getvalue()
-        return MessageChain.create([message.as_quote(), Image(bytes=pic_bytes)])
+        pic_bytes, deck = tarrot.get_tarrot(tarrot_spread, header, return_deck=True)
+
+        res = GetOpenAIConversation.get_chat(
+            f"请帮忙解释一下这个塔罗牌阵，不需要逐牌解释，只需要输出最终300字以内总结：求卜者的问题是 {tarrot_question}，使用{tarrot_spread}牌阵，翻开塔罗牌依次为{'、'.join(deck[1:])}", # type: ignore
+            model="deepseek-chat",
+            url = "https://api.deepseek.com"
+        )
+
+        return MessageChain.create([message.as_quote(), Image(bytes=pic_bytes), Plain(f"塔罗牌解:\n{res}")]) # type: ignore
