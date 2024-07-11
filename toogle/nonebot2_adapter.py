@@ -127,37 +127,6 @@ class PluginWrapper:
         return MessagePack(source_id, nb2toogle(message), group, member, quote)
 
 
-# deprecated
-class LinearHandler:
-    def __init__(self, plugins: Sequence[PluginWrapper]) -> None:
-        self.plugins = plugins
-
-    async def ret(
-        self,
-        matcher: Matcher,
-        event: MessageEvent,
-        message: MessageChain = EventMessage(),
-    ) -> None:
-        message_pack = PluginWrapper.get_message_pack(event, message)
-        if not message_pack:
-            await matcher.send("不支持该种聊天方式！")
-            return
-        for plugin in self.plugins:
-            if plugin.plugin.is_trigger(message_pack):
-                if not is_traffic_free(plugin.plugin, message_pack):
-                    traffic_str = get_traffic_time(plugin.plugin, message_pack)
-                    if traffic_str:
-                        await matcher.send(traffic_str)
-                    return
-                if plugin.plugin.price > 0:
-                    balance = get_balance(message_pack.member.id)
-                    if balance < plugin.plugin.price:
-                        await matcher.send(f"余额不足，{plugin.plugin.name}功能需要{plugin.plugin.price}gb，您剩余{balance}gb\n请通过正常日常聊天来获取gb")
-                        return
-                await plugin_run(plugin.plugin, message_pack)
-                return
-
-
 async def plugin_run(
     plugin: MessageHandler,
     message_pack: MessagePack,

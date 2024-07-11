@@ -8,7 +8,7 @@ import nonebot
 
 from toogle.configs import config
 from toogle.message_handler import MessageHandler, ActiveHandler
-from toogle.nonebot2_adapter import LinearHandler, PluginWrapper
+from toogle.nonebot2_adapter import PluginWrapper
 from toogle.scheduler import ScheduleModule, copied_plugin_list
 
 plugin_list = os.listdir("toogle/plugins/")
@@ -90,8 +90,6 @@ def reload_plugins():
     return total_use_time
 
 reload_plugins()
-
-linear_handler = LinearHandler(export_plugins)
 
 def reload_designated_export_module(plugin_name, module_name=""):
     plugin_module = importlib.import_module(f"toogle.plugins.{plugin_name}")
