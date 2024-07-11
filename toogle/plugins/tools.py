@@ -1,17 +1,20 @@
 import datetime
 import io
+import math
 import os
 import re
 import time
-from typing import Union
+from typing import Optional, Union, no_type_check
 
+import bs4
 import requests
 import PIL.Image, PIL.ImageDraw, PIL.ImageFont
 from matplotlib import pyplot as plt
 
 from toogle.configs import config, proxies
-from toogle.message import Image, MessageChain, Plain
-from toogle.message_handler import MessageHandler, MessagePack
+from toogle.message import ForwardMessage, Image, MessageChain, Plain
+from toogle.message_handler import MessageHandler, MessagePack, WaitCommandHandler
+from toogle.nonebot2_adapter import bot_send_message
 from toogle.plugins.compose.anime_calendar import save_anime_list
 from toogle.plugins.compose.stock import get_search, render_report
 from toogle.plugins.others import baidu_index
@@ -138,4 +141,96 @@ class AnimeSchedule(MessageHandler):
         except Exception as e:
             return MessageChain.plain(f"获取失败: {e}")
         return MessageChain.create([Image(path=pic_path)])
+
+
+class AnimeDownloadSearch(MessageHandler):
+    name = "动漫下载搜索"
+    trigger = r"^动漫下载 (.*)"
+    thread_limit = True
+    interval = 10
+    price = 5
+    readme = "查看当季新番，来源长门有C" 
+
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        search_content = message.message.asDisplay()[5:].strip()
+        animes, url = AnimeDownloadSearch.search_anime(search_content)
+        if not animes:
+            return MessageChain.plain(f"没有找到资源:\n{url}")
+
+        page, per_page = 0, 10
+        def get_anime_page(page):
+            start = page * per_page
+            end = start + per_page
+            anime_page = animes[start:end]
+            if not anime_page:
+                return MessageChain.plain(f'页数不正确! 范围({page+1}-{math.ceil(len(animes)/per_page)}')
+            res = []
+            for index, anime in enumerate(anime_page):
+                title = anime['title']
+                file_size = anime['file_size']
+                res.append(f"【{index+1}】{title} [{file_size}]")
+            return ForwardMessage.get_quick_forward_message([
+                MessageChain.plain('\n'.join(res)),
+                MessageChain.plain(f"页数[{page+1}/{math.ceil(len(animes)/per_page)}]\n使用'翻页[序号]'来翻页\n使用'下载[序号]'获取到磁链"),
+                MessageChain.plain(url),
+            ])
+
+        await bot_send_message(message, get_anime_page(page))
+
+        further_instruction = r'^翻页|^下载'
+        while True:
+            waiter = WaitCommandHandler(message.group.id, message.member.id, further_instruction, timeout=120)
+            res = await waiter.run()
+            if res:
+                instruct = res.message.asDisplay().strip()
+                if instruct.startswith('翻页'):
+                    try:
+                        page = int(instruct[2:].strip()) - 1
+                    except Exception as e:
+                        await bot_send_message(message, "页数不正确，请输入整数!")
+                        continue
+                    await bot_send_message(message, get_anime_page(page))
+                elif instruct.startswith('下载'):
+                    try:
+                        index = int(instruct[2:].strip())
+                        download_res = animes[page * per_page + index - 1]
+                    except Exception as e:
+                        await bot_send_message(message, "序号不正确!")
+                        continue
+                    res = ForwardMessage.get_quick_forward_message([
+                        MessageChain.plain(f"{download_res['title']} [{download_res['file_size']}]"),
+                        MessageChain.plain(download_res['url']),
+                        MessageChain.plain(download_res['magnet']),
+                    ])
+                    await bot_send_message(message, res)
+                    break
+            else:
+                break
+
+
+    @staticmethod
+    @no_type_check
+    def search_anime(search_content: str):
+        url = f"https://share.dmhy.org/topics/list?keyword={search_content}&sort_id=2&team_id=0&order=date-desc"
+        res = requests.get(url, proxies=proxies).text
+        soup = bs4.BeautifulSoup(res, "html.parser")
+        results = soup.find('tbody')
+        if not results:
+            return None, url
+        else:
+            results = results.findAll('tr', {'class': ''})
+        res = []
+        for line in results:
+            title = line.find('td', {'class': 'title'}).find('a', {'target': '_blank'}).text.strip()
+            url = line.find('td', {'class': 'title'}).find('a', {'target': '_blank'}).attrs['href']
+            url = f"https://share.dmhy.org{url}"
+            magnet = line.find('a', {'class': 'download-arrow arrow-magnet'}).attrs['href']
+            file_size = line.findAll('td')[4].text
+            res.append({
+                'title': title,
+                'magnet': magnet,
+                'url': url,
+                'file_size': file_size,
+            })
+        return res, url
 
