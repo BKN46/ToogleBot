@@ -5,6 +5,7 @@ from typing import Optional
 
 import PIL.FontFile
 import PIL.Image
+import PIL.ImageSequence
 import PIL.ImageDraw
 import PIL.ImageFont
 
@@ -260,10 +261,12 @@ class Tarrot(MessageHandler):
 
         pic_bytes, deck = tarrot.get_tarrot(tarrot_spread, header, return_deck=True)
 
-        res = GetOpenAIConversation.get_chat(
-            f"请帮忙解释一下这个塔罗牌阵，不需要逐牌解释，只需要输出最终300字以内总结：求卜者的问题是 {tarrot_question}，使用{tarrot_spread}牌阵，翻开塔罗牌依次为{'、'.join(deck[1:])}", # type: ignore
-            model="deepseek-chat",
-            url = "https://api.deepseek.com"
-        )
-
-        return MessageChain.create([message.as_quote(), Image(bytes=pic_bytes), Plain(f"塔罗牌解:\n{res}")]) # type: ignore
+        try:
+            res = GetOpenAIConversation.get_chat(
+                f"请帮忙解释一下这个塔罗牌阵，不需要逐牌解释，只需要输出最终300字以内总结：求卜者的问题是 {tarrot_question}，使用{tarrot_spread}牌阵，翻开塔罗牌依次为{'、'.join(deck[1:])}", # type: ignore
+                model="deepseek-chat",
+                url = "https://api.deepseek.com"
+            )
+            return MessageChain.create([message.as_quote(), Image(bytes=pic_bytes), Plain(f"塔罗牌解:\n{res}")]) # type: ignore
+        except Exception as e:
+            return MessageChain.create([message.as_quote(), Image(bytes=pic_bytes), Plain(f"Deepseek出现问题，暂无解牌")]) # type: ignore
