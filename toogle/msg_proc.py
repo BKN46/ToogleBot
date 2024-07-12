@@ -1,16 +1,21 @@
 import json
 import os
 import threading
+import time
+
+import nonebot
 
 from toogle.economy import get_balance, give_balance
-from toogle.message import At, Image, MessageChain, Plain
+from toogle.message import At, ForwardMessage, Image, MessageChain, Plain
 from toogle.message_handler import MESSAGE_HISTORY, MessagePack
+from toogle.mirai_extend import recall_msg
 from toogle.nonebot2_adapter import bot_send_message
 from toogle.configs import config
 from toogle.utils import SETU_RECORD_PATH, detect_pic_nsfw, print_err
 from toogle.plugins.openai import gpt_censor, GetOpenAIConversation
 
 POST_PROC_LOCK = threading.Lock()
+DELAY_RECALL_POOL = []
 
 def update_setu_record(group_id, member_id, cnt):
     group_id = str(group_id)
@@ -31,23 +36,33 @@ def update_setu_record(group_id, member_id, cnt):
 
 async def chat_earn(message_pack: MessagePack):
     pics = message_pack.message.get(Image, ignore_forawrd=False, forward_layer=1)
+    DelayedRecall.add_recall(message_pack.group.id, message_pack, only_repeat=True)
     if get_balance(message_pack.member.id) < 15:
         if len(MessageChain(message_pack.message.get(Plain)).asDisplay()) >= 10:
             give_balance(message_pack.member.id, 1)
 
     if pics:
-        if str(message_pack.group.id) in config.get('NSFW_LIST', []):
-            cnt = 0
+        if str(message_pack.group.id) in config.get('NSFW_LIST', []) + config.get('ANTI_NSFW_LIST', []):
             if len(pics) > 5:
                 pics = pics[:5]
-            for pic in pics:
-                score, repeat = detect_pic_nsfw(pic.getBytes(), output_repeat=True) # type: ignore
-                if not repeat and score >= 0.25:
-                    cnt +=1 
-            if cnt > 0:
-                give_balance(message_pack.member.id, cnt)
-                update_setu_record(message_pack.group.id, message_pack.member.id, cnt)
-                MESSAGE_HISTORY.add(f"setu_{message_pack.group.id}", message_pack)
+            setu_detect(message_pack, pics)
+
+
+def setu_detect(message_pack: MessagePack, pics):
+    cnt, raw_cnt = 0, 0
+    for pic in pics:
+        score, repeat = detect_pic_nsfw(pic.getBytes(), output_repeat=True) # type: ignore
+        if score >= 0.25:
+            if not repeat:
+                cnt +=1
+            raw_cnt += 1
+    if cnt > 0:
+        give_balance(message_pack.member.id, cnt)
+        update_setu_record(message_pack.group.id, message_pack.member.id, cnt)
+        MESSAGE_HISTORY.add(f"setu_{message_pack.group.id}", message_pack)
+    if raw_cnt > 0 and not message_pack.message.get(ForwardMessage, forward_layer=1):
+        if str(message_pack.group.id) in config.get('ANTI_NSFW_LIST', []):
+            DelayedRecall.add_recall(message_pack.group.id, message_pack)
 
 
 async def chat_cencor(message_pack: MessagePack):
@@ -63,7 +78,7 @@ async def chat_cencor(message_pack: MessagePack):
                 print_err(e, GetOpenAIConversation, message_pack)
                 return
             if score >= 30:
-                await bot_send_message(
+                bot_send_message(
                     int(message_pack.group.id),
                     MessageChain.create([
                         Plain(f"鉴证警报 鉴证警报: {content}\n"),
@@ -71,3 +86,45 @@ async def chat_cencor(message_pack: MessagePack):
                     ]),
                 )
             MESSAGE_HISTORY.delete(f"censor_{message_pack.group.id}")
+
+
+class DelayedRecall:
+    def __init__(self, target, msg: MessagePack, delay=5, max_delay=300):
+        self.target = target
+        self.msg_list = [msg]
+        self.end_time = time.time() + delay
+        self.delay = delay
+        self.max_delay = max_delay
+
+    def add(self, msg: MessagePack, add_delay=True):
+        if not [x for x in self.msg_list if x.id == msg.id]:
+            self.msg_list.append(msg)
+            if add_delay:
+                self.end_time = time.time() + self.delay
+                nonebot.logger.info(f"Refreshed recall thread for {msg.member.id}") # type: ignore
+
+    def recall(self):
+        while time.time() < self.end_time and not time.time() > self.end_time + self.max_delay:
+            time.sleep(1)
+        send_list = []
+        for msg in self.msg_list:
+            if recall_msg(self.target, msg.id, ignore_exception=True):
+                send_list.append((msg.member.id, msg.member.name, msg.message))
+            time.sleep(0.3)
+        bot_send_message(self.target, ForwardMessage.get_quick_forward_message(send_list))
+        DELAY_RECALL_POOL.remove(self)
+
+    def run(self):
+        threading.Thread(target=self.recall).start()
+
+    @staticmethod
+    def add_recall(target, msg: MessagePack, delay=5, max_delay=300, only_repeat=False):
+        for recall_thread in DELAY_RECALL_POOL:
+            if recall_thread.target == target and msg.member.id == recall_thread.msg_list[0].member.id:
+                recall_thread.add(msg, add_delay=not only_repeat)
+                return
+        if not only_repeat:
+            recall_thread = DelayedRecall(target, msg, delay, max_delay)
+            nonebot.logger.info(f"Add recall thread for {msg.member.id} in {target}") # type: ignore
+            DELAY_RECALL_POOL.append(recall_thread)
+            recall_thread.run()
