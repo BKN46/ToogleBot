@@ -22,7 +22,7 @@ from toogle.utils import SETU_RECORD_PATH, get_main_groups, is_admin, is_admin_g
 #         pic_path = download_daily()
 #         message = MessageChain.create([Image(path=pic_path)])
 #         for group in get_main_groups():
-#             await bot_send_message(int(group), message)
+#             bot_send_message(int(group), message)
 
 
 # class HealthyTips(ScheduleModule):
@@ -34,7 +34,7 @@ from toogle.utils import SETU_RECORD_PATH, get_main_groups, is_admin, is_admin_g
 #     async def ret(self):
 #         message = MessageChain.plain("提肛！喝水！拉伸！")
 #         for group in config.get('HEALTHCARE_GROUP_LIST', []):
-#             await bot_send_message(int(group), message)
+#             bot_send_message(int(group), message)
 
 
 class DailySetuRanking(ScheduleModule):
@@ -62,7 +62,7 @@ class DailySetuRanking(ScheduleModule):
                     break
             setu_list = MESSAGE_HISTORY.get(f"setu_{message.group.id}", windows=2000)
             if setu_list:
-                await bot_send_message(int(message.group.id), MessageHistory.seq_as_forward(setu_list))
+                bot_send_message(int(message.group.id), MessageHistory.seq_as_forward(setu_list))
             return MessageChain(message_list)
 
         for group in config.get('NSFW_LIST', []):
@@ -82,11 +82,11 @@ class DailySetuRanking(ScheduleModule):
                     break
 
             if len(ranking) > 0:
-                await bot_send_message(int(group), MessageChain(message_list))
+                bot_send_message(int(group), MessageChain(message_list))
 
             setu_list = MESSAGE_HISTORY.get(f"setu_{group}", windows=2000)
             if setu_list:
-                # await bot_send_message(int(group), MessageHistory.seq_as_forward(setu_list))
+                # bot_send_message(int(group), MessageHistory.seq_as_forward(setu_list))
                 MESSAGE_HISTORY.delete(f"setu_{group}")
 
         with modify_json_file('setu_record_alltime') as alltime_data:

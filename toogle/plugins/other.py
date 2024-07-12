@@ -40,9 +40,9 @@ class RaceHorse(MessageHandler):
         race, horse = race_horse.init_race()
         for msg in race_horse.do_race(race, horse, sleep_interval=10):
             if isinstance(msg, str):
-                await bot_send_message(message.group.id, MessageChain.plain(msg))
+                bot_send_message(message.group.id, MessageChain.plain(msg))
             elif isinstance(msg, bytes):
-                await bot_send_message(message.group.id, MessageChain.create([Image(bytes=msg)]))
+                bot_send_message(message.group.id, MessageChain.create([Image(bytes=msg)]))
 
         return MessageChain.plain("比赛结束")
 
@@ -517,7 +517,7 @@ class MagnetParse(MessageHandler):
         # res = do_magnet_parse(message.message.asDisplay())
         # return MessageChain.plain(res, quote=message.as_quote())
         res = do_magnet_preview(message.message.asDisplay())
-        await bot_send_message(message.group.id, MessageChain.plain(f"已获取磁链，正在解析中", quote=message.as_quote()))
+        bot_send_message(message.group.id, MessageChain.plain(f"已获取磁链，正在解析中", quote=message.as_quote()))
         if isinstance(res, str):
             return MessageChain.plain(res, quote=message.as_quote())
         else:

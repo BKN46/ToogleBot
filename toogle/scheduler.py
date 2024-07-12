@@ -146,7 +146,7 @@ def load_manual_schedular(item):
 
     if not is_programmable:
         async def ret(message_pack: Union[MessagePack, None]):
-            await bot_send_message(send_group, text)
+            bot_send_message(send_group, text)
     else:
         async def ret(message_pack: Union[MessagePack, None]):
             bot = nonebot.get_bot()
@@ -155,7 +155,7 @@ def load_manual_schedular(item):
             # await handle_event(bot, event)
             message_pack = PluginWrapper.get_message_pack(event, nb_message)
             if not message_pack:
-                await bot_send_message(send_group, "定时任务出现未知错误")
+                bot_send_message(send_group, "定时任务出现未知错误")
                 return
             for plugin in copied_plugin_list:
                 if plugin.plugin.is_trigger(message_pack):

@@ -175,7 +175,7 @@ class AnimeDownloadSearch(MessageHandler):
                 MessageChain.plain(url),
             ])
 
-        await bot_send_message(message, get_anime_page(page))
+        bot_send_message(message, get_anime_page(page))
 
         further_instruction = r'^翻页|^下载'
         while True:
@@ -187,22 +187,22 @@ class AnimeDownloadSearch(MessageHandler):
                     try:
                         page = int(instruct[2:].strip()) - 1
                     except Exception as e:
-                        await bot_send_message(message, "页数不正确，请输入整数!")
+                        bot_send_message(message, "页数不正确，请输入整数!")
                         continue
-                    await bot_send_message(message, get_anime_page(page))
+                    bot_send_message(message, get_anime_page(page))
                 elif instruct.startswith('下载'):
                     try:
                         index = int(instruct[2:].strip())
                         download_res = animes[page * per_page + index - 1]
                     except Exception as e:
-                        await bot_send_message(message, "序号不正确!")
+                        bot_send_message(message, "序号不正确!")
                         continue
                     res = ForwardMessage.get_quick_forward_message([
                         MessageChain.plain(f"{download_res['title']} [{download_res['file_size']}]"),
                         MessageChain.plain(download_res['url']),
                         MessageChain.plain(download_res['magnet']),
                     ])
-                    await bot_send_message(message, res)
+                    bot_send_message(message, res)
                     break
             else:
                 break

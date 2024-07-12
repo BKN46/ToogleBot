@@ -295,7 +295,7 @@ async def admin_user_checker(event: Event) -> bool:
     return event.get_user_id() in config.get("ADMIN_LIST", [])
 
 
-async def bot_send_message(target: Union[int, MessagePack], message: Union[ToogleChain, MessageChain, str], friend=False):
+def bot_send_message(target: Union[int, MessagePack], message: Union[ToogleChain, MessageChain, str], friend=False):
     global BOT
     if not BOT:
         BOT = nonebot.get_bot()
@@ -421,7 +421,7 @@ async def thread_worker(index):
             if plugin.price > 0:
                 take_balance(message_pack.member.id, plugin.price)
             if len(res.root) > 0:
-                await bot_send_message(message_pack, res)
+                bot_send_message(message_pack, res)
             use_time = (time.time() - start_time) * 1000
             if exec_time < 10 * 1000:
                 nonebot.logger.success(f"{plugin.name} in worker {index} running complete. ({exec_time:.2f}/{use_time:.2f}ms)") # type: ignore
@@ -438,13 +438,13 @@ async def thread_worker(index):
             requests.exceptions.HTTPError
         ) as e:
             msg = print_err(e, plugin, message_pack)
-            await bot_send_message(message_pack, f"爬虫网络连接错误，请稍后尝试")
+            bot_send_message(message_pack, f"爬虫网络连接错误，请稍后尝试")
         except VisibleException as e:
-            await bot_send_message(message_pack, f"{e.__str__()}")
+            bot_send_message(message_pack, f"{e.__str__()}")
         except Exception as e:
             if '误触发' not in repr(e) and 'attached to a different loop' not in repr(e):
                 msg = print_err(e, plugin, message_pack)
-                await bot_send_message(int(config.get("ADMIN_LIST", [message_pack.member.id])[0]), msg, friend=True)
+                bot_send_message(int(config.get("ADMIN_LIST", [message_pack.member.id])[0]), msg, friend=True)
 
 
 def worker_start(thread_num=THREAD_NUM):
@@ -462,6 +462,6 @@ async def worker_shutdown(thread_num=THREAD_NUM):
         x.join()
     nonebot.logger.success("All worker thread shutdown.") # type: ignore
     # for i in config.get("ADMIN_LIST", []):
-    #     await bot_send_message(int(i), "Toogle threads all shutdown.", friend=True)
+    #     bot_send_message(int(i), "Toogle threads all shutdown.", friend=True)
 
 worker_start()

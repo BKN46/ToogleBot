@@ -93,7 +93,7 @@ async def message_post_process(event: MessageEvent, message: MessageChain = Even
         if str(message_pack.group.id) in config['CHAT_GROUP_LIST'] and plugin.is_trigger_random(message=message_pack):
             message_ret = await plugin.ret_wrapper(message_pack)
             if message_ret:
-                await bot_send_message(message_pack, message_ret)
+                bot_send_message(message_pack, message_ret)
 
     # economy
     await chat_earn(message_pack)
@@ -106,7 +106,7 @@ async def all_event_handler(event: Event):
         recalled_message = MESSAGE_HISTORY.search(group_id=event.group.id, msg_id=event.message_id) # type: ignore
         if recalled_message:
             RECALL_HISTORY.add(recalled_message.group.id, recalled_message)
-            # await bot_send_message(recalled_message, f"【{recalled_message.member.name}】撤回了一条消息：\n{recalled_message.message.asDisplay()}")
+            # bot_send_message(recalled_message, f"【{recalled_message.member.name}】撤回了一条消息：\n{recalled_message.message.asDisplay()}")
             pass
     elif event.type == "NudgeEvent":
         # 戳一戳事件
@@ -141,4 +141,4 @@ async def on_bot_connect(bot):
     # send message when done module init
     now_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     for admin in config.get('ADMIN_LIST', []):
-        await bot_send_message(int(admin), f"[{now_time}] Toogle已启动", friend=True)
+        bot_send_message(int(admin), f"[{now_time}] Toogle已启动", friend=True)

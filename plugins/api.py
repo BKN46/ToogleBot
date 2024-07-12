@@ -64,5 +64,5 @@ async def send_message(request: Request):
                 tmp_message.append(At(int(m["content"])))
         msg = MessageChain(tmp_message)
 
-    await bot_send_message(group, msg)
+    bot_send_message(group, msg)
     return {"message": "success", "send_to": group}
