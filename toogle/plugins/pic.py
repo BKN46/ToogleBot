@@ -1,6 +1,8 @@
+import io
 import math
 import os
 import random
+import tempfile
 from typing import Optional
 
 import PIL.FontFile
@@ -270,3 +272,24 @@ class Tarrot(MessageHandler):
             return MessageChain.create([message.as_quote(), Image(bytes=pic_bytes), Plain(f"塔罗牌解:\n{res}")]) # type: ignore
         except Exception as e:
             return MessageChain.create([message.as_quote(), Image(bytes=pic_bytes), Plain(f"Deepseek出现问题，暂无解牌")]) # type: ignore
+
+
+class ReverseGIF(MessageHandler):
+    name = "反转GIF"
+    trigger = r"^反转GIF|^反转gif"
+    thread_limit = True
+    readme = "反转GIF"
+
+    async def ret(self, message: MessagePack) -> MessageChain:
+        pics = message.message.get(Image)
+        if not pics:
+            return MessageChain.plain("没看到图", quote=message.as_quote())
+        pic = pics[0]
+        with tempfile.NamedTemporaryFile(dir="data", suffix=".gif") as temp:
+            pic.save(temp.name)
+            im = PIL.Image.open(temp.name)
+            frames = [frame.copy() for frame in PIL.ImageSequence.Iterator(im)]
+            frames.reverse()
+            frames[0].save(temp.name, save_all=True, append_images=frames[1:])
+            pic_bytes = open(temp.name, "rb").read()
+        return MessageChain.create([message.as_quote(), Image(bytes=pic_bytes)])
