@@ -48,6 +48,18 @@ class MessageHistory:
             return None
         return list(self.history.values())[-1]
     
+    def get_prev(self, message: "MessagePack", num=5) -> Optional[List["MessagePack"]]:
+        if not self.history:
+            return None
+        if message.group.id not in self.history:
+            return None
+        for messages in self.history[message.group.id]:
+            for i, msg in enumerate(messages):
+                if msg.id == message.id:
+                    if i > 0:
+                        return messages[max(i-num, 0):i]
+                    return None
+    
     def save_str(self, path: str):
         with open(path, "w") as f:
             f.write(json.dumps({
