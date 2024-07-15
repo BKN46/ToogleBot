@@ -1,4 +1,5 @@
 import datetime
+import hashlib
 import io
 import json
 import os
@@ -17,7 +18,7 @@ from toogle.plugins.others.magnet import do_magnet_parse, do_magnet_preview, par
 from toogle.plugins.others.steam import source_server_info
 from toogle.plugins.others import tarkov as Tarkov
 from toogle.sql import SQLConnection
-from toogle.utils import detect_pic_nsfw, is_admin
+from toogle.utils import SFW_BLOOM, detect_pic_nsfw, is_admin
 from toogle.configs import config
 import toogle.plugins.others.racehorse as race_horse
 import toogle.plugins.others.csgo as CSGO
@@ -471,7 +472,7 @@ class Diablo4Tracker(MessageHandler):
 
 class NFSWorNot(MessageHandler):
     name = "判断色图"
-    trigger = r"这个色不色"
+    trigger = r"这个色不色|^这个不色"
     thread_limit = True
     interval = 0
     readme = "图像识别判断NSFW\n使用Open-NSFW2模型，为Keras实现Yahoo Open-NSFW\n模型为ResNet使用ImageNet 1000预训练后使用NSFW数据集finetune\nOpen-NSFW文章: https://yahooeng.tumblr.com/post/151148689421/open-sourcing-a-deep-learning-solution-for\nResNet论文: https://arxiv.org/pdf/1512.03385v1"
@@ -479,8 +480,15 @@ class NFSWorNot(MessageHandler):
 
     async def ret(self, message: MessagePack) -> MessageChain:
         pics = message.message.get(Image)
+        
         if not pics:
             return MessageChain.plain("没看到图", quote=message.as_quote())
+        
+        if message.message.asDisplay().startswith("这个不色"):
+            for pic in pics:
+                SFW_BLOOM.add(hashlib.md5(pic.getBytes()).hexdigest())
+            return MessageChain.plain("收到", quote=message.as_quote())
+
         res = ""
         judge = lambda x: '不色' if x < 0.1 else '还行' if x < 0.25 else '色'
         start_time = time.time()

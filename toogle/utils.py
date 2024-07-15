@@ -37,6 +37,7 @@ if not os.path.exists("data"):
     os.makedirs("data")
 
 PIC_BLOOM = bloom_filter.BloomFilter(max_elements=10**6, error_rate=0.01, filename='data/pic_bloom')
+SFW_BLOOM = bloom_filter.BloomFilter(max_elements=10**6, error_rate=0.01, filename='data/sfw_bloom')
 
 SETU_RECORD_PATH = "data/setu_record.json"
 
@@ -467,6 +468,10 @@ def draw_pic_text(
 
 def detect_pic_nsfw(pic: bytes, output_repeat=False):
     pic_md5 = hashlib.md5(pic).hexdigest()
+    if pic_md5 in SFW_BLOOM:
+        if output_repeat:
+            return -1, False
+        return -1
     repeat = pic_md5 in PIC_BLOOM
     PIC_BLOOM.add(pic_md5)
 

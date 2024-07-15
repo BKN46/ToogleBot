@@ -51,7 +51,10 @@ async def chat_earn(message_pack: MessagePack):
 def setu_detect(message_pack: MessagePack, pics):
     cnt, raw_cnt = 0, 0
     for pic in pics:
+        start_time = time.time()
         score, repeat = detect_pic_nsfw(pic.getBytes(), output_repeat=True) # type: ignore
+        use_time = (time.time() - start_time) * 1000
+        nonebot.logger.info(f"Pic analysis done, nsfw score {score:.5f}, use time {use_time:.2f}ms") # type: ignore
         if score >= 0.25:
             if not repeat:
                 cnt +=1
@@ -111,7 +114,10 @@ class DelayedRecall:
             if recall_msg(self.target, msg.id, ignore_exception=True):
                 send_list.append((msg.member.id, msg.member.name, msg.message))
             time.sleep(0.3)
-        bot_send_message(self.target, ForwardMessage.get_quick_forward_message(send_list))
+        send_seg_num = 5
+        for i in range(0, len(send_list), send_seg_num):
+            bot_send_message(self.target, ForwardMessage.get_quick_forward_message(send_list[i: i+send_seg_num]))
+            time.sleep(1)
         DELAY_RECALL_POOL.remove(self)
 
     def run(self):

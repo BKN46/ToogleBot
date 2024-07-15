@@ -98,6 +98,7 @@ class Image(Element):
         bytes: Optional[bytes] = None,
         base64: Optional[str] = None,
         image: Optional[PIL.Image.Image] = None,
+        cache: bool = False,
     ) -> None:
         self.id = id
         self.base64 = base64
@@ -109,6 +110,7 @@ class Image(Element):
             self.base64 = get_base64_encode(img_bytes.getvalue())
         self.path = path
         self.url = url
+        self.cache = cache
 
     def asDisplay(self) -> str:
         return "[图片]"

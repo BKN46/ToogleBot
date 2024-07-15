@@ -178,7 +178,9 @@ def toogle2nb(
                 )
             )
         elif isinstance(item, Image):
-            if item.url:
+            if item.id and item.cache:
+                message_list.append(MessageSegment.image(image_id=item.id))
+            elif item.url:
                 message_list.append(MessageSegment.image(url=item.url))
             # elif item.path:
             #     message_list.append(MessageSegment.image(path=item.path))
