@@ -522,6 +522,17 @@ def print_err(e, plugin, message_pack):
     return msg
 
 
+def print_call(plugin, message_pack):
+    msg = (
+        f"{plugin.name}\t"
+        f"{time.time()}\t"
+        f"{message_pack.group.id}\t"
+        f"{message_pack.member.id}"
+    )
+    print(msg, file=open("log/call.log", "a"))
+    return msg
+
+
 if __name__ == "__main__":
     test_bytes = text2img("测试测试")
     img = PIL.Image.open(io.BytesIO(test_bytes))

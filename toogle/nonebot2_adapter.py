@@ -30,7 +30,7 @@ from toogle.message import At, AtAll, Element, ForwardMessage, Group, Image, Mem
 from toogle.message import MessageChain as ToogleChain
 from toogle.message import Plain, Quote
 from toogle.message_handler import MESSAGE_HISTORY, MessageHandler, MessagePack
-from toogle.utils import is_admin, is_admin_group, print_err
+from toogle.utils import is_admin, is_admin_group, print_call, print_err
 from toogle.economy import get_balance, take_balance, has_balance
 
 # THREAD_SEM = Semaphore(1)
@@ -424,6 +424,7 @@ async def thread_worker(index):
                 take_balance(message_pack.member.id, plugin.price)
             if len(res.root) > 0:
                 bot_send_message(message_pack, res)
+                print_call(plugin, message_pack)
             use_time = (time.time() - start_time) * 1000
             if exec_time < 10 * 1000:
                 nonebot.logger.success(f"{plugin.name} in worker {index} running complete. ({exec_time:.2f}/{use_time:.2f}ms)") # type: ignore
