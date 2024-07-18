@@ -184,6 +184,7 @@ class HistoryTu(MessageHandler):
             elif message_content == "黑历史":
                 return MessageChain.create([
                     GetQutu.get_all_pic(IMAGES_PATH, text_filter=text_filter, x_size=200, y_size=100),
+                    Plain(f"一共{len(os.listdir(IMAGES_PATH))}张黑历史"),
                 ])
             else:
                 try:
