@@ -19,7 +19,7 @@ async def custom_api():
 async def custom_post_api(request: Request):
     data = await request.json()
     req_body = json.dumps(data, ensure_ascii=False)
-    print(f"{datetime.datetime.now()}\t{request.client}\t{req_body}", file=open("data/api.log", "a"))
+    print(f"{datetime.datetime.now()}\t{request.client}\t{req_body}", file=open("log/api.log", "a"))
     return {"msg": "ok"}
 
 
