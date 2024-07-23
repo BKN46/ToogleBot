@@ -234,3 +234,20 @@ class AnimeDownloadSearch(MessageHandler):
             })
         return res, url
 
+
+class DateCalculator(MessageHandler):
+    name = "日期计算器"
+    trigger = r"^(\d{1,4}年\d+月\d+日)到(\d{1,4}年\d+月\d+日)$"
+    thread_limit = True
+    # interval = 10
+    readme = "日期计算器" 
+
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        content = message.message.asDisplay()
+        re_match = re.match(self.trigger, content)
+        if re_match:
+            start_date, end_date = re_match.groups()
+            start_date = datetime.datetime.strptime(start_date, "%Y年%m月%d日")
+            end_date = datetime.datetime.strptime(end_date, "%Y年%m月%d日")
+            delta = end_date - start_date
+            return MessageChain.plain(f"{delta.days}天")
