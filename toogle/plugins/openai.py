@@ -280,6 +280,7 @@ class ActiveAIConversation(ActiveHandler):
 
 
     def is_trigger_random(self, message: Optional[MessagePack] = None):
+        return False
         message_content = message.message.asDisplay() if message else ""
         if random.random() < 0.005:
             nonebot.logger.success(f"Triggered [{self.name}]")  # type: ignore
