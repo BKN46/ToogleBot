@@ -1,3 +1,4 @@
+import datetime
 import json
 import time
 import nonebot
@@ -12,6 +13,15 @@ app: FastAPI = nonebot.get_app()
 @app.get("/api")
 async def custom_api():
     return {"message": "Hello, world!"}
+
+
+@app.post("/api")
+async def custom_post_api(request: Request):
+    data = await request.json()
+    req_body = json.dumps(data, ensure_ascii=False)
+    print(f"{datetime.datetime.now()}\t{request.client}\t{req_body}", file=open("data/api.log", "a"))
+    return {"msg": "ok"}
+
 
 SEND_LIMIT = {}
 
