@@ -110,6 +110,8 @@ class MessagePack:
         self.member = member
         self.quote = quote
         self.time = time.time()
+        
+        self.member.name = get_user_name(self)
 
     def as_quote(self):
         return Quote(
