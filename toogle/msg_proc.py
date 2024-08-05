@@ -13,7 +13,7 @@ from toogle.mirai_extend import recall_msg
 from toogle.nonebot2_adapter import bot_send_message
 from toogle.configs import config
 from toogle.utils import SETU_RECORD_PATH, detect_pic_nsfw, modify_json_file, print_err
-from toogle.plugins.openai import gpt_censor, GetOpenAIConversation
+from toogle.plugins.gpt import gpt_censor, GetOpenAIConversation
 
 POST_PROC_LOCK = threading.Lock()
 DELAY_RECALL_POOL = []

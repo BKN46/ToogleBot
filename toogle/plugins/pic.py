@@ -17,7 +17,7 @@ from toogle.nonebot2_adapter import bot_send_message
 from toogle.sql import SQLConnection
 from toogle.utils import create_path, is_admin
 import toogle.plugins.compose.tarrot as tarrot
-from toogle.plugins.openai import GetOpenAIConversation
+from toogle.plugins.gpt import GetOpenAIConversation
 from toogle.configs import config
 
 create_path('data/qutu')
