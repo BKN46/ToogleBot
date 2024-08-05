@@ -17,6 +17,7 @@ from toogle.nonebot2_adapter import bot_send_message
 from toogle.plugins.others.magnet import do_magnet_parse, do_magnet_preview, parse_size
 from toogle.plugins.others.steam import source_server_info
 from toogle.plugins.others import tarkov as Tarkov
+from toogle.plugins.others.minecraft import MCRCON
 from toogle.sql import SQLConnection
 from toogle.utils import SFW_BLOOM, detect_pic_nsfw, is_admin
 from toogle.configs import config
@@ -347,6 +348,20 @@ class ToogleCSServer(MessageHandler):
             f".cs equip #序号# 来装备库存中的武器（序号从0开始）\n"
         )
         return MessageChain.plain(help_str, quote=message.as_quote())
+
+
+class MinecraftRCON(MessageHandler):
+    name = "Minecraft服务器RCON"
+    trigger = r"^\.mc "
+    thread_limit = True
+    readme = "Minecraft服务器RCON命令"
+    
+    async def ret(self, message: MessagePack) -> MessageChain:
+        content = message.message.asDisplay()[4:].strip()
+        if not is_admin(message.member.id):
+            return MessageChain.plain("无权限", quote=message.as_quote())
+        res = MCRCON.send_single(config.get("MCRCON_HOST"), int(config.get("MCRCON_PORT") or 25575), config.get("MCRCON_PASSWORD"), content)
+        return MessageChain.plain(res)
 
 
 class Diablo4Tracker(MessageHandler):
