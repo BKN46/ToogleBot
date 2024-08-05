@@ -1,4 +1,5 @@
 import re
+from typing import Optional
 
 import requests
 
@@ -88,14 +89,14 @@ class CurrencyExchange(MessageHandler):
     }
     currency_map.update(block_chain_map)
 
-    num_str = "零一二三四五六七八九十百千万亿壹贰叁肆伍陆柒捌玖拾佰仟0123456789点两单俩上兆/*+-,()mkwe"
+    num_str = "零一二三四五六七八九十百千万亿壹贰叁肆伍陆柒捌玖拾佰仟0123456789点两单俩兆/*+-,()mkwe"
     num_str = "|".join([x for x in num_str])
     keys_str = "|".join(currency_map.keys())
     exhibit_list = ["一刀", "两刀"]
     trigger = f".*?(([\.|{num_str}]+)(usd|jpy|hkd|eur|gbp|{keys_str})).*" # type: ignore
     readme = "快捷货币转换"
 
-    async def ret(self, message: MessagePack) -> MessageChain:
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
         message_str = message.message.asDisplay()
         matchs = re.search(self.trigger, message_str)
 
@@ -109,6 +110,8 @@ class CurrencyExchange(MessageHandler):
                 rates = self.get_currency()
             rate_mark = self.currency_map[currency].upper()
             num = self.cn2digit(matchs.group(2).replace(",", ""))
+            if num <= 0:
+                raise Exception("误触发")
             rate = rates[rate_mark]
             res = num / rate
             res = f"{matchs.group(1)} ({num:,.2f} {rate_mark})\n折合人民币为 ¥{res:,.2f}"

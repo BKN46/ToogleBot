@@ -149,7 +149,7 @@ class AnimeDownloadSearch(MessageHandler):
     thread_limit = True
     interval = 10
     price = 5
-    readme = "查看当季新番，来源长门有C" 
+    readme = "下载动漫，来源DMHY" 
 
     async def ret(self, message: MessagePack) -> Optional[MessageChain]:
         search_content = message.message.asDisplay()[5:].strip()
