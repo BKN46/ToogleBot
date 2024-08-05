@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 import threading
@@ -11,7 +12,7 @@ from toogle.message_handler import MESSAGE_HISTORY, MessagePack
 from toogle.mirai_extend import recall_msg
 from toogle.nonebot2_adapter import bot_send_message
 from toogle.configs import config
-from toogle.utils import SETU_RECORD_PATH, detect_pic_nsfw, print_err
+from toogle.utils import SETU_RECORD_PATH, detect_pic_nsfw, modify_json_file, print_err
 from toogle.plugins.openai import gpt_censor, GetOpenAIConversation
 
 POST_PROC_LOCK = threading.Lock()
@@ -114,10 +115,14 @@ class DelayedRecall:
             if recall_msg(self.target, msg.id, ignore_exception=True):
                 send_list.append((msg.member.id, msg.member.name, msg.message))
             time.sleep(0.3)
+            
+        recall_num = sum([len(x.message.get(Image)) for x in self.msg_list])
+        self.log(f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\t{self.target}\t{recall_num}")
+
         send_seg_num = 5
         for i in range(0, len(send_list), send_seg_num):
             bot_send_message(self.target, ForwardMessage.get_quick_forward_message(send_list[i: i+send_seg_num]))
-            time.sleep(1)
+            time.sleep(2)
         DELAY_RECALL_POOL.remove(self)
 
     def run(self):
@@ -134,3 +139,7 @@ class DelayedRecall:
             nonebot.logger.info(f"Add recall thread for {msg.member.id} in {target}") # type: ignore
             DELAY_RECALL_POOL.append(recall_thread)
             recall_thread.run()
+            
+    def log(self, content):
+        log_path = "log/recall.log"
+        print(content, file=open(log_path, "a"))

@@ -481,7 +481,10 @@ def detect_pic_nsfw(pic: bytes, output_repeat=False):
         f.write(pic)
         pic_path = f.name
         try:
+            start_time = time.time()
             score = opennsfw2.predict_image(pic_path)
+            use_time = (time.time() - start_time) * 1000
+            nonebot.logger.info(f"Pic analysis done, nsfw score {score:.5f}, use time {use_time:.2f}ms") # type: ignore
         except UnidentifiedImageError as e:
             score = -1
     if output_repeat:
