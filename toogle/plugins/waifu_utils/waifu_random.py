@@ -316,10 +316,10 @@ def parse_anime_db(res):
 
     soup = bs4.BeautifulSoup(res.text, "html.parser")
     profile_pic = soup.find(id="profileimage").attrs.get("src") # type: ignore
+    
     profile_name = (
-        soup.find(id="mainframe1")
-        .find(text="Share ▼") # type: ignore
-        .parent.parent.text.split("|")[0] # type: ignore
+        soup.find('a', {"class": "fgw"})
+        .text # type: ignore
         .strip()
     ).split(", ")[0]
     profile_name = re.sub(r"(\(.*?\))|(（.*?）)", "", profile_name).strip()
@@ -767,7 +767,7 @@ if __name__ == "__main__":
     # calc_confirm()
 
     data, url = get_designated_search("f", ["粉毛", "动漫"]) # type: ignore
-    print(data, url)
+    print(data[1], url)
     # pic_url, text, profile_id, raw = data
     # pic = waifu_card(
     #     pic_url, # type: ignore
