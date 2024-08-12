@@ -101,15 +101,18 @@ class MCRCON:
     @staticmethod
     def send_single(host, port, password, cmd):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((host, port))
+        try:
+            sock.connect((host, port))
+        except Exception as e:
+            return "RCON连接失败, 服务器未在正常运行态"
         # Log in
         result = MCRCON.login(sock, password)
         if not result:
-            raise Exception("RCON login failed")
+            return "RCON登陆失败"
         try:
             response = MCRCON.command(sock, cmd)
         except Exception as e:
-            raise Exception("RCON command failed")
+            return "RCON指令发送失败"
         sock.close()
         response = re.sub(r"§.{1}", "", response)
         return response
