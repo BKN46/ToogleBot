@@ -40,7 +40,7 @@ class HelpMeSelect(MessageHandler):
             return MessageChain.plain(random.choice(sel_list)[len(common_prefix) :], quote=message.as_quote())
         elif match_str and match_str.group(5):
             proc_str = HelpMeSelect.str_prune(match_str.group(5))
-            if proc_str in ["时", "贱", "烦", "好", "动", "敢"]:
+            if proc_str in ["时", "贱", "烦", "好", "动", "敢", "不", "行"]:
                 return
             return MessageChain.plain(random.choice([proc_str, f"不{proc_str}"]), quote=message.as_quote())
         else:

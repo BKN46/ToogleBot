@@ -331,15 +331,18 @@ class GetRandomAnimeFemale(MessageHandler):
                     ]
                 )
 
-            tgt_user = SQLConnection.search(
-                "qq_waifu",
-                {
-                    "id": content,
-                },
-            )
-            if not tgt_user:
+            try:
+                tgt_user = SQLConnection.search(
+                    "qq_waifu",
+                    {
+                        "id": content,
+                    },
+                )
+                if not tgt_user:
+                    raise Exception("id不存在")
+            except Exception as e:
                 return MessageChain.create([Plain(f"{content}不存在，或是未锁定对象")])
-            elif not (
+            if not (
                 not user or not DatetimeUtils.is_today(tgt_user[0][6]) or user[1] > 5
             ):
                 return MessageChain.create([Plain(f"每天一个人只能被NTR一次")])

@@ -192,6 +192,8 @@ class HistoryTu(MessageHandler):
                 except Exception as e:
                     return
                 files = [IMAGES_PATH + x for x in os.listdir(IMAGES_PATH) if text_filter in x]
+                if not 0 <= num < len(files):
+                    return MessageChain.plain(f"黑历史范围: 0 - {len(files) - 1}", quote=message.as_quote())
                 file = files[num]
                 return MessageChain.create([Image.fromLocalFile(file)])
 
