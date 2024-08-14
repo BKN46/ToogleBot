@@ -299,6 +299,35 @@ class ActiveAIConversation(ActiveHandler):
         return False
 
 
+class WhatIs(MessageHandler):
+    name = "什么是"
+    trigger = r"^什么是"
+    thread_limit = True
+    readme = "什么是什么"
+    interval = 600
+    message_length_limit = 1000
+    price = 5
+    
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        content = message.message.asDisplay()[3:]
+        if len(content) > self.message_length_limit:
+            return MessageChain.plain(f"请求字数超限：{len(content)} > {self.message_length_limit}", no_interval=True)
+
+        try:
+            res = GetOpenAIConversation.get_chat_stream(
+                content,
+                model="deepseek-chat",
+                max_time=120,
+                settings="请用中文解释以下内容，不要介绍自己、不要使用语气词、不要提问题，保持简洁自然亲切，300字以内",
+                url=config.get("GPTUrl", ""),
+            )
+            return MessageChain.plain(res, quote=message.as_quote())
+        except ReadTimeout as e:
+            return MessageChain.plain("请求OpenAI GPT模型超时，请稍后尝试", no_interval=True)
+        except Exception as e:
+            return MessageChain.plain(f"OpenAI GPT模型服务可能出错，请稍后尝试\n{repr(e)}", no_interval=True)
+
+
 def gpt_censor(msg_list: List[Union[MessagePack, str]]):
     msg_list = [(x.message.asDisplay() if isinstance(x, MessagePack) else x) for x in msg_list]
     res = GetOpenAIConversation.get_chat(
