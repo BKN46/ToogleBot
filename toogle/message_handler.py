@@ -150,8 +150,11 @@ class MessageHandler:
     def __call__(self, *args: Any, **kwds: Any) -> Any:
         return self.__init__(*args)
 
-    def is_trigger(self, message: MessagePack) -> bool:
-        message_str = message.message.asDisplay()
+    def is_trigger(self, message: Union[MessagePack, str]) -> bool:
+        if isinstance(message, str):
+            message_str = message
+        else:
+            message_str = message.message.asDisplay()
         if bool(re.search(self.trigger, message_str)):
             return True
         return False

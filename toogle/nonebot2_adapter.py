@@ -78,7 +78,7 @@ class PluginWrapper:
                 quote=message_pack.id
             )
             return
-        if get_block(message_pack):
+        if get_block(message_pack, self.plugin):
             return
         if not is_traffic_free(self.plugin, message_pack) and not is_admin(message_pack.member.id):
             traffic_str = get_traffic_time(self.plugin, message_pack)
@@ -134,9 +134,42 @@ async def plugin_run(
     thread_put_job(plugin, message_pack)
 
 
-def get_block(message: MessagePack):
+MUTE_LIST = [
+    {
+        "id": 123454321,
+        "til_time": datetime.datetime(2077, 7, 7),
+        "function": "",
+    }
+]
+
+
+def add_mute(id: int, til_time: datetime.datetime, function: str=""):
+    for mute_id in MUTE_LIST:
+        if id == mute_id["id"] and mute_id["function"] == function:
+            mute_id["til_time"] = til_time
+            return
+    MUTE_LIST.append({
+        "id": id,
+        "til_time": til_time,
+        "function": function,
+    })
+    return
+
+
+def get_block(message: MessagePack, plugin: MessageHandler) -> bool:
     if str(message.member.id) in config["BLACK_LIST"]:
         return True
+    for mute_id in MUTE_LIST:
+        if message.member.id == mute_id["id"]:
+            if mute_id["til_time"] > datetime.datetime.now():
+                nonebot.logger.info(f"Blocked [{plugin.name}]") # type: ignore
+                if mute_id["function"]:
+                    if plugin.is_trigger(mute_id["function"]):
+                        return True
+                else:
+                    return True
+            else:
+                MUTE_LIST.remove(mute_id)
     return False
 
 
