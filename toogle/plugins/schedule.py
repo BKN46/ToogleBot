@@ -1,7 +1,11 @@
 import datetime
 import json
 import os
+import time
 from typing import Union
+
+import bs4
+import requests
 
 from toogle.message import Image, MessageChain, Plain, At
 from toogle.message_handler import MESSAGE_HISTORY, MessageHandler, MessageHistory, MessagePack
@@ -104,6 +108,79 @@ class DailySetuRanking(ScheduleModule):
 
 #     async def ret(self):
 #         pass
+
+class ScheduledMonitor(ScheduleModule):
+    name="定时监测"
+    minute="*/5"
+    second=0
+    
+    last_monitor_time = datetime.datetime.now()
+    with modify_json_file('monitor_send') as record:
+        send_list = record
+
+    async def ret(self):
+        send_infos = {
+            'earth_quake': self.get_earth_quake(),
+        }
+        
+        for send_title, send_content in send_infos.items():
+            if not send_content:
+                continue
+            for group, info in self.send_list.items():
+                if isinstance(info, str) and info == send_title:
+                    bot_send_message(int(group), MessageChain.plain(send_content)) # TODO: add other form of sending
+                elif isinstance(info, dict) and send_title == info.get('function', ''):
+                    pass
+                
+        self.last_monitor_time = datetime.datetime.now()
+
+    
+    def get_earth_quake(self):
+        url = "https://www.ceic.ac.cn/speedsearch?time=1"
+        res = requests.get(url, verify=False)
+        print(res.text, file=open('test/earth_quake.html', 'w'))
+        bs = bs4.BeautifulSoup(res.text, 'html.parser')
+        table = bs.find('table', {'class': 'speed-table1'})
+        res = []
+        for tr in table.find_all('tr'): # type: ignore
+            tds = tr.find_all('td')
+            if len(tds) < 6:
+                continue
+            level = tds[0].text
+            happen_time = datetime.datetime.strptime(tds[1].text, '%Y-%m-%d %H:%M:%S')
+            location = tds[5].text
+            if happen_time > self.last_monitor_time:
+                res.append(f"{level}级地震，发生在{happen_time}，位于{location}")
+        if len(res) > 0:
+            return '===== 地震提醒 ======\n' + '\n'.join(res) + '\n ==================='
+        return ''
+
+
+    def get_bilibili_update(self, mid):
+        url = "https://api.bilibili.com/x/space/wbi/arc/search"
+        header = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
+        }
+        query = {
+            "mid": mid,
+            "pn": 1,
+            "ps": 30,
+            "order": "pubdate",
+            "platform": "web",
+            "wts": int(time.time()),
+        }
+        res = requests.get(url, headers=header, params=query)     
+   
+        output_res = []
+        vlist = res.json()['data']['list']['vlist']
+        for video in vlist:
+            vtime = datetime.datetime.fromtimestamp(video['created'])
+            if vtime < self.last_monitor_time:
+                break
+            link = f"https://www.bilibili.com/video/{video['bvid']}"
+            output_res.append(f"{video['author']}发布了《{video['title']}》{vtime}\n{link}")
+        if output_res:
+            return '\n'.join(output_res)
 
 
 class CreateSchedule(MessageHandler):
