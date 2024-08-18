@@ -5,6 +5,7 @@ import os
 import re
 import time
 from typing import Optional, Union, no_type_check
+from urllib.parse import urlencode
 
 import bs4
 import requests
@@ -211,8 +212,8 @@ class AnimeDownloadSearch(MessageHandler):
     @staticmethod
     @no_type_check
     def search_anime(search_content: str):
-        url = f"https://share.dmhy.org/topics/list?keyword={search_content}&sort_id=2&team_id=0&order=date-desc"
-        res = requests.get(url, proxies=proxies).text
+        page_url = f"https://share.dmhy.org/topics/list?keyword={search_content}&sort_id=2&team_id=0&order=date-desc"
+        res = requests.get(page_url, proxies=proxies).text
         soup = bs4.BeautifulSoup(res, "html.parser")
         results = soup.find('tbody')
         if not results:
@@ -232,7 +233,41 @@ class AnimeDownloadSearch(MessageHandler):
                 'url': url,
                 'file_size': file_size,
             })
-        return res, url
+        return res, page_url
+
+
+class FilmDownloadSearch(MessageHandler):
+    name = "影视下载搜索"
+    trigger = r"^影视下载 (.*)"
+    thread_limit = True
+    interval = 10
+    price = 5
+    readme = "下载动漫，来源BT之家" 
+
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        search_content = message.message.asDisplay()[5:].strip()
+        content = urlencode({"search": search_content}).split("=")[1].replace("%", "_")
+        url = f"https://www.1lou.info/search-{content}-1.htm"
+        res = requests.get(url).text
+        soup = bs4.BeautifulSoup(res, "html.parser")
+        search_res_raw = soup.findAll('li', {'class': 'media thread tap'})
+        if not search_res_raw:
+            return MessageChain.plain("没有找到资源")
+        else:
+            search_res = []
+            for line in search_res_raw:
+                title = line.text.strip().split("\n")[0]
+                tags = []
+                for tag in line.text.strip().split("\n")[1:]:
+                    if tag:
+                        tags.append(tag)
+                    else:
+                        break
+                link = f"https://www.1lou.info/" + line.attrs.get("data-href", '没有链接')
+                search_res.append(f"{title}\n{'/'.join(tags)}\n{link}")
+        return ForwardMessage.get_quick_forward_message([ # type: ignore
+            MessageChain.plain(message) for message in search_res
+        ] + [MessageChain.plain(url)])
 
 
 class DateCalculator(MessageHandler):
