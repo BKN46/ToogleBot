@@ -3,6 +3,8 @@
 Mirai + Nonebot2实现
 并且为任何可能的框架迁移做好准备
 
+[![在爱发电支持我](https://afdian.moeci.com/1/badge.svg)](https://afdian.com/a/ToogleBot)
+
 ## 安装
 
 ```plain
