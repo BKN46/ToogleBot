@@ -6,6 +6,7 @@ from fastapi import FastAPI, Request
 
 from toogle.message import Image, MessageChain, Plain, At
 from toogle.nonebot2_adapter import bot_send_message
+from toogle.membership import recv_afdian_msg
 
 app: FastAPI = nonebot.get_app()
 
@@ -21,6 +22,15 @@ async def custom_post_api(request: Request):
     req_body = json.dumps(data, ensure_ascii=False)
     print(f"{datetime.datetime.now()}\t{request.client}\t{req_body}", file=open("log/api.log", "a"))
     return {"msg": "ok"}
+
+
+@app.post("/afdian")
+async def afdian_webhook_api(request: Request):
+    data = await request.json()
+    req_body = json.dumps(data, ensure_ascii=False)
+    recv_afdian_msg(data)
+    print(f"{datetime.datetime.now()}\t{request.client}\t{req_body}", file=open("log/afdian.log", "a"))
+    return {"ec": 200, "em": "ok"}
 
 
 SEND_LIMIT = {}

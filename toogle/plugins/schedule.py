@@ -7,6 +7,7 @@ from typing import Union
 import bs4
 import requests
 
+from toogle.economy import get_balance, give_balance
 from toogle.message import Image, MessageChain, Plain, At
 from toogle.message_handler import MESSAGE_HISTORY, MessageHandler, MessageHistory, MessagePack
 from toogle.scheduler import ScheduleModule, all_schedule, get_job_name, load_manual_schedular, remove_job
@@ -108,6 +109,29 @@ class DailySetuRanking(ScheduleModule):
 
 #     async def ret(self):
 #         pass
+
+class MembershipSchedule(ScheduleModule):
+    name="会员业务定时任务"
+    month="*"
+    day=1
+    hour=0
+    minute=0
+    second=0
+
+    async def ret(self):
+        with modify_json_file('afdian') as d:
+            for qq, info in d.items():
+                time_due = datetime.datetime.strptime(info['time_due'], "%Y-%m-%d %H:%M:%S")
+                if time_due < datetime.datetime.now():
+                    del d[qq]
+                    continue
+                else:
+                    trade_plan = info['trade_plan']
+                    balance_left = get_balance(int(qq))
+                    target_balance = 3000 if trade_plan == "大黄狗大会员" else 500
+                    if balance_left < target_balance:
+                        give_balance(int(qq), target_balance - balance_left)
+
 
 class ScheduledMonitor(ScheduleModule):
     name="定时监测"
