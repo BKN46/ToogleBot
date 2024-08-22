@@ -120,6 +120,9 @@ async def all_event_handler(event: Event):
     elif event.type == "MemberCardChangeEvent":
         # 成员群名片变动事件
         pass
+    elif event.type == "FriendRequestEvent":
+        # 加好友请求事件
+        pass
 
 
 @nonebot.get_driver().on_shutdown

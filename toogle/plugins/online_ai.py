@@ -58,7 +58,7 @@ class GetMidjourney(MessageHandler):
     name = "Midjourney生成图片"
     trigger = r"^\.midjourney\s"
     thread_limit = True
-    price = 50
+    price = 30
     interval = 300
     readme = "获取Midjourney生成图片"
 
