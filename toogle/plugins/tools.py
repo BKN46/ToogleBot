@@ -217,7 +217,7 @@ class AnimeDownloadSearch(MessageHandler):
         soup = bs4.BeautifulSoup(res, "html.parser")
         results = soup.find('tbody')
         if not results:
-            return None, url
+            return None, page_url
         else:
             results = results.findAll('tr', {'class': ''})
         res = []
@@ -252,7 +252,7 @@ class FilmDownloadSearch(MessageHandler):
         soup = bs4.BeautifulSoup(res, "html.parser")
         search_res_raw = soup.findAll('li', {'class': 'media thread tap'})
         if not search_res_raw:
-            return MessageChain.plain("没有找到资源")
+            return MessageChain.plain("没有找到资源", quote=message.as_quote())
         else:
             search_res = []
             for line in search_res_raw:
