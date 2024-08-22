@@ -14,10 +14,10 @@ from toogle.message import Group, Member, MessageChain, Plain, Quote, ForwardMes
 
 class MessageHistory:
     def __init__(self, windows=2000) -> None:
-        self.history = {}
+        self.history: dict[int, List["MessagePack"]] = {}
         self.windows = windows
 
-    def add(self, id, message: "MessagePack"):
+    def add(self, id: int, message: "MessagePack"):
         if id not in self.history:
             self.history[id] = []
         self.history[id].append(message)
@@ -53,13 +53,12 @@ class MessageHistory:
             return None
         if message.group.id not in self.history:
             return None
-        for messages in self.history[message.group.id]:
-            for i, msg in enumerate(messages):
-                if msg.id == message.id:
-                    if i > 0:
-                        return messages[max(i-num, 0):i]
-                    return None
-    
+        for i, msg in enumerate(self.history[message.group.id]):
+            if msg.id == message.id:
+                if i > 0:
+                    return self.history[message.group.id][max(i-num, 0):i]
+                return None
+
     def save_str(self, path: str):
         with open(path, "w") as f:
             f.write(json.dumps({
@@ -74,7 +73,7 @@ class MessageHistory:
     def load(self, path: str):
         if os.path.exists(path):
             with open(path, "rb") as f:
-                self.history = pickle.load(f)
+                self.history: dict[int, List["MessagePack"]] = pickle.load(f)
 
     @staticmethod
     def seq_as_forward(message_list: List["MessagePack"]) -> MessageChain:
@@ -89,6 +88,19 @@ class MessageHistory:
             message_id=0,
             message=MessageChain.plain('历史消息'),
         )])
+
+
+    def find_qq_last_message(self, qq: int) -> Optional["MessagePack"]:
+        res = []
+        for messages in self.history.values():
+            for message in messages[::-1]:
+                if message.member.id == qq:
+                    res.append(message)
+                    break
+        if not res:
+            return None
+        res = sorted(res, key=lambda x: x.time, reverse=True)
+        return res[0]
 
 
 MESSAGE_HISTORY = MessageHistory()
