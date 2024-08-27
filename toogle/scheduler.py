@@ -11,6 +11,7 @@ import nonebot
 from poyo import parse_string
 from toogle.message import MessageChain
 from toogle.message_handler import MessagePack
+from toogle.configs import config
 
 from toogle.nonebot2_adapter import bot_send_message, WORK_QUEUE, get_event, PluginWrapper, plugin_run, toogle2nb
 
@@ -59,11 +60,19 @@ class ScheduleModule:
             else:
                 nonebot.logger.success(f"[Schedule][{self.name}] done") # type: ignore
         except Exception as e:
-            print(
+            err_info = (
                 f"{'*'*20}\n[{datetime.datetime.now().strftime('%Y-%m-%d, %H:%M:%S')}]"
                 f"[{self.name}] {repr(e)}\n"
-                f"\n{'*'*20}\n{traceback.format_exc()}",
+                f"\n{'*'*20}\n{traceback.format_exc()}"
+            )
+            print(
+                err_info,
                 file=open("log/schedule_err.log", "a"),
+            )
+            bot_send_message(
+                int(config.get("ADMIN_LIST", [0])[0]),
+                err_info,
+                friend=True
             )
 
     def regist(self):
