@@ -6,11 +6,12 @@ import os
 import pickle
 import random
 import time
-from typing import Union
+from typing import List, Union
 
 import PIL.Image
 import requests
 
+from toogle import utils
 from toogle.message import At, Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack
 from toogle.nonebot2_adapter import bot_send_message
@@ -483,6 +484,48 @@ class Diablo4Tracker(MessageHandler):
     
     def time_near(self, time1, time2):
         return abs(time1 - time2) / 1000 / 60 < 5
+
+
+class MarvelSnapZone(MessageHandler):
+    name = "漫威终极逆转Snap工具"
+    trigger = r"^\.snap \d{6}$"
+    thread_limit = True
+    readme = "漫威终极逆转Snap工具"
+
+
+    async def ret(self, message: MessagePack) -> MessageChain:
+        content = message.message.asDisplay()[6:].strip()
+        deck = [int(x) for x in content]
+        if sum(deck) != 12:
+            return MessageChain.plain("卡牌总数应为12", quote=message.as_quote())
+        res = self.calcualte_cost_jam_rate(deck)
+        return MessageChain.plain(res, quote=message.as_quote())
+
+
+    def calcualte_cost_jam_rate(self, seq: List[int], iters=10000):
+        jam = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
+        waste = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
+        for _ in range(iters):
+            deck = []
+            for i in range(6):
+                deck += [i+1 for _ in range(seq[i])]
+
+            draw = lambda x: [deck.pop(random.randrange(len(deck))) for _ in range(x)]
+            hand = draw(3)
+
+            for rnd in range(6):
+                hand += draw(1)
+                play = [hand.pop(x) for x in utils.dp_backpack_algorithm(rnd + 1, hand)]
+                if len(play) == 0:
+                    jam[rnd + 1] += 1
+                    waste[rnd + 1] += rnd + 1
+                else:
+                    waste[rnd + 1] += rnd + 1 - sum(play)
+        
+        res = "回合 / 卡手率 / 平均费用浪费\n"
+        for i in range(6):
+            res += f" {i+1}  / {jam[i+1] / iters:^7.2%} / {waste[i+1] / iters:^6.2f}\n"
+        return res
 
 
 class NFSWorNot(MessageHandler):
