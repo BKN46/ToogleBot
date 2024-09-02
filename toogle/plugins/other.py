@@ -584,7 +584,7 @@ class MarvelSnapZone(MessageHandler):
             return f"卡牌{name}不存在"
 
         return (
-            f"卡牌名称: {zh_name} {en_name}\n"
+            f"卡牌名称: {card['name']} {card['originalName']}\n"
             f"卡牌属性: {cost}费 {power}攻\n"
             f"卡牌描述: {desc}\n"
             f"卡牌来源: {info.get('Source', 'null')}\n"
