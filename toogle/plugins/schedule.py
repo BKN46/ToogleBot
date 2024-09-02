@@ -118,7 +118,7 @@ class MembershipSchedule(ScheduleModule):
     minute=0
     second=0
 
-    async def ret(self):
+    async def ret(self, message_pack: Union[MessagePack, None]):
         with modify_json_file('afdian') as d:
             for qq, info in d.items():
                 time_due = datetime.datetime.strptime(info['time_due'], "%Y-%m-%d %H:%M:%S")
@@ -137,12 +137,12 @@ class ScheduledMonitor(ScheduleModule):
     name="定时监测"
     minute="*/5"
     second=0
-    
+
     last_monitor_time = datetime.datetime.now()
     with modify_json_file('monitor_send') as record:
         send_list = record
 
-    async def ret(self):
+    async def ret(self, message_pack: Union[MessagePack, None]):
         send_infos = {
             'earth_quake': self.get_earth_quake(),
         }
@@ -158,13 +158,15 @@ class ScheduledMonitor(ScheduleModule):
                 
         self.last_monitor_time = datetime.datetime.now()
 
-    
+
     def get_earth_quake(self):
         url = "https://www.ceic.ac.cn/speedsearch?time=1"
         res = requests.get(url, verify=False)
         print(res.text, file=open('test/earth_quake.html', 'w'))
         bs = bs4.BeautifulSoup(res.text, 'html.parser')
         table = bs.find('table', {'class': 'speed-table1'})
+        if not table:
+            return ''
         res = []
         for tr in table.find_all('tr'): # type: ignore
             tds = tr.find_all('td')
@@ -194,7 +196,7 @@ class ScheduledMonitor(ScheduleModule):
             "wts": int(time.time()),
         }
         res = requests.get(url, headers=header, params=query)     
-   
+
         output_res = []
         vlist = res.json()['data']['list']['vlist']
         for video in vlist:
