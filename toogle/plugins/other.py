@@ -1,3 +1,4 @@
+from curses.ascii import isalpha
 import datetime
 import hashlib
 import io
@@ -5,10 +6,12 @@ import json
 import os
 import pickle
 import random
+import re
 import time
-from typing import List, Union
+from typing import List, Optional, Union
 
 import PIL.Image
+import bs4
 import requests
 
 from toogle import utils
@@ -488,19 +491,27 @@ class Diablo4Tracker(MessageHandler):
 
 class MarvelSnapZone(MessageHandler):
     name = "漫威终极逆转Snap工具"
-    trigger = r"^\.snap \d{6}$"
+    trigger = r"^\.snap "
     thread_limit = True
     readme = "漫威终极逆转Snap工具"
+    
+    if os.path.exists("data/snap_cards.json"):
+        cards_data = json.load(open("data/snap_cards.json", "r"))
+    else:
+        cards_data = []
 
 
-    async def ret(self, message: MessagePack) -> MessageChain:
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
         content = message.message.asDisplay()[6:].strip()
-        deck = [int(x) for x in content]
-        if sum(deck) != 12:
-            return MessageChain.plain("卡牌总数应为12", quote=message.as_quote())
-        res = self.calcualte_cost_jam_rate(deck)
-        return MessageChain.plain(res, quote=message.as_quote())
-
+        if content.isdigit():
+            deck = [int(x) for x in content]
+            if sum(deck) != 12:
+                return MessageChain.plain("卡牌总数应为12", quote=message.as_quote())
+            res = self.calcualte_cost_jam_rate(deck)
+            return MessageChain.plain(res, quote=message.as_quote())
+        else:
+            res = self.get_snap_card_data(content.lower())
+            return MessageChain.plain(res, quote=message.as_quote())
 
     def calcualte_cost_jam_rate(self, seq: List[int], iters=10000):
         jam = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
@@ -526,6 +537,69 @@ class MarvelSnapZone(MessageHandler):
         for i in range(6):
             res += f" {i+1}  / {jam[i+1] / iters:^7.2%} / {waste[i+1] / iters:^6.2f}\n"
         return res
+
+
+    def get_snap_card_data(self, name: str):
+        if not name:
+            return "请输入卡牌名称"
+
+        cards = []
+        for card in self.cards_data:
+            if name == card.get('name', '').lower() or name == card.get('originalName', '').lower():
+                cards = [card]
+                break
+            if name in card.get('name', '').lower() or name in card.get('originalName', '').lower():
+                cards.append(card)
+
+        if not cards:
+            return f"卡牌{name}不存在"
+        elif len(cards) > 10:
+            return f"找到了太多卡牌，请输入更精确的名称"
+        elif len(cards) > 1:
+            return f"你是不是要找:\n" + "\n".join([f"{x['name']} / {x['originalName']}" for x in cards])
+
+        card = cards[0]
+
+        zh_name = card['name']
+        en_name = card['originalName'].replace(" ", "-").lower()
+        cost, power = card['cost'], card['power']
+        desc = re.sub('<.*?>', '', card['description'])
+
+        url = f"https://marvelsnapzone.com/cards/{en_name}"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
+        }
+        res = requests.get(url, headers=headers)
+
+        bs = bs4.BeautifulSoup(res.text, "html.parser")
+        
+        info = {}
+        for t in bs.findAll('div', {'class': 'item-name'}):
+            info[t.text] = t.parent.find('div', {'class': 'item-value'}).text.strip()
+            
+        for t in bs.findAll('div', {'class': 'name'}):
+            info[t.text] = t.parent.find('div', {'class': 'info'}).text.replace('\n',' ').strip()
+
+        if not info:
+            return f"卡牌{name}不存在"
+
+        return (
+            f"卡牌名称: {zh_name} {en_name}\n"
+            f"卡牌属性: {cost}费 {power}攻\n"
+            f"卡牌描述: {desc}\n"
+            f"卡牌来源: {info.get('Source', 'null')}\n"
+            # f"卡牌发布时间: {info.get('Release Date', 'null')}\n"
+            f"===============\n"
+            f"统计量: {info.get('# of Games', 'null')}场/{info.get('# of Cubes', 'null')}分\n"
+            # f"变种使用率: {info.get('Used if Owned', 'null')}\n"
+            f"卡牌排名: {info.get('Ranking', 'null')}\n"
+            f"胜率贡献值: {info.get('Total Meta Share', 'null')}\n"
+            f"分数贡献值: {info.get('Total Cube Share', 'null')}\n"
+            f"携带胜率: {info.get('Win Rate on Draw', 'null')}\n"
+            f"使用胜率: {info.get('Win Rate on Play', 'null')}\n"
+            f"携带分数贡献: {info.get('Cube Rate on Draw', 'null')}\n"
+            f"使用分数贡献: {info.get('Cube Rate on Play', 'null')}\n"
+        )
 
 
 class NFSWorNot(MessageHandler):
