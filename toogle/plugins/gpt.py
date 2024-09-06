@@ -165,19 +165,23 @@ class GetOpenAIConversation(MessageHandler):
         other_history: list = [],
         model="gpt-4",
         url = "https://api.openai.com/v1",
+        tools = [],
     ) -> str:
         path = "/chat/completions"
         body = {
             "model": model,
             "messages": [{"role": "user", "content": text}]
         }
+        if tools:
+            body['tools'] = tools
+
         if other_history:
-            body['messages'] = [{"role": "user", "content": x} for x in other_history] + (body['messages'] if text else [])
+            body['messages'] = [({"role": "user", "content": x} if isinstance(x, str) else x) for x in other_history] + (body['messages'] if text else [])
         if settings:
             body['messages'] = [{"role": "system", "content": settings}] + body['messages']
         if json_output:
             body['response_format'] = {"type": "json_object"}
-        res = requests.post(url + path, headers=header, json=body, timeout=15, proxies=proxies, verify=False)
+        res = requests.post(url + path, headers=header, json=body, timeout=60, proxies=proxies, verify=False)
         try:
             if raw_output:
                 return res.json()
@@ -195,6 +199,7 @@ class GetOpenAIConversation(MessageHandler):
         model="gpt-4",
         max_tokens=1000,
         url = "https://api.openai.com/v1",
+        tools = [],
     ) -> str:
         path = "/chat/completions"
         body = {
@@ -203,13 +208,15 @@ class GetOpenAIConversation(MessageHandler):
             "stream": True,
             "max_tokens": max_tokens,
         }
+        if tools:
+            body['tools'] = tools
 
         if other_history:
-            body['messages'] = [{"role": "user", "content": x} for x in other_history] + body['messages']
+            body['messages'] = [({"role": "user", "content": x} if isinstance(x, str) else x) for x in other_history] + body['messages']
         if settings:
             body['messages'] = [{"role": "system", "content": settings}] + body['messages']
 
-        res = requests.post(url + path, headers=header, json=body, proxies=proxies, stream=True, timeout=5, verify=False)
+        res = requests.post(url + path, headers=header, json=body, proxies=proxies, stream=True, timeout=15, verify=False)
         res_text = ''
         start_time = time.time()
         for line in res.iter_lines():
@@ -224,6 +231,62 @@ class GetOpenAIConversation(MessageHandler):
                 res_text += "\n[由于时长限制后续生成直接截断]"
                 break
         return res_text.strip()
+
+    @staticmethod
+    def get_web_search(
+        text: str,
+        model="gpt-4",
+        settings = "你是一条乐于助人的大黄狗",
+        url = "https://api.openai.com/v1",
+    ):
+        messages = [
+            {"role": "system", "content": settings},
+        ]
+        messages.append({
+            "role": "user",
+            "content": text
+        })
+        finish_reason = None
+        while finish_reason is None or   finish_reason == "tool_calls":
+            choice = GetOpenAIConversation.get_chat( # type: ignore
+                '',
+                other_history=messages,
+                model=model,
+                raw_output=True,
+                url=url,
+                tools=[
+                    {
+                        "type": "builtin_function",
+                        "function": {
+                            "name": "$web_search",
+                        },
+                    }
+                ]
+            )
+            choice: dict = choice['choices'][0]
+            finish_reason = choice['finish_reason']
+            if finish_reason == "tool_calls":  # <-- 判断当前返回内容是否包含 tool_calls
+                messages.append(choice['message'])  # <-- 我们将 Kimi 大模型返回给我们的 assistant 消息也添加到上下文中，以便于下次请求时 Kimi 大模型能理解我们的诉求
+                for tool_call in choice['message']['tool_calls']:  # <-- tool_calls 可能是多个，因此我们使用循环逐个执行
+                    tool_call_name = tool_call['function']['name']
+                    tool_call_arguments = json.loads(tool_call['function']['arguments'])  # <-- arguments 是序列化后的 JSON Object，我们需要使用 json.loads 反序列化一下
+                    if tool_call_name == "$web_search":
+                        tool_result = tool_call_arguments
+                    else:
+                        tool_result = f"Error: unable to find tool by name '{tool_call_name}'"
+    
+                    # 使用函数执行结果构造一个 role=tool 的 message，以此来向模型展示工具调用的结果；
+                    # 注意，我们需要在 message 中提供 tool_call_id 和 name 字段，以便 Kimi 大模型
+                    # 能正确匹配到对应的 tool_call。
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": tool_call['id'],
+                        "name": tool_call_name,
+                        "content": json.dumps(tool_result),  # <-- 我们约定使用字符串格式向 Kimi 大模型提交工具调用结果，因此在这里使用 json.dumps 将执行结果序列化成字符串
+                    })
+    
+        return choice['message']['content']
+
 
     @staticmethod
     def parse_history_context(history: list[MessagePack]) -> list:
@@ -300,25 +363,24 @@ class ActiveAIConversation(ActiveHandler):
 
 
 class WhatIs(MessageHandler):
-    name = "什么是"
-    trigger = r"^什么是"
+    name = "大黄狗有问必答"
+    trigger = r"^什么是|^查一下"
     thread_limit = True
     readme = "什么是什么"
     interval = 600
     message_length_limit = 1000
-    price = 5
+    price = 8
     
     async def ret(self, message: MessagePack) -> Optional[MessageChain]:
-        content = message.message.asDisplay()[3:]
+        content = message.message.asDisplay()
         if len(content) > self.message_length_limit:
             return MessageChain.plain(f"请求字数超限：{len(content)} > {self.message_length_limit}", no_interval=True)
 
         try:
-            res = GetOpenAIConversation.get_chat_stream(
+            res = GetOpenAIConversation.get_web_search(
                 content,
-                model="deepseek-chat",
-                max_time=120,
-                settings="请用中文解释以下内容，不要介绍自己、不要使用语气词、不要提问题，保持简洁自然亲切，300字以内",
+                model=config.get("GPTModel", ""),
+                settings="请解答以下内容，结果精简在500字以内",
                 url=config.get("GPTUrl", ""),
             )
             return MessageChain.plain(res, quote=message.as_quote())
