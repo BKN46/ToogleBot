@@ -10,11 +10,17 @@ def ini_parse(data: str):
     return data
 
 
-config = {
-    line.split("=")[0]: ini_parse(line.split("=")[1].replace("\n", ""))
-    for line in open(".env", "r").readlines()
-    if len(line) > 1
-}
+config = {}
+
+def reload_config():
+    global config
+    config = {
+        line.split("=")[0]: ini_parse(line.split("=")[1].replace("\n", ""))
+        for line in open(".env", "r").readlines()
+        if len(line) > 1
+    }
+
+reload_config()
 
 proxies = {
     'http': config.get('REQUEST_PROXY_HTTP', ''),
