@@ -20,6 +20,9 @@ class Dice(MessageHandler):
         f"支持如.1d6+1d20+3这样的简单组合运算\n"
         f"使用.1d20kh或者.1d20kl来指定优劣势，支持类似.3d20kh2来制定取复数优劣势\n"
         f"使用.2d6r2来指定低于点数可重骰\n"
+        f"使用.2d6e6来指定高于点数可爆炸(多投一颗)\n"
+        f"使用.2d6>5或.2d6<2来统计大于等于或小于等于某数值的骰子个数\n"
+        f"使用.2d6>5i1来统计低于某数值的骰子个数，如果骰子小于等于某一值则额外减1\n"
         f"使用.`1d20来查看概率分布"
     )
 
@@ -104,31 +107,64 @@ class Dice(MessageHandler):
                 num = 1
             elif int(num) > 10000:
                 raise Exception("Exceed maximum dice num")
+            low_reroll = 0
+            explode_roll = -1
             if "r" in sides:
                 sides, low_reroll = int(sides.split("r")[0]), int(
                     sides.split("r")[1] or 0
                 )
-            else:
-                low_reroll = 0
+            elif "e" in sides:
+                sides, explode_roll = int(sides.split("e")[0]), int(
+                    sides.split("e")[1] or 0
+                )
             if int(sides) > 10000:
                 raise Exception("Exceed maximum dice sides")
+            roll_result = [
+                Dice.rd(self, int(sides), do_save=True, low_reroll=low_reroll)
+                for _ in range(int(num))
+            ]
+            if explode_roll > 0:
+                extra_roll_num = len([i for i in roll_result if i >= explode_roll])
+                roll_result += [
+                    Dice.rd(self, int(sides), do_save=True, low_reroll=low_reroll)
+                    for _ in range(extra_roll_num)
+                ]
             return str(
-                sum(
-                    [
-                        Dice.rd(self, int(sides), do_save=True, low_reroll=low_reroll)
-                        for _ in range(int(num))
-                    ]
-                )
+                sum(roll_result)
             )
 
     # Parse whole dice phrase
-    def roll(self, dice_str: str) -> int:
+    def roll(self, dice_str: str, reset_history=False) -> int:
+        if reset_history:
+            self.roll_res = []
         while re.match(r"\d*d(\d+)(kh|kl|r|)(\d*)", dice_str):
-            dice_str = re.sub(r"\d*d(\d+)(kh|kl|r|)(\d*)", self.psd, dice_str)
-        return int(eval(dice_str))
+            dice_str = re.sub(r"\d*d(\d+)(kh|kl|r|e|)(\d*)", self.psd, dice_str)
+        if '>' in dice_str:
+            l_tmp = dice_str.split('>')[1]
+            if "i" in l_tmp:
+                l_num, inner_explode = int(l_tmp.split("i")[0]), int(
+                    l_tmp.split("i")[1] or 0
+                )
+            else:
+                l_num, inner_explode = int(l_tmp), 0
+            return len([i for i in self.roll_res if i >= int(l_num)]) - len([i for i in self.roll_res if i <= inner_explode])
+        elif '<' in dice_str:
+            l_tmp = dice_str.split('<')[1]
+            if "i" in l_tmp:
+                l_num, inner_explode = int(l_tmp.split("i")[0]), int(
+                    l_tmp.split("i")[1] or 0
+                )
+            else:
+                l_num, inner_explode = int(l_tmp), 0
+            return len([i for i in self.roll_res if i <= l_num]) - len([i for i in self.roll_res if i <= inner_explode])
+        else:
+            return int(eval(dice_str))
 
     def cal_roll_avg(self, dice_str: str, times=1000):
-        return round(sum([self.roll(dice_str) for _ in range(times)]) / times, 1)
+        roll_res = []
+        for _ in range(times):
+            roll_res.append(self.roll(dice_str, reset_history=True))
+        return round(sum(roll_res) / times, 1)
 
     def show_dice_distribute(self, dice_str: str):
         def pdf_unify(x):
@@ -201,6 +237,7 @@ class Dice(MessageHandler):
         random_res = [
             self.roll(
                 dice_str,
+                reset_history=True,
             )
             for _ in range(30000)
         ]
