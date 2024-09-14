@@ -1,6 +1,7 @@
 import math
 import random
 import re
+from typing import Optional
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -14,7 +15,7 @@ pic_path = "data/dice_tmp.jpg"
 
 class Dice(MessageHandler):
     name = "骰子"
-    trigger = r"(^(\.|。|\.r|。r|/r)(`|)(\d|d|D))|(#.*[d|D|/].*#)"
+    trigger = r"(^(\.|。|\.r|。r|/r)(`|)(\d|d|D))|(#.{0,5}[d|D|/].{0,5}#)"
     readme = (
         f"骰娘，可以使用 .d20 .1d20 .rd20 /r d20等方式触发\n"
         f"支持如.1d6+1d20+3这样的简单组合运算\n"
@@ -26,11 +27,13 @@ class Dice(MessageHandler):
         f"使用.`1d20来查看概率分布"
     )
 
-    async def ret(self, message: MessagePack) -> MessageChain:
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
         self.roll_res = []
         org_str = message.message.asDisplay().lower()
         dice_str = org_str[1:]
         if "#" in message.message.asDisplay():
+            if len(org_str) > 50:
+                return
             return MessageChain.create([self.get_insertion_dice(org_str)])
         elif dice_str.startswith("`"):
             dice_str = dice_str[1:]

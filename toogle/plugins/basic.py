@@ -24,7 +24,8 @@ except Exception as e:
 
 class HelpMeSelect(MessageHandler):
     name = "随机选择"
-    trigger = r"(^(是|应该)(.+还是.+))|(^(.+)不\5.*)"
+    trigger = r"(^(是|应该)(.+还是.+))"
+    # trigger = r"(^(是|应该)(.+还是.+))|(^(.+)不\5.*)"
     readme = "随机选项"
     interval = 10
     price = 2
@@ -34,15 +35,17 @@ class HelpMeSelect(MessageHandler):
         if match_str and match_str.group(3):
             proc_str = HelpMeSelect.str_prune(match_str.group(3))
             sel_list = proc_str.split("还是")
+            if max([len(x) for x in sel_list]) > 10:
+                return
             common_prefix = HelpMeSelect.longestCommonPrefix(sel_list)
             if len(common_prefix) == len(sel_list[0]):
                 return MessageChain.plain("那你问我？", quote=message.as_quote())
             return MessageChain.plain(random.choice(sel_list)[len(common_prefix) :], quote=message.as_quote())
-        elif match_str and match_str.group(5):
-            proc_str = HelpMeSelect.str_prune(match_str.group(5))
-            if proc_str in ["时", "贱", "烦", "好", "动", "敢", "不", "行"]:
-                return
-            return MessageChain.plain(random.choice([proc_str, f"不{proc_str}"]), quote=message.as_quote())
+        # elif match_str and match_str.group(5):
+        #     proc_str = HelpMeSelect.str_prune(match_str.group(5))
+        #     if proc_str in ["时", "贱", "烦", "好", "动", "敢", "不", "行"]:
+        #         return
+        #     return MessageChain.plain(random.choice([proc_str, f"不{proc_str}"]), quote=message.as_quote())
         else:
             raise Exception("No match!")
 
