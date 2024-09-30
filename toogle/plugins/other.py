@@ -1,3 +1,4 @@
+import asyncio
 from curses.ascii import isalpha
 import datetime
 import hashlib
@@ -15,7 +16,7 @@ import bs4
 import requests
 
 from toogle import utils
-from toogle.message import At, Image, MessageChain, Plain
+from toogle.message import At, ForwardMessage, Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack
 from toogle.nonebot2_adapter import bot_send_message
 from toogle.plugins.others.magnet import do_magnet_parse, do_magnet_preview, parse_size
@@ -23,10 +24,11 @@ from toogle.plugins.others.steam import source_server_info
 from toogle.plugins.others import tarkov as Tarkov
 from toogle.plugins.others.minecraft import MCRCON
 from toogle.sql import SQLConnection
-from toogle.utils import SFW_BLOOM, detect_pic_nsfw, is_admin
+from toogle.utils import SFW_BLOOM, detect_pic_nsfw, is_admin, modify_json_file
 from toogle.configs import config
 import toogle.plugins.others.racehorse as race_horse
 import toogle.plugins.others.csgo as CSGO
+import toogle.plugins.others.baseball as baseball
 
 try:
     JOKING_HAZARD_GAME_DATA = pickle.load(open("data/joking_hazard.pkl", "rb"))
@@ -83,6 +85,75 @@ class JokingHazard(MessageHandler):
         io_buf = io.BytesIO()
         combined_pic.save(io_buf, format="PNG")
         return MessageChain.create([Image(bytes=io_buf.getvalue())])
+
+
+class BaseballGame(MessageHandler):
+    name = "模拟棒球比赛"
+    trigger = r"^\.baseball|.bb 注册球员|.bb 我的球员"
+    thread_limit = True
+    readme = "模拟棒球"
+
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        message_content = message.message.asDisplay()
+        if message_content == ".baseball":
+            if not is_admin(message.member.id):
+                return MessageChain.plain("无权限", quote=message.as_quote())
+            team1 = baseball.Team(message.group.name[:5] + "队")
+            with modify_json_file("baseball_players.json") as players:
+                players = [v for k, v in players.items() if v['group'] == message.group.id]
+                for player in players:
+                    team1.add_player(baseball.Player.from_json(player['data']))
+            team1.team_balance()
+            team2 = baseball.Team.get_random_team()
+            game = baseball.Game(team1, team2)
+            
+            bot_send_message(message.group.id, ForwardMessage.get_quick_forward_message([
+                MessageChain.plain(f"比赛开始\n{team1.name} VS {team2.name}"),
+                MessageChain.plain(f"{team1.show()}"),
+                MessageChain.plain(f"{team2.show()}"),
+            ]))
+
+            msg_buffer = []
+            for turn in game.game():
+                if turn == 'turn':
+                    msg = game.show() + "\n" + '\n'.join(game.logs)
+                    msg_buffer.append(MessageChain.plain(msg))
+                    game.logs.clear()
+                elif turn == "round":
+                    await asyncio.sleep(120)
+                    # time.sleep(60)
+                    bot_send_message(message.group.id, ForwardMessage.get_quick_forward_message([MessageChain.plain(game.now_turn())] + msg_buffer)) # type: ignore
+                    msg_buffer.clear()
+            bot_send_message(message.group.id, MessageChain.plain("比赛结束" + '\n'.join(game.logs)))
+            
+            # update players data
+            with modify_json_file("baseball_players.json") as players:
+                for player in team1.players:
+                    if player.name in players:
+                        players[player.name]['data'] = player.to_json()
+
+        elif message_content.startswith(".bb 注册球员"):
+            player_name = message_content[9:].strip()
+            if not player_name:
+                return MessageChain.plain("请输入球员名", quote=message.as_quote())
+            with modify_json_file("baseball_players.json") as players:
+                if player_name in players:
+                    return MessageChain.plain("球员已存在")
+                player = baseball.Player(player_name)
+                players[player_name] = {
+                    "name": player_name,
+                    "user": message.member.id,
+                    "group": message.group.id,
+                    "data": player.to_json(),
+                }
+            return MessageChain.plain("球员注册成功", quote=message.as_quote())
+        elif message_content.startswith(".bb 我的球员"):
+            with modify_json_file("baseball_players.json") as players:
+                player_list = [v for k, v in players.items() if v['user'] == message.member.id]
+                if not player_list:
+                    return MessageChain.plain("你还没有球员，输入「.bb 注册球员 #球员名#」来注册一个", quote=message.as_quote())
+                player = baseball.Player.from_json(player_list[0]['data'])
+                return MessageChain.plain(player.get_data(), quote=message.as_quote())
 
 
 class RandomAlbum(MessageHandler):
