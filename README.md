@@ -90,45 +90,75 @@ TODO
 
 ## 功能
 
-> currencyExchange.CurrencyExchange:  货币转换
-> novelai.GetAICompose:  AI画图
-> dice.Dice:  骰子
-> remaking.GetRemake:  科学remake
-> runPython.RunPython:  Python解释器
-> waifu.GetRandomAnimeFemale:  随机ACG老婆
-> economy.Balance:  余额
-> tools.AStock:  A股详情查询
-> tools.BaiduIndex:  百度指数
-> tools.GetRainfallWeatherGraph:  全国降水天气预告图
-> tools.HealthCalculator:  健康计算器
-> other.CSGOBuff:  CSGO Buff饰品查询
-> other.CSGORandomCase:  CSGO开箱
-> other.Diablo4Tracker:  D4 event tracker
-> other.JokingHazard:  Joking Hazard
-> other.MagnetParse:  磁链内容解析
-> other.NFSWorNot:  判断色图
-> other.RaceHorse:  模拟赛马
-> other.RandomAlbum:  随机专辑
-> pic.HistoryTu:  黑历史
-> pic.LongTu:  随机龙图
-> wt.WTDatamine:  战雷拆包数据查询
-> wt.WTVehicleLine:  战雷开线资源查询
-> wt.WTWinRate:  战雷历史模式国家胜率查询
-> setu.GetLuck:  每日运势
-> debug.WitsAndWagers:  猜来猜趣简化版
-> trpg.CustomDiceTable:  创建自定义骰表
-> trpg.DPRCalculator:  DND5E DPR计算器
-> trpg.Search5ECHM:  DND5E 天麟不全书查询
-> trpg.Search5EMagic:  DND5E 魔法查询
-> schedule.CreateSchedule:  创建定时
-> math.Calculator:  计算器
-> math.FastFallCal:  快速坠落时间计算
-> math.FastPythagorean:  快速勾股计算
-> math.Mathematica:  数学绘图
-> math.UnitConversion:  单位转换
-> math.WolframAlpha:  Wolfram Alpha
-> basic.HelpMeSelect:  随机选择
-> basic.Lottery:  抽奖
-> basic.NowTime:  世界时间
-> basic.SeeRecall:  反撤回
-> basic.UpdatePersonalInfo:  更新群聊个人信息
+```python
+<class 'toogle.plugins.currencyExchange.CurrencyExchange'>: 货币转换
+<class 'toogle.plugins.dice.Dice'>: 骰子
+<class 'toogle.plugins.remaking.GetRemake'>: 科学remake
+<class 'toogle.plugins.runPython.RunPython'>: Python解释器
+<class 'toogle.plugins.online_ai.GetAICompose'>: AI画图
+<class 'toogle.plugins.online_ai.GetMidjourney'>: Midjourney生成图片
+<class 'toogle.plugins.waifu.GetRandomAnimeFemale'>: 随机ACG老婆
+<class 'toogle.plugins.economy.Balance'>: 余额
+<class 'toogle.plugins.economy.Membership'>: 大黄狗赞助
+<class 'toogle.plugins.tools.AStock'>: A股详情查询
+<class 'toogle.plugins.tools.AnimeDownloadSearch'>: 动漫下载搜索
+<class 'toogle.plugins.tools.AnimeSchedule'>: 当季新番
+<class 'toogle.plugins.tools.BaiduIndex'>: 百度指数
+<class 'toogle.plugins.tools.DateCalculator'>: 日期计算器
+<class 'toogle.plugins.tools.FilmDownloadSearch'>: 影视下载搜索
+<class 'toogle.plugins.tools.GetRainfallWeatherGraph'>: 全国降水天气预告图
+<class 'toogle.plugins.tools.HealthCalculator'>: 健康计算器
+<class 'toogle.plugins.tools.PCBenchCompare'>: PC硬件对比
+<class 'toogle.plugins.admin.Mute'>: 禁用成员
+<class 'toogle.plugins.other.BaseballGame'>: 模拟棒球比赛
+<class 'toogle.plugins.other.CSGOBuff'>: CSGO Buff饰品查询
+<class 'toogle.plugins.other.CSGORandomCase'>: CSGO开箱
+<class 'toogle.plugins.other.Diablo4Tracker'>: D4 event tracker
+<class 'toogle.plugins.other.JokingHazard'>: Joking Hazard
+<class 'toogle.plugins.other.MagnetParse'>: 磁链内容解析
+<class 'toogle.plugins.other.MarvelSnapZone'>: 漫威终极逆转Snap工具
+<class 'toogle.plugins.other.MinecraftRCON'>: Minecraft服务器RCON
+<class 'toogle.plugins.other.NFSWorNot'>: 判断色图
+<class 'toogle.plugins.other.RaceHorse'>: 模拟赛马
+<class 'toogle.plugins.other.RandomAlbum'>: 随机专辑
+<class 'toogle.plugins.other.TarkovSearch'>: 塔科夫查询
+<class 'toogle.plugins.other.ToogleCSServer'>: CS服务器相关
+<class 'toogle.plugins.gpt.GetOpenAIConversation'>: OpenAI对话
+<class 'toogle.plugins.pic.GetQutu'>: 趣图
+<class 'toogle.plugins.pic.HistoryTu'>: 黑历史
+<class 'toogle.plugins.pic.LongTu'>: 随机龙图
+<class 'toogle.plugins.pic.ReverseGIF'>: 反转GIF
+<class 'toogle.plugins.pic.Tarrot'>: 塔罗牌
+<class 'toogle.plugins.wt.WTDatamine'>: 战雷拆包数据查询
+<class 'toogle.plugins.wt.WTVehicleLine'>: 战雷开线资源查询
+<class 'toogle.plugins.wt.WTWinRate'>: 战雷历史模式国家胜率查询
+<class 'toogle.plugins.gpt.WhatIs'>: 大黄狗有问必答
+<class 'toogle.plugins.setu.GetLuck'>: 每日运势
+<class 'toogle.plugins.debug.AsyncDebug'>: 异步测试
+<class 'toogle.plugins.debug.CounterPlugin'>: 调试计数器
+<class 'toogle.plugins.debug.DarkstarServerPing'>: Stormworks暗星服务器状态查询
+<class 'toogle.plugins.debug.DebugPlugin'>: 调试用插件
+<class 'toogle.plugins.debug.PoliticsOrNot'>: 调试用插件
+<class 'toogle.plugins.debug.RecallDebugPlugin'>: 撤回debug
+<class 'toogle.plugins.debug.ToogleWorldDebug'>: 异步测试
+<class 'toogle.plugins.debug.WitsAndWagers'>: 猜来猜趣简化版
+<class 'toogle.plugins.trpg.CustomDiceTable'>: 创建自定义骰表
+<class 'toogle.plugins.trpg.DPRCalculator'>: DND5E DPR计算器
+<class 'toogle.plugins.trpg.Search5ECHM'>: DND5E 天麟不全书查询
+<class 'toogle.plugins.trpg.Search5EMagic'>: DND5E 魔法查询
+<class 'toogle.plugins.schedule.CreateSchedule'>: 创建定时
+<class 'toogle.plugins.schedule.DailySetuRanking'>: 每日色图排行
+<class 'toogle.plugins.math.Calculator'>: 计算器
+<class 'toogle.plugins.math.FastFallCal'>: 快速坠落时间计算
+<class 'toogle.plugins.math.FastPythagorean'>: 快速勾股计算
+<class 'toogle.plugins.math.Mathematica'>: 数学绘图
+<class 'toogle.plugins.math.UnitConversion'>: 单位转换
+<class 'toogle.plugins.math.WolframAlpha'>: Wolfram Alpha
+<class 'toogle.plugins.basic.EatWhat'>: 吃什么
+<class 'toogle.plugins.basic.HelpMeSelect'>: 随机选择
+<class 'toogle.plugins.basic.Lottery'>: 抽奖
+<class 'toogle.plugins.basic.NowTime'>: 世界时间
+<class 'toogle.plugins.basic.SeeRecall'>: 反撤回
+<class 'toogle.plugins.basic.UpdatePersonalInfo'>: 更新群聊个人信息
+<class 'toogle.plugins.basic.Vote'>: 投票
+```
