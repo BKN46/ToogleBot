@@ -80,6 +80,8 @@ async def send_message(request: Request):
                 tmp_message.append(Plain(m["content"]))
             elif m["type"] == "image":
                 tmp_message.append(Image(base64=m["content"]))
+            elif m["type"] == "image_url":
+                tmp_message.append(Image(url=m["content"]))
             elif m["type"] == "at":
                 tmp_message.append(At(int(m["content"])))
         msg = MessageChain(tmp_message)

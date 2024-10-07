@@ -200,17 +200,30 @@ class HistoryTu(MessageHandler):
         if message_content.startswith("删黑历史"):
             if not is_admin(message.member.id):
                 return MessageChain.plain(f"你也配？")
-            files = [IMAGES_PATH + x for x in os.listdir(IMAGES_PATH)]
-            del_files = []
-            try:
-                for num in message_content[4:].strip().split():
-                    del_files.append(files[int(num)])
-                pics = [Image(bytes=open(i, 'rb').read()) for i in del_files]
-                for pic in del_files:
-                    os.remove(pic)
-                return MessageChain.create([Plain(f"哗啦啦，删掉了{len(del_files)}张黑历史:")] + pics)
-            except Exception as e:
-                return MessageChain.plain(f"删黑历史失败: {e}\n{str(del_files)}")
+            images: Optional[List[Image]] = message.message.get(Image) # type: ignore
+            if images:
+                del_cnt = 0
+                files = [IMAGES_PATH + x for x in os.listdir(IMAGES_PATH)]
+                for img in images:
+                    img_file_name = img.id.replace("{", "").replace("}", "")
+                    for f in files:
+                        if img_file_name in f:
+                            os.remove(f)
+                            del_cnt += 1
+                            break
+                return MessageChain.plain(f"删黑历史成功: {del_cnt}张", quote=message.as_quote())
+            else:
+                files = [IMAGES_PATH + x for x in os.listdir(IMAGES_PATH)]
+                del_files = []
+                try:
+                    for num in message_content[4:].strip().split():
+                        del_files.append(files[int(num)])
+                    pics = [Image(bytes=open(i, 'rb').read()) for i in del_files]
+                    for pic in del_files:
+                        os.remove(pic)
+                    return MessageChain.create([Plain(f"哗啦啦，删掉了{len(del_files)}张黑历史:")] + pics)
+                except Exception as e:
+                    return MessageChain.plain(f"删黑历史失败: {e}\n{str(del_files)}")
 
         else:
             pics = message.message.get(Image)

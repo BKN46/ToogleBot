@@ -70,7 +70,7 @@ async def handle_help(
     message_pack = PluginWrapper.get_message_pack(event, message)
     search_content = re.search(get_help_regex, message_pack.message.asDisplay()).groups()[1].strip() # type: ignore
     if search_content == "--markdown":
-        res = '\n'.join([f"{mod.plugin_class}: {mod.plugin.name}" for mod in export_plugins])
+        res = '\n'.join([f"{mod.__class__.__name__}: {mod.plugin.name}" for mod in export_plugins])
     elif not search_content:
         res = get_help_page(0)
     elif str.isdigit(search_content):
