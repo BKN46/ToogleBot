@@ -388,3 +388,41 @@ class MessageChain:
             return message_list[:length_limit]
         else:
             return message_list
+
+
+def json_to_msg(msg: Union[str, List[dict], dict]) -> MessageChain:
+    if isinstance(msg, list):
+        tmp_message = MessageChain([])
+        for m in msg:
+            tmp_message += json_to_msg(m)
+        return tmp_message
+    elif isinstance(msg, str):
+        return MessageChain.plain(msg)
+    elif isinstance(msg, dict):
+        if msg["type"] == "text":
+            return MessageChain([Plain(msg["content"])])
+        elif msg["type"] == "image":
+            return MessageChain([Image(base64=msg["content"])])
+        elif msg["type"] == "image_url":
+            return MessageChain([Image(url=msg["content"])])
+        elif msg["type"] == "forward":
+            '''
+            {
+                'type': 'forward',
+                'content': [{
+                    'sender': 'name',
+                    'content': [{#messageChain#}]
+                }]
+            }
+            '''
+            res = ForwardMessage.get_quick_forward_message([
+                (0, x['sender'], json_to_msg(x['content']))
+                for x in msg["content"]]
+            )
+            return res
+        elif msg["type"] == "at":
+            return MessageChain([At(int(msg["content"]))])
+        else:
+            return MessageChain.plain("[未知消息类型]")
+    else:
+        return MessageChain.plain("[未知消息类型]")

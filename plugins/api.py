@@ -4,7 +4,7 @@ import time
 import nonebot
 from fastapi import FastAPI, Request
 
-from toogle.message import Image, MessageChain, Plain, At
+from toogle.message import json_to_msg
 from toogle.nonebot2_adapter import bot_send_message
 from toogle.membership import recv_afdian_msg
 
@@ -73,18 +73,9 @@ async def send_message(request: Request):
 
     group, msg = info["group"], data["message"]
 
-    if isinstance(msg, list):
-        tmp_message = []
-        for m in msg:
-            if m["type"] == "text":
-                tmp_message.append(Plain(m["content"]))
-            elif m["type"] == "image":
-                tmp_message.append(Image(base64=m["content"]))
-            elif m["type"] == "image_url":
-                tmp_message.append(Image(url=m["content"]))
-            elif m["type"] == "at":
-                tmp_message.append(At(int(m["content"])))
-        msg = MessageChain(tmp_message)
+    print(f"{datetime.datetime.now()}\t{request.client}\t/send\t{group}\t{len(data['message'])}", file=open("log/api.log", "a"))
 
+    msg = json_to_msg(msg)
     bot_send_message(group, msg)
+
     return {"message": "success", "send_to": group}
