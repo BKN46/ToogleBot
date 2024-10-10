@@ -226,7 +226,7 @@ class ForwardMessage(Element):
         ]
     
     @staticmethod
-    def get_quick_forward_message(message_list: List[Union['MessageChain', Tuple[int, str, 'MessageChain']]], people_name="QQ用户") -> "MessageChain":
+    def get_quick_forward_message(message_list: List[Union['MessageChain', Tuple[int, str, 'MessageChain']]], people_name="QQ用户", forward_name="转发消息", forward_brief="转发消息") -> "MessageChain":
         if not isinstance(message_list[0], tuple):
             message_list = [(0, people_name, x) for x in message_list] # type: ignore
     
@@ -237,9 +237,9 @@ class ForwardMessage(Element):
             ]),
             0,
             int(time.time()),
-            "转发消息",
+            forward_name,
             0,
-            MessageChain.plain("转发消息"),
+            MessageChain.plain(forward_brief),
         )])
 
         return res
@@ -409,6 +409,8 @@ def json_to_msg(msg: Union[str, List[dict], dict]) -> MessageChain:
             '''
             {
                 'type': 'forward',
+                'title': 'optional',
+                'brief': 'optional',
                 'content': [{
                     'sender': 'name',
                     'content': [{#messageChain#}]
@@ -417,7 +419,9 @@ def json_to_msg(msg: Union[str, List[dict], dict]) -> MessageChain:
             '''
             res = ForwardMessage.get_quick_forward_message([
                 (0, x['sender'], json_to_msg(x['content']))
-                for x in msg["content"]]
+                for x in msg["content"]],
+                forward_name=msg.get("title", "转发消息"),
+                forward_brief=msg.get("brief", "转发消息")
             )
             return res
         elif msg["type"] == "at":
