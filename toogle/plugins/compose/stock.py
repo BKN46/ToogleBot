@@ -63,7 +63,13 @@ def get_search(original_text: str):
         search_list = []
         for x in res.json()["QuotationCodeTable"]["Data"]:
             if x["SecurityTypeName"] in classify_map.keys():
-                line = (get_secucode(x), classify_map[x["SecurityTypeName"]] + x["Name"], classify_map[x["SecurityTypeName"]] + x["Code"])
+                line = (
+                    get_secucode(x),
+                    classify_map[x["SecurityTypeName"]] + x["Name"],
+                    classify_map[x["SecurityTypeName"]] + x["Code"],
+                    f"{x['QuoteID']}",
+                    x["Name"],
+                    )
                 if any([
                     line[0] == original_text,
                     x["Code"] == original_text,
@@ -75,6 +81,43 @@ def get_search(original_text: str):
         return []
 
     return search_list
+
+
+def get_stock_now(codes: list[str]):
+    dimension_map = {
+        'f2': '最新价',
+        'f3': '涨跌幅',
+        'f4': '涨跌额',
+        'f14': '企业名',
+    }
+    url = "https://push2.eastmoney.com/api/qt/ulist/get"
+    params = {
+        'fltt': 1,
+        'invt': 2,
+        'fields': 'f14,f12,f13,f1,f2,f4,f3,f152',
+        'secids': ",".join(codes),
+        'pn': 1,
+        'np': 1,
+        'pz': 20,
+        'dect': 1,
+    }
+    try:
+        res = requests.get(url, params=params).json()['data']['diff']
+    except Exception as e:
+        return f"获取出错\n{repr(e)}"
+    
+    # res = "\n".join([
+    #     f"{line['f14']} {line['f2']/1000:.3f} {line['f3']/100}% ({line['f4']/1000:.3f})"
+    #     for line in res
+    # ])
+    res = {
+        codes[i]: {
+            v: line[k]
+            for k, v in dimension_map.items()
+        }
+        for i, line in enumerate(res)
+    }
+    return res
 
 
 def get_font_wrap(text: str, font: PIL.ImageFont.ImageFont, box_width: int):
@@ -601,6 +644,10 @@ def render_report(code: str):
 if __name__ == "__main__":
     # res = render_report("SZ301061")
     # res = render_HK_stock("00700.HK")
-    res = render_US_stock("MSFT.O")
-    PIL.Image.open(io.BytesIO(res)).show()
-    # print(get_search("微软"))
+    # res = render_US_stock("MSFT.O")
+    # PIL.Image.open(io.BytesIO(res)).show()
+    # print(get_search("腾讯"))
+    print(get_stock_now(["116.03969"]))
+    # search_name = '添加自选股 中国通号 2.885 13000'[5:].strip()
+    # search_arr = search_name.split(' ')
+    # print(search_arr)

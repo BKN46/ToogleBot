@@ -17,18 +17,18 @@ from toogle.message import ForwardMessage, Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack, WaitCommandHandler
 from toogle.nonebot2_adapter import bot_send_message
 from toogle.plugins.compose.anime_calendar import save_anime_list
-from toogle.plugins.compose.stock import get_search, render_report
+from toogle.plugins.compose.stock import get_search, get_stock_now, render_report
 from toogle.plugins.others import baidu_index
 from toogle.plugins.others.pcbench import get_compairison as get_pcbench_compairison
 from toogle.plugins.others.weather import get_rainfall_graph
-from toogle.utils import is_admin
+from toogle.utils import is_admin, modify_json_file
 
 
-class AStock(MessageHandler):
-    name = "A股详情查询"
+class StockReport(MessageHandler):
+    name = "上市企业财报详情查询"
     trigger = r"^财报\s"
     thread_limit = True
-    readme = "A股财报查询"
+    readme = "上市企业财报查询，包含A股、美股、港股"
 
     async def ret(self, message: MessagePack) -> MessageChain:
         search_content = message.message.asDisplay()[2:].strip()
@@ -43,6 +43,88 @@ class AStock(MessageHandler):
         else:
             img_bytes = render_report(search_list[0][0])
             return MessageChain.create([Image(bytes=img_bytes)])
+
+class StockTrace(MessageHandler):
+    name = "黄狗自选股"
+    trigger = r"^自选股$|^添加自选股 |^删除自选股 "
+    readme = "大黄狗股票快速查看\n可通过`添加自选股 [股票名称] [可选:成本价] [可选:持有股数]`添加自选股\n通过`删除自选股 [股票名称]`删除自选股"
+
+    async def ret(self, message: MessagePack) -> MessageChain:
+        message_content = message.message.asDisplay()
+
+        with modify_json_file("stock") as f:
+            stock_list = f.get(str(message.member.id), {
+                '1.000001': {
+                    'name': '上证指数',
+                    'price': 0,
+                    'hold': 0,
+                },
+            })
+
+        if message_content == "自选股":
+            stock_info = get_stock_now(list(stock_list.keys()))
+            if isinstance(stock_info, str):
+                return MessageChain.plain(stock_info, quote=message.as_quote())
+            else:
+                res = ""
+                for k, v in stock_info.items():
+                    base_ratio = 100 if k.startswith('1.') else 1000
+                    res += f"{v['企业名']} {v['最新价']/base_ratio:<10.2f}{v['涨跌幅']/100:>7.2f}%"
+                    if stock_list[k]['price'] and stock_list[k]['hold'] > 0:
+                        total_earn = (v['最新价']/base_ratio - stock_list[k]['price']) * stock_list[k]['hold']
+                        today_earn = v['涨跌额'] * stock_list[k]['hold'] / base_ratio
+                        res += f" [收益]{int(total_earn)}/{int(today_earn)}\n"
+                    else:
+                        res += "\n"
+                return MessageChain.plain(res, quote=message.as_quote())
+
+        elif message_content.startswith("添加自选股"):
+            search_name = message.message.asDisplay()[5:].strip()
+            search_arr = search_name.split(' ')
+            if len(search_arr) == 3:
+                search_name = search_arr[0]
+                stock_price = float(search_arr[1])
+                stock_hold = float(search_arr[2])
+            else:
+                stock_price = 0
+                stock_hold = 0
+
+            search_list = get_search(search_name)
+
+            if len(search_list) == 0:
+                return MessageChain.plain("没有搜到对应 A股/港股/美股 上市公司", quote=message.as_quote())
+            elif len(search_list) > 1:
+                res_text = f"存在多个匹配，请精确搜索:\n" + f"\n".join(
+                    [f"{x[2]} {x[4]}" for x in search_list]
+                )
+                return MessageChain.plain(res_text, quote=message.as_quote())
+            else:
+                with modify_json_file("stock") as f:
+                    stock = search_list[0]
+                    if str(message.member.id) not in f:
+                        f[str(message.member.id)] = {
+                            '1.000001': {
+                                'name': '上证指数',
+                                'price': 0,
+                                'hold': 0,
+                            }
+                        }
+                    f[str(message.member.id)][stock[3]] = {
+                        'name': stock[4],
+                        'price': stock_price,
+                        'hold': stock_hold,
+                    }
+                return MessageChain.plain(f"成功添加自选股: {stock[4]}", quote=message.as_quote())
+        elif message_content.startswith("删除自选股"):
+            stock_name = message.message.asDisplay()[5:].strip()
+            for k, v in stock_list.items():
+                if v['name'] == stock_name:
+                    with modify_json_file("stock") as f:
+                        f[str(message.member.id)].pop(k)
+                    return MessageChain.plain(f"成功删除自选股: {stock_name}", quote=message.as_quote())
+            else:
+                return MessageChain.plain(f"没有找到对应自选股: {stock_name}", quote=message.as_quote())
+        return MessageChain.plain("指令错误", quote=message.as_quote())
 
 
 class BaiduIndex(MessageHandler):
