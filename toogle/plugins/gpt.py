@@ -247,7 +247,7 @@ class GetOpenAIConversation(MessageHandler):
             "content": text
         })
         finish_reason = None
-        while finish_reason is None or   finish_reason == "tool_calls":
+        while finish_reason is None or finish_reason == "tool_calls":
             choice = GetOpenAIConversation.get_chat( # type: ignore
                 '',
                 other_history=messages,
@@ -263,6 +263,10 @@ class GetOpenAIConversation(MessageHandler):
                     }
                 ]
             )
+            if 'choices' not in choice:
+                if 'Your request exceeded model token limit' in choice.get('error', {}).get('message', ''):
+                    raise Exception(f"Error: model token limit exceeded: {choice['error']}")
+                raise Exception(f"Error: unable to find choices in response: {json.dumps(choice, ensure_ascii=False)}")
             choice: dict = choice['choices'][0]
             finish_reason = choice['finish_reason']
             if finish_reason == "tool_calls":  # <-- 判断当前返回内容是否包含 tool_calls
