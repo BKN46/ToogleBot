@@ -53,7 +53,7 @@ class GetQutu(MessageHandler):
             return MessageChain.create([Image.fromLocalFile(file)])
 
     @staticmethod
-    def get_all_pic(IMAGES_PATH, text_filter="", x_size=128, y_size=128):
+    def get_all_pic(IMAGES_PATH, text_filter="", x_size=128, y_size=128, limit=200):
         IMAGES_FORMAT = [
             ".jpg",
             ".JPG",
@@ -75,8 +75,8 @@ class GetQutu(MessageHandler):
             if os.path.splitext(name)[1] == item and text_filter in name
         ]
         IMAGE_NUM = len(image_names)
-        if IMAGE_NUM > 200:
-            IMAGE_NUM = 200
+        if IMAGE_NUM > limit:
+            IMAGE_NUM = limit
         IMAGE_SIZE = (x_size, y_size)
         IMAGE_COLUMN = math.ceil(math.sqrt(IMAGE_NUM))
         IMAGE_ROW = math.ceil(IMAGE_NUM / IMAGE_COLUMN)
@@ -99,7 +99,7 @@ class GetQutu(MessageHandler):
                     )
                     draw.text(
                         ((x - 1) * IMAGE_SIZE[0], (y - 1) * IMAGE_SIZE[1]),
-                        str((y - 1) * (IMAGE_ROW) + x + y - 2),
+                        str((y - 1) * (IMAGE_COLUMN) + x - 1),
                         (200, 0, 0),
                         font,
                     )
@@ -179,11 +179,12 @@ class HistoryTu(MessageHandler):
                 text_filter = ""
             if "随机" in message_content:
                 files = [IMAGES_PATH + x for x in os.listdir(IMAGES_PATH) if text_filter in x]
-                file = random.choice(files)
-                return MessageChain.create([Image.fromLocalFile(file)])
+                random_int = random.randint(0,len(files)-1)
+                file = files[random_int]
+                return MessageChain.create([Plain(f"#{random_int}"), Image.fromLocalFile(file)])
             elif message_content == "黑历史":
                 return MessageChain.create([
-                    GetQutu.get_all_pic(IMAGES_PATH, text_filter=text_filter, x_size=200, y_size=100),
+                    GetQutu.get_all_pic(IMAGES_PATH, text_filter=text_filter, x_size=300, y_size=150, limit=500),
                     Plain(f"一共{len(os.listdir(IMAGES_PATH))}张黑历史"),
                 ])
             else:

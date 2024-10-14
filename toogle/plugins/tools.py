@@ -68,7 +68,7 @@ class StockTrace(MessageHandler):
             else:
                 res = ""
                 for k, v in stock_info.items():
-                    base_ratio = 100 if k.startswith('1.') else 1000
+                    base_ratio = 1000 if k.startswith('116.') else 100
                     res += f"{v['企业名']} {v['最新价']/base_ratio:<10.2f}{v['涨跌幅']/100:>7.2f}%"
                     if stock_list[k]['price'] and stock_list[k]['hold'] > 0:
                         total_earn = (v['最新价']/base_ratio - stock_list[k]['price']) * stock_list[k]['hold']

@@ -13,7 +13,7 @@ from toogle.message import Group, Member, MessageChain, Plain, Quote, ForwardMes
 
 
 class MessageHistory:
-    def __init__(self, windows=2000) -> None:
+    def __init__(self, windows=500) -> None:
         self.history: dict[int, List["MessagePack"]] = {}
         self.windows = windows
 
