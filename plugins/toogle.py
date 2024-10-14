@@ -16,6 +16,8 @@ from nonebot.adapters.mirai2 import MessageChain
 
 from toogle.configs import config
 from toogle.index import export_plugins, active_plugins
+from toogle.message import ForwardMessage
+from toogle.message import MessageChain as ToogleChain
 from toogle.message_handler import MESSAGE_HISTORY, RECALL_HISTORY
 from toogle.nonebot2_adapter import PluginWrapper, bot_send_message
 from toogle.msg_proc import chat_earn
@@ -41,9 +43,8 @@ async def handle_help(
     event: MessageEvent,
     message: MessageChain = EventMessage(),
 ):
-    def get_help_page(page, page_size=5):
+    def get_help_page(page):
         res = []
-        total_page = math.ceil(len(export_plugins)/page_size)
         if page >= total_page:
             page = total_page - 1
         elif page < 0:
@@ -51,9 +52,9 @@ async def handle_help(
         p1, p2 = page * page_size, min((page + 1) * page_size, len(export_plugins))
         for mod in export_plugins[p1:p2]:
             res.append(
-                f"{mod.plugin.name}\n【说明】 {mod.plugin.readme}"
+                f"{mod.plugin.name}\n【触发正则】 {mod.plugin.trigger}\n【说明】 {mod.plugin.readme}"
             )
-        return f"\n{'#'*15}\n".join(res) + f"\n\nPage {page + 1}/{total_page} (指令后加上序号翻页，也可具体查询功能名称)"
+        return f"\n{'#'*15}\n".join(res) + f"\n\nPage {page + 1}/{total_page}"
 
     def fuzz_search(content):
         res = []
@@ -68,11 +69,20 @@ async def handle_help(
         return f"\n{'#'*15}\n".join(res)
 
     message_pack = PluginWrapper.get_message_pack(event, message)
+
+    page_size=5
+    total_page = math.ceil(len(export_plugins)/page_size)
+
     search_content = re.search(get_help_regex, message_pack.message.asDisplay()).groups()[1].strip() # type: ignore
     if search_content == "--markdown":
         res = '\n'.join([f"{mod.__class__.__name__}: {mod.plugin.name}" for mod in export_plugins])
     elif not search_content:
-        res = get_help_page(0)
+        res = ForwardMessage.get_quick_forward_message([
+            ToogleChain.plain(f"{mod.plugin.name}\n【触发正则】 {mod.plugin.trigger}\n【说明】 {mod.plugin.readme}\n【触发花费】 {mod.plugin.price}gb\n【触发间隔】 {mod.plugin.interval}秒")
+            for mod in export_plugins
+            ], people_name="大黄狗")
+        bot_send_message(message_pack, res)
+        return
     elif str.isdigit(search_content):
         res = get_help_page(int(search_content) - 1)
     else:
