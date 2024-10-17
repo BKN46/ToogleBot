@@ -12,6 +12,7 @@ from requests.exceptions import ReadTimeout
 from toogle.configs import config, interval_limiter
 from toogle.message import Image, MessageChain, Plain
 from toogle.message_handler import MESSAGE_HISTORY, MessageHandler, MessagePack, ActiveHandler
+from toogle.nonebot2_adapter import bot_send_message
 from toogle.sql import DatetimeUtils, SQLConnection
 
 api_key = config.get("GPTSecret")
@@ -389,9 +390,24 @@ class WhatIs(MessageHandler):
             )
             return MessageChain.plain(res, quote=message.as_quote())
         except ReadTimeout as e:
-            return MessageChain.plain("请求OpenAI GPT模型超时，请稍后尝试", no_interval=True)
+            return MessageChain.plain("请求GPT模型超时，请稍后尝试", no_interval=True)
         except Exception as e:
-            return MessageChain.plain(f"OpenAI GPT模型服务可能出错，请稍后尝试\n{repr(e)}", no_interval=True)
+            if "model token limit exceeded" in repr(e):
+                bot_send_message(message, MessageChain.plain("请求GPT模型token数量超限，正在切换更大模型尝试回答...", quote=message.as_quote()))
+                try:
+                    res = GetOpenAIConversation.get_web_search(
+                        content,
+                        model=config.get("GPTModelLarge", ""),
+                        settings="请解答以下内容，结果精简在500字以内",
+                        url=config.get("GPTUrl", ""),
+                    )
+                    return MessageChain.plain(res, quote=message.as_quote())
+                except ReadTimeout as e:
+                    return MessageChain.plain("请求GPT模型超时，请稍后尝试", no_interval=True)
+                except Exception as e:
+                    return MessageChain.plain(f"GPT模型服务可能出错，请稍后尝试\n{repr(e)}", no_interval=True)
+            else:
+                return MessageChain.plain(f"GPT模型服务可能出错，请稍后尝试\n{repr(e)}", no_interval=True)
 
 
 def gpt_censor(msg_list: List[Union[MessagePack, str]]):
