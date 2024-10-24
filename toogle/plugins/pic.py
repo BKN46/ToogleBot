@@ -310,3 +310,27 @@ class ReverseGIF(MessageHandler):
             frames[0].save(temp.name, save_all=True, append_images=frames[1:])
             pic_bytes = open(temp.name, "rb").read()
         return MessageChain.create([message.as_quote(), Image(bytes=pic_bytes)])
+
+
+class GenPixelChinese(MessageHandler):
+    name = "生成像素字"
+    trigger = r"^生成像素字"
+    thread_limit = True
+    readme = "生成丁卯点阵体7px像素字"
+
+    async def ret(self, message: MessagePack) -> MessageChain:
+        message_str = message.message.asDisplay()[5:].strip().replace('\n','')
+        image = GenPixelChinese.gen_text_img(message_str)
+        return MessageChain.create([Image(image=image), message.as_quote()])
+
+    @staticmethod
+    def gen_text_img(text, resize_ratio=20):
+        size = 7
+        font = PIL.ImageFont.truetype("toogle/plugins/compose/fonts/DinkieBitmap-7pxDemo.ttf", size+1)
+        img_width = (size+1)*len(text)+1
+        img_height = size + 2
+        image = PIL.Image.new("1", (img_width, img_height), (1))
+        draw = PIL.ImageDraw.Draw(image)
+        draw.text((1, -1), text, font=font)
+        image = image.resize((img_width*resize_ratio, img_height*resize_ratio), PIL.Image.Resampling.BILINEAR)
+        return image
