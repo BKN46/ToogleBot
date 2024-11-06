@@ -179,6 +179,45 @@ def get_tarkov_goons():
     return '\n'.join(res)
 
 
+def get_tarkov_change_auth():
+    res = requests.get('https://api.tarkov-changes.com/v1/auth')
+    return res.json()['results']
+
+
+def get_tarkov_boss_spawn_rate():
+    headers = {
+        'Csrf-Token': get_tarkov_change_auth(),
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
+        'Origin': 'https://tarkov-changes.com',
+        'referer': 'https://tarkov-changes.com/',
+        'Sec-Ch-Ua': '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"',
+        'Sec-Ch-Ua-Mobile': '?0',
+        'Sec-Ch-Ua-Platform': '"macOS"',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+    }
+    res = requests.get('https://api.tarkov-changes.com/v1/boss', headers=headers)
+    spawns = {}
+    for line in res.json()['results']:
+        if line['Map'] == 'SandBox':
+            continue
+        if 1000 >= line['BossChance'] > 0:
+            if line['Map'] not in spawns:
+                spawns[line['Map']] = {}
+            if line['BossName'] in spawns[line['Map']]:
+                # spawns[line['Map']][line['BossName']] = f"{spawns[line['Map']][line['BossName']]}, {line['BossChance']}%"
+                spawns[line['Map']][line['BossName']] = f"{line['BossChance']}%"
+            else:
+                spawns[line['Map']][line['BossName']] = f"{line['BossChance']}%"
+    res_str = ''
+    for k, v in spawns.items():
+        res_str += f"{k}:\n"
+        for boss, chance in v.items():
+            res_str += f"    {boss}: {chance}\n"
+    return res_str
+
+
 if os.path.exists(TARKOV_DATA_PATH):
     with open(TARKOV_DATA_PATH, "r") as f:
         TARKOV_DATA = json.load(f)
@@ -628,5 +667,7 @@ if __name__ == "__main__":
     # print(search_craft(get_market_item('火药')[0].bsg_id))
     # print(search_quest("奢靡人生"))
     # print(search_item_trader_buy('5c093e3486f77430cb02e593'))
-    print(calc_tarkov_tax(343, 2*142, 1000, base_price_ratio=0.4), 18274)
-    print(calc_tarkov_tax(9998, 5*142, 150, base_price_ratio=0.4), 7964)
+    # print(calc_tarkov_tax(343, 2*142, 1000, base_price_ratio=0.4), 18274)
+    # print(calc_tarkov_tax(9998, 5*142, 150, base_price_ratio=0.4), 7964)
+    res = get_tarkov_boss_spawn_rate()
+    print(1)

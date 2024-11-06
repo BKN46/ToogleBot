@@ -296,7 +296,7 @@ class CSGORandomCase(MessageHandler):
 
 class TarkovSearch(MessageHandler):
     name = "塔科夫查询"
-    trigger = r"^\.tarkov|^tk |^tkq |^tkm |^tka |^tkhelp$|^tkgoons$|^tkc |^tktb"
+    trigger = r"^\.tarkov|^tk |^tkq |^tkm |^tka |^tkhelp$|^tkgoons$|^tkc |^tktb|^tkboss"
     thread_limit = True
     readme = f"塔科夫查询\n"\
         f".tarkov #物品名# 查询物品\n"\
@@ -306,6 +306,7 @@ class TarkovSearch(MessageHandler):
         f"tka #弹药名# 查询弹药\n"\
         f"tkc #出售价格# #成本价# #数量# 快速利润计算\n"\
         f"tkm #地图名# 查询地图\n"\
+        f"tkboss 查询全地图BOSS刷率\n"\
         f"tkhelp 相关网站\n"\
         f"tkgoons 查询三狗位置"
 
@@ -329,6 +330,8 @@ class TarkovSearch(MessageHandler):
             return MessageChain.plain(Tarkov.parse_calculator(message_content))
         elif message_content.startswith("tkhelp"):
             return MessageChain.plain(Tarkov.get_sites())
+        elif message_content.startswith("tkboss"):
+            return MessageChain.plain(Tarkov.get_tarkov_boss_spawn_rate())
         elif message_content.startswith("tkgoons"):
             return MessageChain.plain(Tarkov.get_tarkov_goons())
         elif message_content.startswith("tkm "):
