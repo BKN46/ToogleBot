@@ -123,7 +123,6 @@ class MembershipSchedule(ScheduleModule):
             for qq, info in d.items():
                 time_due = datetime.datetime.strptime(info['time_due'], "%Y-%m-%d %H:%M:%S")
                 if time_due < datetime.datetime.now():
-                    del d[qq]
                     continue
                 else:
                     trade_plan = info['trade_plan']
