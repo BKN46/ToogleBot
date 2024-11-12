@@ -202,7 +202,7 @@ def get_tarkov_boss_spawn_rate():
     for line in res.json()['results']:
         if line['Map'] == 'SandBox':
             continue
-        if 1000 >= line['BossChance'] > 0:
+        if line['BossChance'] > 0:
             if line['Map'] not in spawns:
                 spawns[line['Map']] = {}
             if line['BossName'] in spawns[line['Map']]:

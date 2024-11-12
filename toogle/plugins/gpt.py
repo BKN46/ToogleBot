@@ -374,8 +374,8 @@ class WhatIs(MessageHandler):
     readme = "什么是什么"
     interval = 600
     message_length_limit = 1000
-    price = 8
-    
+    price = 12
+
     async def ret(self, message: MessagePack) -> Optional[MessageChain]:
         content = message.message.asDisplay()
         if len(content) > self.message_length_limit:
