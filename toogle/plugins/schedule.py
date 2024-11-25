@@ -8,11 +8,12 @@ import bs4
 import requests
 
 from toogle.economy import get_balance, give_balance
-from toogle.message import Image, MessageChain, Plain, At
+from toogle.message import ForwardMessage, Image, MessageChain, Plain, At
 from toogle.message_handler import MESSAGE_HISTORY, MessageHandler, MessageHistory, MessagePack
+from toogle.plugins.others.weibo import get_save_old_otaku
 from toogle.scheduler import ScheduleModule, all_schedule, get_job_name, load_manual_schedular, remove_job
 from toogle.plugins.compose.daily_news import download_daily
-from toogle.nonebot2_adapter import bot_send_message
+from toogle.nonebot2_adapter import bot_send_message, send_admins
 from toogle.configs import config
 from toogle.utils import SETU_RECORD_PATH, get_main_groups, is_admin, is_admin_group, modify_json_file
 
@@ -143,19 +144,37 @@ class ScheduledMonitor(ScheduleModule):
 
     async def ret(self, message_pack: Union[MessagePack, None]):
         send_infos = {
-            'earth_quake': self.get_earth_quake(),
+            # 'earth_quake': self.get_earth_quake(),
+            # 'bilibili': self.get_bilibili_update,
+            'save_old_otaku': self.get_save_old_otaku(),
         }
         
         for send_title, send_content in send_infos.items():
             if not send_content:
                 continue
-            for group, info in self.send_list.items():
-                if isinstance(info, str) and info == send_title:
-                    bot_send_message(int(group), MessageChain.plain(send_content)) # TODO: add other form of sending
-                elif isinstance(info, dict) and send_title == info.get('function', ''):
-                    pass
-                
+            for group, subscribe_list in self.send_list.items():
+                for info in subscribe_list:
+                    if isinstance(info, str) and info == send_title:
+                        bot_send_message(int(group), send_content)
+                    elif isinstance(info, dict) and send_title == info.get('function', ''):
+                        pass
+
         self.last_monitor_time = datetime.datetime.now()
+        # send_admins(MessageChain.plain(f"定时监测完成，{self.last_monitor_time}\n{send_infos}"))
+
+    def get_save_old_otaku(self):
+        res = []
+        info = get_save_old_otaku(time_limit=self.last_monitor_time.timestamp())
+        if not info:
+            return None
+        for create_time, msg, pic_url_list, detail_page, comments in info:
+            res.append(MessageChain.create([
+                Plain(f"{create_time}\n{msg}\n{detail_page}"),
+            ] + [
+                Image(url=url) for url in pic_url_list
+            ]))
+            res.append(MessageChain.create([Plain(f'{comments[0]}条评论:\n\n' + '\n\n'.join(comments[1]))]))
+        return ForwardMessage.get_quick_forward_message(res, people_name='拯救大龄二次元')
 
 
     def get_earth_quake(self):
@@ -165,7 +184,7 @@ class ScheduledMonitor(ScheduleModule):
         bs = bs4.BeautifulSoup(res.text, 'html.parser')
         table = bs.find('table', {'class': 'speed-table1'})
         if not table:
-            return ''
+            return None
         res = []
         for tr in table.find_all('tr'): # type: ignore
             tds = tr.find_all('td')
@@ -177,8 +196,8 @@ class ScheduledMonitor(ScheduleModule):
             if happen_time > self.last_monitor_time:
                 res.append(f"{level}级地震，发生在{happen_time}，位于{location}")
         if len(res) > 0:
-            return '===== 地震提醒 ======\n' + '\n'.join(res) + '\n ==================='
-        return ''
+            return MessageChain.plain('===== 地震提醒 ======\n' + '\n'.join(res) + '\n ===================')
+        return None
 
 
     def get_bilibili_update(self, mid):
@@ -205,7 +224,8 @@ class ScheduledMonitor(ScheduleModule):
             link = f"https://www.bilibili.com/video/{video['bvid']}"
             output_res.append(f"{video['author']}发布了《{video['title']}》{vtime}\n{link}")
         if output_res:
-            return '\n'.join(output_res)
+            return MessageChain.plain('\n'.join(output_res))
+        return None
 
 
 class CreateSchedule(MessageHandler):
