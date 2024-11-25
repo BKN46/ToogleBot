@@ -386,6 +386,11 @@ def bot_send_message(target: Union[int, MessagePack], message: Union[ToogleChain
     ).start()
 
 
+def send_admins(message: Union[ToogleChain, MessageChain, str]):
+    for i in config.get("ADMIN_LIST", []):
+        bot_send_message(int(i), message, friend=True)
+
+
 def get_event(bot, target_id, sender_id, message_chain):
     source = MessageSource(id=target_id, time=datetime.datetime.now())
     group = GroupInfo(
