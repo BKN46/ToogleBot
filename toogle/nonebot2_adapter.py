@@ -65,6 +65,9 @@ class PluginWrapper:
         if not message_pack.message.asDisplay():
             nonebot.logger.warning("不处理空消息传入") # type: ignore
             return
+        if not re.match(self.plugin.trigger, message_pack.message.asDisplay()):
+            nonebot.logger.warning("错误正则匹配") # type: ignore
+            return
         if self.plugin.price > 0:
             balance = get_balance(message_pack.member.id)
             if balance < self.plugin.price and str(message_pack.group.id) in config["ECO_GROUP"]:
