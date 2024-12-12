@@ -109,6 +109,7 @@ class GetMidjourney(MessageHandler):
                         bot_send_message(message, MessageChain.create([Plain("非法操作")]))
                         continue
                     try:
+                        bot_send_message(message, MessageChain.plain("收到，请稍等", quote=waiter_res.as_quote()))
                         generate_res = midjourney.upsample_image(image_id, int(instruct[-1]))
                         image_id = generate_res["image_id"]
                         pic_url = generate_res["image_url"]
@@ -120,6 +121,7 @@ class GetMidjourney(MessageHandler):
                         bot_send_message(message, MessageChain.create([message.as_quote(), Plain("非法操作")]))
                         continue
                     try:
+                        bot_send_message(message, MessageChain.plain("收到，请稍等", quote=waiter_res.as_quote()))
                         generate_res = midjourney.reroll_image(image_id)
                         image_id = generate_res["image_id"]
                         pic_url = generate_res["image_url"]
@@ -131,6 +133,7 @@ class GetMidjourney(MessageHandler):
                         bot_send_message(message, MessageChain.create([message.as_quote(), Plain("非法操作")]))
                         continue
                     try:
+                        bot_send_message(message, MessageChain.plain("收到，请稍等", quote=waiter_res.as_quote()))
                         generate_res = midjourney.varient_image(image_id, int(instruct[-1]))
                         image_id = generate_res["image_id"]
                         pic_url = generate_res["image_url"]
@@ -142,6 +145,7 @@ class GetMidjourney(MessageHandler):
                         bot_send_message(message, MessageChain.create([message.as_quote(), Plain("非法操作")]))
                         continue
                     try:
+                        bot_send_message(message, MessageChain.plain("收到，请稍等", quote=waiter_res.as_quote()))
                         generate_res = midjourney.varient_image(image_id, variation=instruct)
                         image_id = generate_res["image_id"]
                         pic_url = generate_res["image_url"]
