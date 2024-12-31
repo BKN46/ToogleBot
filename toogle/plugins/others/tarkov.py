@@ -120,9 +120,11 @@ MAP_INFO = {
 
 def get_sites():
     return f"[交互地图]https://escapefromtarkov.fandom.com/wiki/Map:Customs#"\
+    f"\n[中文百科]https://www.eftarkov.com/"\
+    f"\n[中文任务查询]https://tarkov.kaedeori.com/"\
     f"\n[快速定位]https://tarkov-market.com/maps/woods"\
     f"\n[跳蚤市场]https://tarkov-market.com/"\
-    f"\n[任务跟踪]https://tarkov-market.com/"\
+    f"\n[任务跟踪]https://tarkov-market.com/progression/quests-interactive"\
     f"\n[子弹信息]https://www.eft-ammo.com/"\
     f"\n[弹道计算]https://tarkov-ballistics.com/"\
     f"\n[在线配装]https://www.totovbuilder.com/build"\
@@ -218,13 +220,45 @@ def get_tarkov_boss_spawn_rate():
     return res_str
 
 
+def get_tarkov_api_boss_spawn_rate():
+    data = query_tarkov_dev("""{
+                    maps(gameMode: pve) {
+                        name
+                        bosses {
+                            name
+                            spawnChance
+                        }
+                    }
+                }""")
+    spawns = {}
+    for line in data['maps']:
+        if line['name'] == 'SandBox':
+            continue
+        if len(line['bosses']) > 0:
+            if line['name'] not in spawns:
+                spawns[line['name']] = {}
+            for boss in line['bosses']:
+                spawns[line['name']][boss['name']] = f"{int(boss['spawnChance']*100)}%"
+    res_str = ''
+    for k, v in spawns.items():
+        res_str += f"{k}:\n"
+        for boss, chance in v.items():
+            res_str += f"    {boss}: {chance}\n"
+    return res_str
+
+
+def reload_tarkov_static_data():
+    global TARKOV_DATA
+    TARKOV_DATA = get_tarkov_meta_data()
+    with open(TARKOV_DATA_PATH, "w") as f:
+        json.dump(TARKOV_DATA, f, ensure_ascii=False, indent=2)
+
+
 if os.path.exists(TARKOV_DATA_PATH):
     with open(TARKOV_DATA_PATH, "r") as f:
         TARKOV_DATA = json.load(f)
 else:
-    TARKOV_DATA = get_tarkov_meta_data()
-    with open(TARKOV_DATA_PATH, "w") as f:
-        json.dump(TARKOV_DATA, f, ensure_ascii=False, indent=2)
+    reload_tarkov_static_data()
 
 
 class Item:
@@ -378,9 +412,15 @@ def search_item_trader_buy(item_bsg_id):
 
 
 def search_item(item_name_cn, market=True, pve=False):
+    try_static = False
+    res = ""
     if market:
-        items = get_market_item(item_name_cn, pve=pve)
-    else:
+        try:
+            items = get_market_item(item_name_cn, pve=pve)
+        except Exception as e:
+            try_static = True
+    if (not market) or try_static:
+        res = "[TarkovMarket API请求失败, 使用静态数据]\n"
         items = [Item(x) for x in search_item_json(item_name_cn)]
         for item in items:
             if item.name == item_name_cn:
@@ -402,7 +442,7 @@ def search_item(item_name_cn, market=True, pve=False):
     else:
         item = items[0]
         if market:
-            res = f"{item.name} - {item.price} RUB ({item.diff24h}% in 24h / {item.diff7days}% in 7d)"
+            res += f"{item.name} - {item.price} RUB ({item.diff24h}% in 24h / {item.diff7days}% in 7d)"
             if item.banned_on_flea:
                 res += f"\n[不可跳蚤交易]"
             elif not item.have_market_data:
@@ -669,5 +709,5 @@ if __name__ == "__main__":
     # print(search_item_trader_buy('5c093e3486f77430cb02e593'))
     # print(calc_tarkov_tax(343, 2*142, 1000, base_price_ratio=0.4), 18274)
     # print(calc_tarkov_tax(9998, 5*142, 150, base_price_ratio=0.4), 7964)
-    res = get_tarkov_boss_spawn_rate()
-    print(1)
+    res = get_tarkov_api_boss_spawn_rate()
+    print(res)

@@ -167,9 +167,10 @@ class ScheduledMonitor(ScheduleModule):
         info = get_save_old_otaku(time_limit=self.last_monitor_time.timestamp())
         if not info:
             return None
-        for create_time, msg, pic_url_list, detail_page, comments in info:
+        for create_time, msg, pic_url_list, detail_page, comments, key_info in info:
             res.append(MessageChain.create([
-                Plain(f"{create_time}\n{msg}\n{detail_page}"),
+                Plain(f"{key_info}\n{create_time}\n"),
+                Plain(f"{msg}\n{detail_page}"),
             ] + [
                 Image(url=url) for url in pic_url_list
             ]))

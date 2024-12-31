@@ -296,12 +296,13 @@ class CSGORandomCase(MessageHandler):
 
 class TarkovSearch(MessageHandler):
     name = "塔科夫查询"
-    trigger = r"^\.tarkov|^tk |^tkq |^tkm |^tka |^tkhelp$|^tkgoons$|^tkc |^tktb|^tkboss"
+    trigger = r"^\.tarkov|^tk |^tkq |^tkm |^tka |^tkhelp$|^tkgoons$|^tkc |^tktb|^tkboss|^tkreload"
     thread_limit = True
     readme = f"塔科夫查询\n"\
         f".tarkov #物品名# 查询物品\n"\
         f".tarkovpve #物品名# 查询PVE物品\n"\
         f"tk #物品名# 快速查询PVE物品\n"\
+        f"tkreload 更新塔科夫数据\n"\
         f"tkq #任务名# 查询任务\n"\
         f"tka #弹药名# 查询弹药\n"\
         f"tkc #出售价格# #成本价# #数量# 快速利润计算\n"\
@@ -331,9 +332,12 @@ class TarkovSearch(MessageHandler):
         elif message_content.startswith("tkhelp"):
             return MessageChain.plain(Tarkov.get_sites())
         elif message_content.startswith("tkboss"):
-            return MessageChain.plain(Tarkov.get_tarkov_boss_spawn_rate())
+            return MessageChain.plain(Tarkov.get_tarkov_api_boss_spawn_rate())
         elif message_content.startswith("tkgoons"):
             return MessageChain.plain(Tarkov.get_tarkov_goons())
+        elif message_content.startswith("tkreload"):
+            Tarkov.reload_tarkov_static_data()
+            return MessageChain.plain("数据已更新")
         elif message_content.startswith("tkm "):
             search_content = message_content[4:].strip()
             search_map = Tarkov.MAP_INFO.get(search_content)
