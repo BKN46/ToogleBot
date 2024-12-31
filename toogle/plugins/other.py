@@ -320,7 +320,7 @@ class TarkovSearch(MessageHandler):
         elif message_content.startswith("tkq "):
             search_content = message_content[4:].strip()
             res = Tarkov.search_quest(search_content)
-            return MessageChain.plain(res)
+            return MessageChain.plain(res) # type: ignore
         elif message_content.startswith("tka "):
             search_content = message_content[4:].strip()
             res = Tarkov.search_ammo(search_content)

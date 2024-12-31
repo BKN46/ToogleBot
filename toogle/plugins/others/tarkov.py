@@ -16,14 +16,14 @@ TARKOV_MARKET_SECRET = config.get("TARKOV_MARKET_SECRET")
 
 
 TRADER_CN_NAMES = {
-    "Prapor": "俄商Prapor",
-    "Therapist": "大妈Therapist",
-    "Skier": "配件商Skier",
-    "Peacekeeper": "美商Peacekeeper",
-    "Mechanic": "机械师Mechanic",
-    "Ragman": "服装商Ragman",
-    "Jaeger": "猎人Jaeger",
-    "Fence": "黑商Fence",
+    "Prapor": "俄商",
+    "Therapist": "大妈",
+    "Skier": "配件商",
+    "Peacekeeper": "美商",
+    "Mechanic": "机械师",
+    "Ragman": "服装商",
+    "Jaeger": "野鸽",
+    "Fence": "黑商",
 }
 
 HIDEOUT_CN_NAMES = {
@@ -509,7 +509,18 @@ def search_ammo(ammo_name):
         res += f"[{item['name']}]".ljust(25)
         res += f"{item['properties']['damage']}" + (f"x{item['properties']['projectileCount']}" if item['properties']['projectileCount'] > 1 else "") + "伤"
         res += f" {item['properties']['penetrationPower']}穿"
-        res += f" - 基准价格: {item['basePrice']} RUB"
+        # res += f" - 基准价格: {item['basePrice']} RUB"
+        if [x for x in item['buyFor'] if x['vendor']['name'] in TRADER_CN_NAMES]:
+            buy_for = list(sorted([x for x in item['buyFor'] if x['vendor']['name'] in TRADER_CN_NAMES], key=lambda x: x['priceRUB']))[0]
+            res += f" {TRADER_CN_NAMES.get(buy_for['vendor']['name'],buy_for['vendor']['name'])}L{buy_for['vendor'].get('minTraderLevel',0)}"
+            if (buy_for['vendor'].get('taskUnlock') or {}).get('name'):
+                res += f"[{buy_for['vendor']['taskUnlock']['name']}]"
+            else: 
+                quest_req = [x['value'] for x in buy_for['requirements'] if x['type'] == 'questCompleted']
+                if quest_req:
+                    quest_info = search_quest("&", quest_id=quest_req[0]) or {'name': '任务需求'}
+                    res += f"[{quest_info['name']}]" # type: ignore
+            res += f": {buy_for['price']} {buy_for['currency']}"
         res += "(禁跳蚤)" if 'noFlea' in item['types'] else ""
         res += "\n"
     if len(ammos) > 10:
@@ -540,14 +551,20 @@ def get_station(station_id):
     return {'name': '[未找到]'}
 
 
-def search_quest(quest_name):
+def search_quest(quest_name, quest_id=None):
     quests = []
+        
     for task in TARKOV_DATA['tasks']:
+        if quest_id and quest_id == task['tarkovDataId']:
+            return task
         if quest_name == task['name']:
             quests = [task]
             break
         elif quest_name in task['name']:
             quests.append(task)
+            
+    if quest_id or not quests:
+        return []
 
     if len(quests) > 1:
         res = []
@@ -709,5 +726,6 @@ if __name__ == "__main__":
     # print(search_item_trader_buy('5c093e3486f77430cb02e593'))
     # print(calc_tarkov_tax(343, 2*142, 1000, base_price_ratio=0.4), 18274)
     # print(calc_tarkov_tax(9998, 5*142, 150, base_price_ratio=0.4), 7964)
-    res = get_tarkov_api_boss_spawn_rate()
+    # res = get_tarkov_api_boss_spawn_rate()
+    res = search_ammo("6.8")
     print(res)
