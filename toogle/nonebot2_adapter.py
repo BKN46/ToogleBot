@@ -65,8 +65,8 @@ class PluginWrapper:
         if not message_pack.message.asDisplay():
             nonebot.logger.warning("不处理空消息传入") # type: ignore
             return
-        if not re.match(self.plugin.trigger, message_pack.message.asDisplay()):
-            nonebot.logger.warning("错误正则匹配") # type: ignore
+        if not re.findall(self.plugin.trigger, message_pack.message.asDisplay().strip()):
+            nonebot.logger.warning(f"错误正则匹配: [{self.plugin.trigger}] {message_pack.message.asDisplay()}") # type: ignore
             return
         if self.plugin.price > 0:
             balance = get_balance(message_pack.member.id)
