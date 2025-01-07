@@ -329,7 +329,7 @@ def parse_anime_db(res):
     profile_heat = (
         soup.find(id="main1").find("a", {"href": "seriesfinder3.php"}).text.split()[0] # type: ignore
     )
-    profile_year = soup.find("a", {"href": "year_trivia.php"}).text.split()[0] # type: ignore
+    profile_year = soup.find("a", {"href": re.compile(r"animebyyear\.php\?.*")}).text[1:-1] # type: ignore
     profile_src = (
         soup.find(id="sidephoto")
         .find(text="From") # type: ignore
