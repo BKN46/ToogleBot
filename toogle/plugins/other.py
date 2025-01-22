@@ -296,7 +296,7 @@ class CSGORandomCase(MessageHandler):
 
 class TarkovSearch(MessageHandler):
     name = "塔科夫查询"
-    trigger = r"^\.tarkov|^tk |^tkq |^tkm |^tka |^tkhelp$|^tkgoons$|^tkc |^tktb|^tkboss|^tkreload"
+    trigger = r"^\.tarkov|^tk |^tkq |^tkm |^tka |^tkhelp$|^tkgoons$|^tkc |^tktb|^tkboss|^tkb|^tkreload"
     thread_limit = True
     readme = f"塔科夫查询\n"\
         f".tarkov #物品名# 查询物品\n"\
@@ -305,6 +305,7 @@ class TarkovSearch(MessageHandler):
         f"tkreload 更新塔科夫数据\n"\
         f"tkq #任务名# 查询任务\n"\
         f"tka #弹药名# 查询弹药\n"\
+        f"tkb #弹药名# #护甲等级# #护甲耐久# #护甲材质# 模拟弹药穿甲\n"\
         f"tkc #出售价格# #成本价# #数量# 快速利润计算\n"\
         f"tkm #地图名# 查询地图\n"\
         f"tkboss 查询全地图BOSS刷率\n"\
@@ -324,6 +325,12 @@ class TarkovSearch(MessageHandler):
         elif message_content.startswith("tka "):
             search_content = message_content[4:].strip()
             res = Tarkov.search_ammo(search_content)
+            return MessageChain.plain(res)
+        elif message_content.startswith("tkb "):
+            search_content = message_content[4:].strip().split()
+            if len(search_content) < 4:
+                return MessageChain.plain("参数错误")
+            res = Tarkov.get_tarkov_ballistic_test(' '.join(search_content[:-3]), int(search_content[-3]), int(search_content[-2]), search_content[-1])
             return MessageChain.plain(res)
         elif message_content.startswith("tktb"):
             return MessageChain.plain(Tarkov.get_tieba_main())

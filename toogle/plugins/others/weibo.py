@@ -81,7 +81,14 @@ def get_save_old_otaku(json_dict={}, time_limit=0.0, bearable_time=60.0):
         if not '求脱单' in msg_raw:
             continue
         key_info = msg_raw.split("\n")[1]
-        pic_url_list = [v['original']['url'] for k, v in msg['pic_infos'].items()]
+        if 'pic_infos' in msg:
+            pic_url_list = [v['original']['url'] for k, v in msg['pic_infos'].items()]
+        else:
+            pic_url_list = [
+                item['data']['original']['url']
+                for item in msg['mix_media_info']['items']
+                if item['type'] == 'pic'
+            ]
         detail_page = f"https://weibo.com/{msg['user']['id']}/{msg['mblogid']}#comment"
         comments = get_comments(msg['user']['id'], msg['id'])
         res.append((create_time, msg_raw, pic_url_list, detail_page, comments, key_info))

@@ -2,6 +2,7 @@ import datetime
 import json
 import math
 import os
+import random
 import re
 import sys
 import bs4
@@ -679,6 +680,7 @@ def profit_calculate(
     require_cover = math.ceil((base_price * quantity + tax) / quantity)
     return profit, tax, require_cover
 
+
 def parse_calculator(msg):
     re_str = r"^tkc (\d*) (\d*)(u|e|)(\/| )(\d*)"
     re_group = re.search(re_str, msg)
@@ -715,6 +717,95 @@ def get_tieba_main(name='逃离塔科夫'):
     return "贴吧最近消息：\n" + f"\n".join(contents[1:15])
 
 
+ARMOR_MATERIAL_LIST = {
+    # Destructibility, Explosive Destructibility
+    '芳纶': (0.1875, 0.15),
+    '超高分子量聚乙烯': (0.3375, 0.3),
+    '复合材料': (0.375, 0.2),
+    '钛': (0.4125, 0.375),
+    '铝': (0.45, 0.45),
+    '装甲钢': (0.525, 0.45),
+    '陶瓷': (0.6, 0.525),
+    '玻璃': (0.6, 0.6),
+}
+
+def tarkov_penetration_test(bullet_pen, bullet_damage, bullet_armor_damage, armor_level, armor_durability_max, armor_material, blunt_damage=0.0, damage_reduction=0.0, batch=1000):
+    def get_pen_posibility(armor_durability, armor_class, bullet_pen):
+        d, c, n = armor_durability, armor_class, bullet_pen
+        a=(121-5000/(45+d*2))*c*10*0.01
+        if n >= a:
+            return (100+n/(0.9*a-n))/100
+        elif (a-15)<n<a:
+            return 0.4*(a-n-15)**2 / 100
+        else:
+            return 0
+        
+    def durability_loss(bullet_pen, bullet_armor_damage, armor_class, armor_desrtuctibility):
+        return bullet_pen * bullet_armor_damage * min(max(bullet_pen / armor_class / 10, 0.5), 0.9) * armor_desrtuctibility
+    
+    def simulate_strike():
+        armor_durability = armor_durability_max
+        res = []
+        total_damage = 0
+        for _ in range(100):
+            pen_posibility = get_pen_posibility(armor_durability / armor_durability_max * 100, armor_level, bullet_pen)
+            if random.random() < pen_posibility:
+                total_damage += bullet_damage * (1-damage_reduction)
+            else:
+                total_damage += blunt_damage * bullet_damage
+            armor_durability -= durability_loss(bullet_pen, bullet_armor_damage, armor_level, ARMOR_MATERIAL_LIST[armor_material][0])
+            armor_durability = max(armor_durability, 0)
+            res.append(total_damage)
+        return res
+
+    pentimes, d35times, d85times, d200times = 0, 0, 0, 0
+    for _ in range(batch):
+        res = simulate_strike()
+        pen_sign, d35_sign, d85_sign, d200_sign = False, False, False, False
+        for i, damage in enumerate(res):
+            if not pen_sign and damage >= 1:
+                pentimes += i + 1
+                pen_sign = True
+            if not d35_sign and damage >= 35:
+                d35times += i + 1
+                d35_sign = True
+            if not d85_sign and damage >= 85:
+                d85times += i + 1
+                d85_sign = True
+            if not d200_sign and damage >= 200:
+                d200times += i + 1
+                d200_sign = True
+            
+
+    pen, d35, d85, d200 = pentimes / batch, d35times / batch, d85times / batch, d200times / batch
+
+    return pen, d35, d85, d200
+
+
+def get_tarkov_ballistic_test(ammo_name, armor_level, armor_duration, armor_material):    
+    if armor_material not in ARMOR_MATERIAL_LIST:
+        return "未找到该护甲材质:\n" + '\n'.join(ARMOR_MATERIAL_LIST.keys())
+
+    ammos = sorted([
+        item for item in search_item_json(ammo_name, blur=True)
+        if 'ammo' in item['types'] and item['properties']
+    ], key=lambda x: x['properties']['penetrationPower'], reverse=True)
+
+    if len(ammos) == 0:
+        return "未找到该弹药"
+    elif len(ammos) > 1:
+        return "找到多种弹药，请精确输入:\n" + "\n".join([x['name'] for x in ammos])
+
+    ammo = ammos[0]['properties']
+    
+    res = tarkov_penetration_test(ammo['penetrationPower'], ammo['damage'], ammo['armorDamage'], armor_level, armor_duration, armor_material)
+    
+    return f"平均穿甲需要: {res[0]:.2f}发\n"\
+            f"平均35伤需要: {res[1]:.2f}发\n"\
+            f"平均85伤需要: {res[2]:.2f}发\n"\
+            f"平均200伤需要: {res[3]:.2f}发"
+
+
 if __name__ == "__main__":
     # print(search_item("马宝路香烟", market=False, pve=False))
     # print(search_craft("57347c5b245977448d35f6e1"))
@@ -727,5 +818,6 @@ if __name__ == "__main__":
     # print(calc_tarkov_tax(343, 2*142, 1000, base_price_ratio=0.4), 18274)
     # print(calc_tarkov_tax(9998, 5*142, 150, base_price_ratio=0.4), 7964)
     # res = get_tarkov_api_boss_spawn_rate()
-    res = search_ammo("6.8")
+    # res = search_ammo("6.8")
+    res = get_tarkov_ballistic_test('7.62x51毫米 BPZ FMJ', 5, 45, '超高分子量聚乙烯')
     print(res)
