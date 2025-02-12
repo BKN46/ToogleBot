@@ -3,7 +3,7 @@ import json
 import math
 import random
 import re
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 import nonebot
 import requests
 import time
@@ -228,10 +228,89 @@ class GetOpenAIConversation(MessageHandler):
                     data = json.loads(decoded_line[5:].strip())
                     if 'content' in data['choices'][0]['delta']:
                         res_text += data['choices'][0]['delta']['content']
+                elif decoded_line.endswith("[DONE]"):
+                    break
             if time.time() - start_time > max_time:
                 res_text += "\n[由于时长限制后续生成直接截断]"
                 break
         return res_text.strip()
+
+    @staticmethod
+    def get_chat_stream_logic_chain(
+        text: Union[str, list],
+        max_time=30,
+        settings: str = "",
+        other_history: list = [],
+        model="deepseek-r1",
+        max_tokens=1000,
+        url = "https://api.openai.com/v1",
+        tools = [],
+        api_key = config.get("GPTSecret"),
+    ):
+        path = "/chat/completions"
+        body = {
+            "model": model,
+            "messages": [{"role": "user", "content": text}],
+            "stream": True,
+            "max_tokens": max_tokens,
+        }
+        if tools:
+            body['tools'] = tools
+
+        if other_history:
+            body['messages'] = [({"role": "user", "content": x} if isinstance(x, str) else x) for x in other_history] + body['messages']
+        if settings:
+            body['messages'] = [{"role": "system", "content": settings}] + body['messages']
+
+        reason_text = ''
+        res_text = ''
+        total_text = ''
+        error = ''
+        usage = 0
+        start_time = time.time()
+
+        header = {"Authorization": f"Bearer {api_key}"}
+        res = requests.post(url + path, headers=header, json=body, proxies=proxies, stream=True, timeout=15, verify=False)
+        for line in res.iter_lines():
+            # filter out keep-alive new lines
+            if line:
+                decoded_line = line.decode('utf-8')
+                if decoded_line.startswith("data:") and not decoded_line.endswith("[DONE]"):
+                    data = json.loads(decoded_line[5:].strip())
+                    if 'reasoning_content' in data['choices'][0]['delta']:
+                        reason_text += data['choices'][0]['delta']['reasoning_content']
+                        total_text += data['choices'][0]['delta']['reasoning_content']
+                    if 'content' in data['choices'][0]['delta']:
+                        res_text += data['choices'][0]['delta']['content']
+                        total_text += data['choices'][0]['delta']['content']
+                    if 'usage' in data:
+                        usage = data['usage']['total_tokens']
+                elif 'error' in decoded_line:
+                    error = json.loads(decoded_line)['error']['message']
+            if time.time() - start_time > max_time:
+                res_text += "\n[由于时长限制后续生成直接截断]"
+                break
+
+            if '\n\n' in total_text:
+                yield_content = total_text.split('\n\n')[:-1]
+                total_text = total_text.split('\n\n')[-1]
+                for content in yield_content:
+                    yield {
+                        'yield': content,
+                        'usage': usage,
+                        'error': error,
+                        'is_res': len(res_text) > 0,
+                    }
+
+        yield {
+            'yield': total_text,
+            'reason': reason_text.strip(),
+            'res': res_text.strip(),
+            'usage': usage,
+            'error': error,
+            'use_time': (time.time() - start_time) * 1000,
+        }
+
 
     @staticmethod
     def get_web_search(
@@ -369,7 +448,7 @@ class ActiveAIConversation(ActiveHandler):
 
 class WhatIs(MessageHandler):
     name = "大黄狗有问必答"
-    trigger = r"^什么是|^查一下"
+    trigger = r"^什么是|^查一下|^DS |^DSR "
     thread_limit = True
     readme = "什么是什么"
     interval = 600
@@ -380,6 +459,40 @@ class WhatIs(MessageHandler):
         content = message.message.asDisplay()
         if len(content) > self.message_length_limit:
             return MessageChain.plain(f"请求字数超限：{len(content)} > {self.message_length_limit}", no_interval=True)
+
+        if content.startswith("DSR "):
+            content = content[4:]
+            start_output=False
+            for res in GetOpenAIConversation.get_chat_stream_logic_chain(
+                content,
+                model="deepseek-r1",
+                url="https://api.lkeap.cloud.tencent.com/v1",
+                api_key=config.get("GPTSecretTencent"),
+                max_time=300,
+            ):
+                if res['error']:
+                    return MessageChain.plain(f"\n出现错误: {res['error']}", quote=message.as_quote())
+                if not start_output and res['is_res']:
+                    start_output = True
+                    res['yield'] = f"{res['yield']}"
+                bot_send_message(message, MessageChain.plain(res['yield'].strip()))
+            return MessageChain.plain("对话结束", quote=message.as_quote())
+        elif content.startswith("DS "):
+            content = content[3:]
+            final_res = {}
+            for res in GetOpenAIConversation.get_chat_stream_logic_chain(
+                content,
+                model="deepseek-r1",
+                url="https://api.lkeap.cloud.tencent.com/v1",
+                api_key=config.get("GPTSecretTencent"),
+                max_time=300,
+            ):
+                final_res = res
+                if res['error']:
+                    return MessageChain.plain(f"\n出现错误: {res['error']}", quote=message.as_quote())
+            if not final_res['res'].strip():
+                final_res['res'] = "无输出结果，以下是推理路径：\n" + final_res['reason']
+            return MessageChain.plain(f"{final_res['res']}\n\n开销: {final_res['usage']}\n耗时: {final_res['use_time']:.2f}ms", quote=message.as_quote()) # type: ignore
 
         try:
             res = GetOpenAIConversation.get_web_search(
