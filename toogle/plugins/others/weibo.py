@@ -95,11 +95,19 @@ def get_save_old_otaku(json_dict={}, time_limit=0.0, bearable_time=60.0):
     return res
 
 
-def get_comments(user_id, comment_id):
-    url = f'https://weibo.com/ajax/statuses/buildComments?is_reload=1&id={comment_id}&is_show_bulletin=2&is_mix=0&count=10&uid={user_id}&fetch_level=0&locale=zh-CN'
+def get_comments(user_id, comment_id, limit=5, refresh_cookie=False, time_order=False):
+    time_order = 'flow=1&' if time_order else ''
+    url = f'https://weibo.com/ajax/statuses/buildComments?{time_order}is_reload=1&id={comment_id}&is_show_bulletin=2&is_mix=0&count=20&uid={user_id}&fetch_level=0&locale=zh-CN'
+    if refresh_cookie:
+        cookie = get_cookie()
+        if not cookie:
+            return 0, ['获取cookie失败']
+        headers.update({
+            'Cookie': f"SUB={cookie[0]}; SUBP={cookie[1]};"
+        })
     res = requests.get(url, headers=headers).json()
     total_number = res['total_number']
-    msg = [f"{x['text_raw']} [{x['like_counts']}点赞][{x['source']}]" for x in res['data'][:5]]
+    msg = [f"{x['text_raw']} [{x['like_counts']}点赞][{x['source']}]" for x in res['data'][:limit]]
     return total_number, msg
 
 

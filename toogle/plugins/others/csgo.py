@@ -3,18 +3,21 @@ import io
 import os
 import json
 import random
+import sys
 import threading
 import time
 
+import bs4
 import requests
 import PIL.Image
 from mysql import connector
 from matplotlib import pyplot as plt
 
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../.."))
+
 from toogle.configs import config, proxies
 from toogle.message import Image
 from toogle.utils import draw_pic_text, pic_max_resize, text2img
-from toogle.sql import SQLConnection
 
 
 thread_lock = threading.Lock()
