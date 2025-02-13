@@ -245,7 +245,7 @@ class Dice(MessageHandler):
             for _ in range(30000)
         ]
         random_y = []
-        dice_x = [i + min(random_res) for i in range(max(random_res) + 1)]
+        dice_x = [i + min(random_res) for i in range(max(random_res) - min(random_res) + 1)]
 
         plt.xlim(min(random_res), max(random_res))
         plt.xticks(
