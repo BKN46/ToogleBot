@@ -19,6 +19,7 @@ from toogle import utils
 from toogle.message import At, ForwardMessage, Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack
 from toogle.nonebot2_adapter import bot_send_message
+import toogle.plugins.others.gf2 as girlsfrontline2
 from toogle.plugins.others.magnet import do_magnet_parse, do_magnet_preview, parse_size
 from toogle.plugins.others.steam import source_server_info
 from toogle.plugins.others import tarkov as Tarkov
@@ -685,6 +686,40 @@ class MarvelSnapZone(MessageHandler):
             f"携带分数贡献: {info.get('Cube Rate on Draw', 'null')}\n"
             f"使用分数贡献: {info.get('Cube Rate on Play', 'null')}\n"
         )
+
+
+class GF2DataSearch(MessageHandler):
+    name = "少前2快速搜索工具"
+    trigger = r"^gf2 "
+    thread_limit = True
+    readme = "少前2快速搜索工具，搜索全部人形/武器技能词条\n可使用>来指定顺序搜索\n可使用!来指定不包含\n最后一层过滤为翻页"
+
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        content = message.message.asDisplay()[4:].strip()
+        if content == 'reload':
+            girlsfrontline2.gf2_mcc_doll_data()
+            girlsfrontline2.reload_all_data()
+            return MessageChain.plain("数据已更新")
+
+        page, page_size = 0, 10
+        if content.split('>')[-1].strip().isdigit():
+            page = int(content.split('>')[-1].strip()) - 1
+            content = content.split('>')[0].strip()
+
+        res = girlsfrontline2.general_search(content)
+        res = [
+            MessageChain.plain(x) for x in res
+        ]
+        
+        if len(res) <= 0:
+            return MessageChain.plain("无搜索结果", quote=message.as_quote())
+
+        if len(res) > page_size:
+            total_page = len(res) // page_size + 1
+            res = res[page * page_size: (page + 1) * page_size]
+            res.append(MessageChain.plain(f"第{page + 1}页 / 共{total_page}页 \n输入 gf2 {content}>{page + 1} 来查看下一页"))
+
+        return ForwardMessage.get_quick_forward_message(res) # type: ignore
 
 
 class NFSWorNot(MessageHandler):
