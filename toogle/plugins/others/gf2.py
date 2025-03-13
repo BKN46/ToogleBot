@@ -169,13 +169,21 @@ def parse_single_doll(doll_data):
         skills[skill_type] += parse_css_text(doll_data[skill_type][-1]['Desc'], tooltip_bool=tooltip_bool)
         if doll_data[skill_type][-1].get('Upgrade'):
             skills[skill_type] += '\n升级: ' + parse_css_text(doll_data[skill_type][-1]['Upgrade'], tooltip_bool=tooltip_bool)
+            
+    talent_keys = {}
+    for talent in doll_data.get('TalentKey', []):
+        talent_keys[talent['Name']] = parse_css_text(talent['Desc'])
 
     return [
         f'[武器]{weapon_name}(原型{weapon_code}): {weapon_skill}',
         *[
             f'[{doll_name}({weapon_code})][{SKILL_TYPE_MAPPING[k]}]{v}'
             for k, v in skills.items()
-        ]
+        ],
+        *[
+            f'[{doll_name}({weapon_code})][{k}]: {v}'
+            for k, v in talent_keys.items()
+        ],
     ]
 
 

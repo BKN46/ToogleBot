@@ -701,10 +701,10 @@ class GF2DataSearch(MessageHandler):
             girlsfrontline2.reload_all_data()
             return MessageChain.plain("数据已更新")
 
-        page, page_size = 0, 10
-        if content.split('>')[-1].strip().isdigit():
+        page, page_size = 0, 20
+        if len(content.split('>')) > 1 and content.split('>')[-1].strip().isdigit():
             page = int(content.split('>')[-1].strip()) - 1
-            content = content.split('>')[0].strip()
+            content = '>'.join(content.split('>')[:-1]).strip()
 
         res = girlsfrontline2.general_search(content)
         res = [
@@ -717,7 +717,7 @@ class GF2DataSearch(MessageHandler):
         if len(res) > page_size:
             total_page = len(res) // page_size + 1
             res = res[page * page_size: (page + 1) * page_size]
-            res.append(MessageChain.plain(f"第{page + 1}页 / 共{total_page}页 \n输入 gf2 {content}>{page + 1} 来查看下一页"))
+            res.append(MessageChain.plain(f"第{page + 1}页 / 共{total_page}页 \n输入 gf2 {content}>{page + 2} 来查看下一页"))
 
         return ForwardMessage.get_quick_forward_message(res) # type: ignore
 
