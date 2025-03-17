@@ -722,6 +722,50 @@ class GF2DataSearch(MessageHandler):
         return ForwardMessage.get_quick_forward_message(res) # type: ignore
 
 
+try:
+    LAW_BOOK = []
+    for law_type in ['刑法', '民法典', '治安管理处罚法']:
+        tmp_line = ''
+        for law in open(f'data/laws/{law_type}.txt', 'r').readlines():
+            if re.match(r'^第.+?条', law):
+                if tmp_line:
+                    LAW_BOOK.append(tmp_line.strip())
+                tmp_line = f'【{law_type}】{law}'
+            elif law.startswith('第'):
+                continue
+            else:
+                tmp_line += law
+        if tmp_line:
+            LAW_BOOK.append(tmp_line.strip())
+except:
+    LAW_BOOK = []
+
+
+class LawQuickSearch(MessageHandler):
+    name = "中国法律速查"
+    trigger = r"^law "
+    thread_limit = True
+    readme = "法律速查，包含刑法、民法典、治安管理处罚法"
+
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        content = message.message.asDisplay()[4:].strip()
+        if not content:
+            return MessageChain.plain("请输入搜索内容", quote=message.as_quote())
+        if not LAW_BOOK:
+            return MessageChain.plain("数据加载失败", quote=message.as_quote())
+        res = []
+        for law in LAW_BOOK:
+            if content in law:
+                res.append(law)
+        if not res:
+            return MessageChain.plain("无搜索结果", quote=message.as_quote())
+        
+        if len(res) > 8:
+            return ForwardMessage.get_quick_forward_message([MessageChain.plain(x) for x in res])
+
+        return MessageChain.plain('\n\n'.join(res), quote=message.as_quote())
+
+
 class NFSWorNot(MessageHandler):
     name = "判断色图"
     trigger = r"这个色不色|^这个不色"
