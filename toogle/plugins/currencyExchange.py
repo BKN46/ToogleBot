@@ -13,7 +13,7 @@ class CurrencyExchange(MessageHandler):
     currency_map = {
         "USD": "usd",
         "usd": "usd",
-        "刀": "usd",
+        # "刀": "usd",
         "美刀": "usd",
         "美金": "usd",
         "美元": "usd",
@@ -39,10 +39,10 @@ class CurrencyExchange(MessageHandler):
         # "rub": "rub",
         "卢布": "rub",
         "卢比": "inr",
-        "ARS": "ars",
+        # "ARS": "ars",
         # "ars": "ars",
         "阿根廷比索": "ars",
-        "比索": "ars",
+        # "比索": "ars",
         # "peso": "ars",
         # "cad": "cad",
         # "CAD": "cad",
@@ -72,7 +72,7 @@ class CurrencyExchange(MessageHandler):
         "克朗": "sek",
         "瑞典克朗": "sek",
         "金鹰": "wtge",
-        "GE": "wtge",
+        # "GE": "wtge",
         "研发点": "wtrp",
         "银狮": "wtsl",
     }
@@ -92,7 +92,7 @@ class CurrencyExchange(MessageHandler):
     num_str = "零一二三四五六七八九十百千万亿壹贰叁肆伍陆柒捌玖拾佰仟0123456789点两单俩兆/*+-,()mkwe"
     num_str = "|".join([x for x in num_str])
     keys_str = "|".join(currency_map.keys())
-    exhibit_list = ["一刀", "两刀"]
+    exhibit_list = ["一刀"]
     trigger = f".*?(([\.|{num_str}]+)(usd|jpy|hkd|eur|gbp|{keys_str})).*" # type: ignore
     readme = "快捷货币转换"
 
