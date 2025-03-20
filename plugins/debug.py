@@ -16,7 +16,7 @@ from nonebot.adapters.mirai2.event.message import MessageEvent
 from nonebot.adapters.mirai2.event.message import MessageSource
 import shshsh
 
-from toogle.configs import config
+from toogle.configs import config, reload_config
 from toogle.index import reload_plugins, export_plugins
 from toogle.message import MessageChain
 from toogle.message_handler import MESSAGE_HISTORY
@@ -48,6 +48,7 @@ async def handle_reload_plugin(
 ):
     use_time = reload_plugins()
     load_plugins()
+    reload_config()
     await reload_plugin_matcher.send(f"Reloaded {len(export_plugins)} export modules ({len(MATCHERS)} in matcher) in {use_time:.2f}ms")
 
 reload_plugin_matcher.append_handler(handle_reload_plugin)
