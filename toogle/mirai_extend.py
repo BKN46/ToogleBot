@@ -100,6 +100,24 @@ def recall_msg(target, msg_id, ignore_exception=False):
         return True
 
 
+def mute_member(target, member_id, mute_time, ignore_exception=False):
+    with with_temp_verify() as session_key:
+        data = {
+            "sessionKey": session_key,
+            "target": int(target),
+            "memberId": int(member_id),
+            "time": int(mute_time),
+        }
+        res = requests.post(http_path("/mute"), json=data)
+        if res.json()["code"] != 0:
+            if res.json()["code"] == 10:
+                return False
+            if not ignore_exception:
+                raise Exception(f"Failed to recall message: {res.text}")
+            return False
+        return True
+
+
 # async def send_group_nudge(group, target):
 #     await bot_exec("send_nudge", target=int(target), subject=int(group), kind="Group")
 
