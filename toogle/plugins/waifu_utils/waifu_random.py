@@ -327,12 +327,12 @@ def parse_anime_db(res):
     if len(profile_name) < 1 or profile_name == "\xa0":
         profile_name = en_name
     profile_heat = (
-        soup.find(id="main1").find("a", {"href": "seriesfinder3.php"}).text.split()[0] # type: ignore
+        soup.find(id="derpiNavi").find("a", {"class": "nicefollow"}).text.split()[1] # type: ignore
     )
     profile_year = soup.find("a", {"href": re.compile(r"animebyyear\.php\?.*")}).text[1:-1] # type: ignore
     profile_src = (
         soup.find(id="sidephoto")
-        .find(text="From") # type: ignore
+        .find(text="Primary Assignment") # type: ignore
         .parent.parent.find("a") # type: ignore
         .attrs["href"] # type: ignore
         .split("?id=")[-1]
