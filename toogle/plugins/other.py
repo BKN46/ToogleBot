@@ -26,7 +26,7 @@ from toogle.plugins.others import tarkov as Tarkov
 from toogle.plugins.others.minecraft import MCRCON
 from toogle.sql import SQLConnection
 from toogle.utils import SFW_BLOOM, detect_pic_nsfw, is_admin, modify_json_file
-from toogle.configs import config
+from toogle.configs import config, proxies
 import toogle.plugins.others.racehorse as race_horse
 import toogle.plugins.others.csgo as CSGO
 import toogle.plugins.others.baseball as baseball
@@ -686,6 +686,55 @@ class MarvelSnapZone(MessageHandler):
             f"携带分数贡献: {info.get('Cube Rate on Draw', 'null')}\n"
             f"使用分数贡献: {info.get('Cube Rate on Play', 'null')}\n"
         )
+
+
+class ZLibDownload(MessageHandler):
+    name = "电子书下载"
+    trigger = r"^.zlib "
+    thread_limit = True
+    readme = "电子书下载，来源zlib"
+    
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        host = 'https://z-library.sk'
+        content = message.message.asDisplay()[6:].strip()
+        start_time = time.time()
+        
+        url = f'{host}/s/{content}?'
+        res = requests.get(url, proxies=proxies)
+        soup = bs4.BeautifulSoup(res.text, 'html.parser')
+        books = soup.find('div', {'class': 'col-md-12 itemFullText'}).find('div', id='searchResultBox') # type: ignore
+        search_res = []
+        for book in books.findAll('div', {'class': 'book-item'}): # type: ignore
+            book_info = book.find('z-bookcard')
+            book_title = book_info.find('div', {'slot': 'title'}).text
+            book_author = book_info.find('div', {'slot': 'author'}).text
+            
+            search_res.append({
+                'title': book_title,
+                'author': book_author,
+                'size': book_info.get('filesize'),
+                'format': book_info.get('extension'),
+                'language': book_info.get('language'),
+                'year': book_info.get('year'),
+                'rating': book_info.get('rating'),
+                'quality': book_info.get('quality'),
+                'download_link': f'{host}{book_info.get("download")}'
+            })
+            pass
+        use_time = (time.time() - start_time) * 1000
+        return ForwardMessage.get_quick_forward_message([
+            MessageChain.plain(f'Z-lib 搜索[{content}] 耗时{use_time:.1f}ms\n{url}'),
+            *[
+                MessageChain.plain((
+                    f"《{x['title']}》 - {x['author']}\n"
+                    f"{x['format']} {x['size']}\n"
+                    f"年代：{x['year']} - {x['language']}\n"
+                    f"评分：{x['rating']} 质量：{x['quality']}\n"
+                    f"{x['download_link']}"
+                ))
+                for x in search_res
+            ][:20]
+        ])
 
 
 class GF2DataSearch(MessageHandler):
