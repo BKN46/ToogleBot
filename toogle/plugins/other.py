@@ -718,6 +718,7 @@ class ZLibDownload(MessageHandler):
                 'year': book_info.get('year'),
                 'rating': book_info.get('rating'),
                 'quality': book_info.get('quality'),
+                'publisher': book_info.get('publisher'),
                 'download_link': f'{host}{book_info.get("download")}'
             })
             pass
@@ -728,7 +729,7 @@ class ZLibDownload(MessageHandler):
                 MessageChain.plain((
                     f"《{x['title']}》 - {x['author']}\n"
                     f"{x['format']} {x['size']}\n"
-                    f"年代：{x['year']} - {x['language']}\n"
+                    f"{x['publisher']} - {x['year']}年 - {x['language']}\n"
                     f"评分：{x['rating']} 质量：{x['quality']}\n"
                     f"{x['download_link']}"
                 ))
