@@ -73,3 +73,4 @@ class VoteMute(MessageHandler):
 
         if len(VOTE_MUTE_DICT[vote_mute_dict_key]['vote_member']) >= 3:
             mute_member(message.group.id, target_id, 600)
+            VOTE_MUTE_DICT[vote_mute_dict_key]['time'] = 0
