@@ -140,7 +140,7 @@ def parse_css_text(s, tooltip_bool=[]):
     tooltip_list = []
     def get_tooltip(matcher):
         content = matcher.group(0).split('</div>')
-        content = content[0] + ': ' + ''.join(content[1:])
+        content = f'[{content[0]}] ' + ''.join(content[1:])
         content = re.sub(r'<.*?>', '', content).replace('raw-content>', '').strip()
         title = content.split(': ')[0]
         if not title in tooltip_bool:
@@ -159,20 +159,23 @@ def parse_single_doll(doll_data):
     weapon_code = '_'.join(weapon['Code'].split('_')[1:-1])
     # weapon_type = WEAPON_TYPE_MAPPING.get(weapon['WeaponType'], '未知武器类型')
     weapon_skill = parse_css_text(weapon['Skill'][-1]['Desc']) + '\n' + parse_css_text(weapon.get('FixedSkill'))
-    if 'PrivateSkill' in weapon:
+    if weapon.get('PrivateSkill'):
         private_doll = weapon.get('PrivateDolls', [{}])[0].get('Name', '')
         weapon_skill += f'\n{private_doll}专属: ' + parse_css_text(weapon.get('PrivateSkill'))
-    
+
+
     skills = {}
     for skill_type in ['NormalAttack', 'ActiveSkill1', 'ActiveSkill2', 'UltimateSkill', 'PassiveSkill', 'ExtraSkill1', 'ExtraSkill2']:
         if skill_type not in doll_data or not doll_data[skill_type]:
             continue
-        skills[skill_type] = doll_data[skill_type][-1]['Name'] + ": "
+        skills[skill_type] = doll_data[skill_type][0]['Name'] + ": "
         tooltip_bool = []
-        skills[skill_type] += parse_css_text(doll_data[skill_type][-1]['Desc'], tooltip_bool=tooltip_bool)
-        if doll_data[skill_type][-1].get('Upgrade'):
-            skills[skill_type] += '\n升级: ' + parse_css_text(doll_data[skill_type][-1]['Upgrade'], tooltip_bool=tooltip_bool)
-            
+        skills[skill_type] += parse_css_text(doll_data[skill_type][0]['Desc'], tooltip_bool=tooltip_bool)
+        for grade_skill in doll_data[skill_type]:
+            if grade_skill.get('Upgrade'):
+                skills[skill_type] += f'\n\n[{grade_skill["Grade"]}锥]' + parse_css_text(grade_skill['Upgrade']).strip()
+
+
     talent_keys = {}
     for talent in doll_data.get('TalentKey', []):
         talent_keys[talent['Name']] = parse_css_text(talent['Desc'])
