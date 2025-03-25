@@ -31,7 +31,7 @@ def get_continues_json(s: str):
     def test(matcher):
         fix_str = matcher.group(2).replace('\\','').replace('"',"").replace("'", '').replace('`', '')
         return f'{matcher.group(1)}:"{fix_str}"{matcher.group(5)}'
-    tmp_str = re.sub(r'''("Desc"|"Upgrade"|"SkillUpgrade"):((`|').*?(`|'))(,|\})''', test, tmp_str)
+    tmp_str = re.sub(r'''("Desc"|"Upgrade"|"SkillUpgrade"|"PrivateSkill"|"FixedSkill"):((`|').*?(`|'))(,|\})''', test, tmp_str)
     return json.loads(tmp_str)
 
 
@@ -154,11 +154,14 @@ def parse_css_text(s, tooltip_bool=[]):
 def parse_single_doll(doll_data):
     doll_name = doll_data['Name']
 
-    weapon = doll_data['PrivateWeapon'][0]
+    weapon = doll_data['PrivateWeapon'][-1]
     weapon_name = weapon['Name']
     weapon_code = '_'.join(weapon['Code'].split('_')[1:-1])
     # weapon_type = WEAPON_TYPE_MAPPING.get(weapon['WeaponType'], '未知武器类型')
-    weapon_skill = parse_css_text(weapon['Skill'][-1]['Desc'])
+    weapon_skill = parse_css_text(weapon['Skill'][-1]['Desc']) + '\n' + parse_css_text(weapon.get('FixedSkill'))
+    if 'PrivateSkill' in weapon:
+        private_doll = weapon.get('PrivateDolls', [{}])[0].get('Name', '')
+        weapon_skill += f'\n{private_doll}专属: ' + parse_css_text(weapon.get('PrivateSkill'))
     
     skills = {}
     for skill_type in ['NormalAttack', 'ActiveSkill1', 'ActiveSkill2', 'UltimateSkill', 'PassiveSkill', 'ExtraSkill1', 'ExtraSkill2']:
@@ -212,5 +215,6 @@ def general_search(text):
 
 
 if __name__ == "__main__":
-    # print(gf2_mcc_doll_data(ignore_buffer=True))
-    print('\n======\n'.join(general_search("K2>驱散>!不可驱散")))
+    # get_continues_json(open('data/gf2_mcc_data/Bla43Ntv.js.raw', 'r').read())
+    print(gf2_mcc_doll_data(ignore_buffer=False))
+    # print('\n======\n'.join(general_search("K2>驱散>!不可驱散")))
