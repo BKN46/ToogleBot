@@ -119,8 +119,8 @@ def save_anime_list(buffer_path: str = "data/anime/", ignore_cache: bool = False
             continue
         data = {
             'week_day': now_weekday,
-            'anime_img': info.find('img').attrs['src'],
-            'anime_time': info.findAll('p')[1].text,
+            'anime_img': info.find('img').attrs['data-src'],
+            'anime_length': info.findAll('p')[1].text,
             'anime_start_time': info.findAll('p')[0].text,
             'anime_name': line.find('td').text,
         }
@@ -167,7 +167,7 @@ def save_anime_list(buffer_path: str = "data/anime/", ignore_cache: bool = False
         img.paste(anime_img, (col * pic_size[0], row * col_size + (col_size - pic_size[1])))
         draw.text(
             (col * pic_size[0], row * col_size),
-            f"{anime['week_day']} {anime['anime_time']} ({anime['anime_start_time']})",
+            f"{anime['week_day']} {anime['anime_start_time']} {anime['anime_length']}",
             font=font,
             fill=(255, 255, 255),
         )
