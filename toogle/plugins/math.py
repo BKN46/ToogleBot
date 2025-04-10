@@ -124,7 +124,9 @@ class Calculator(MessageHandler):
 
     async def ret(self, message: MessagePack) -> MessageChain:
         text = message.message.asDisplay()
-        running_res: str = Calculator.get_exec(Calculator.func_preproc(text[:-1]))
+        running_res = Calculator.get_exec(Calculator.func_preproc(text[:-1]))
+        if type(running_res) in [float, int] and running_res >= 10**7: # type: ignore
+            running_res = f"{running_res:,}"
         return MessageChain.create([message.as_quote(), Plain(running_res)])
 
     @staticmethod
@@ -137,16 +139,17 @@ class Calculator(MessageHandler):
             "√": "sqrt",
             "²": "**2",
             "³": "**3",
-            "k": "000",
-            "w": "0000",
-            "K": "000",
-            "W": "0000",
-            "m": "000000",
-            "b": "000000000",
-            "B": "000000000",
-            "千": "000",
-            "万": "0000",
-            "亿": "00000000",
+            "k": "*1000",
+            "w": "*10000",
+            "K": "*1000",
+            "W": "*10000",
+            "m": "*1000000",
+            "M": "*1000000",
+            "b": "*1000000000",
+            "B": "*1000000000",
+            "千": "*1000",
+            "万": "*10000",
+            "亿": "*100000000",
             "\n": "",
         }
         for k, v in opts.items():
@@ -188,8 +191,6 @@ class Calculator(MessageHandler):
         except Exception as e:
             running_res = 0
             # running_res = repr(e)
-        if type(running_res) in [float, int] and running_res >= 10**7:
-            running_res = f"{running_res:,}"
         return running_res # type: ignore
 
 

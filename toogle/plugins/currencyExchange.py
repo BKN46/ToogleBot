@@ -107,7 +107,7 @@ class CurrencyExchange(MessageHandler):
             if currency in self.block_chain_map:
                 rates = self.get_blockchain()
             else:
-                rates = self.get_currency()
+                rates = CurrencyExchange.get_currency()
             rate_mark = self.currency_map[currency].upper()
             num = self.cn2digit(matchs.group(2).replace(",", ""))
             if num <= 0:
@@ -252,10 +252,11 @@ class CurrencyExchange(MessageHandler):
     def get_blockchain(self):
         api_url = "https://api.coincap.io/v2/assets"
         data = requests.get(api_url).json()["data"]
-        usd_rate = self.get_currency()["USD"]
+        usd_rate = CurrencyExchange.get_currency()["USD"]
         return {x["symbol"]: usd_rate / float(x["priceUsd"]) for x in data}
 
-    def get_currency(self):
+    @staticmethod
+    def get_currency():
         api_url = "https://api.exchangerate-api.com/v4/latest/CNY"
         rates = requests.get(api_url).json()["rates"]
         rates.update(
