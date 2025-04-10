@@ -30,6 +30,7 @@ from toogle.configs import config, proxies
 import toogle.plugins.others.racehorse as race_horse
 import toogle.plugins.others.csgo as CSGO
 import toogle.plugins.others.baseball as baseball
+import toogle.plugins.others.milkywayidle as Milkywayidle
 
 try:
     JOKING_HAZARD_GAME_DATA = pickle.load(open("data/joking_hazard.pkl", "rb"))
@@ -814,6 +815,24 @@ class LawQuickSearch(MessageHandler):
             return ForwardMessage.get_quick_forward_message([MessageChain.plain(x) for x in res])
 
         return MessageChain.plain('\n\n'.join(res), quote=message.as_quote())
+
+
+class MilkywayidleSearch(MessageHandler):
+    name = "银河奶牛放置工具"
+    trigger = r"^mwi(g|l) "
+    thread_limit = True
+    readme = "Milkywayidle银河奶牛放置速查工具"
+
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        content = message.message.asDisplay()
+        if content.startswith("mwig "):
+            content = content[5:].strip()
+            res = Milkywayidle.gold_to_money(content)
+            return MessageChain.plain(res, quote=message.as_quote())
+        elif content.startswith("mwil "):
+            content = content[4:].strip().split(' ')
+            res = Milkywayidle.get_level_info(int(content[0]), int(content[1]))
+            return MessageChain.plain(res, quote=message.as_quote())
 
 
 class NFSWorNot(MessageHandler):
