@@ -141,6 +141,9 @@ class Calculator(MessageHandler):
             "w": "0000",
             "K": "000",
             "W": "0000",
+            "m": "000000",
+            "b": "000000000",
+            "B": "000000000",
             "千": "000",
             "万": "0000",
             "亿": "00000000",
@@ -183,9 +186,11 @@ class Calculator(MessageHandler):
             if len(str(running_res)) > 200:
                 raise Exception("输出字数过多!")
         except Exception as e:
-            running_res = ""
+            running_res = 0
             # running_res = repr(e)
-        return running_res
+        if type(running_res) in [float, int] and running_res >= 10**7:
+            running_res = f"{running_res:,}"
+        return running_res # type: ignore
 
 
 class WolframAlpha(MessageHandler):
