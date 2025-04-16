@@ -835,6 +835,23 @@ class MilkywayidleSearch(MessageHandler):
             return MessageChain.plain(res, quote=message.as_quote())
 
 
+class MilkywayidleSearch(MessageHandler):
+    name = "银河奶牛笑话大全"
+    trigger = r"^牛牛笑话"
+    thread_limit = True
+    readme = "随机牛牛笑话"
+
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        content = message.message.asDisplay()
+        with modify_json_file('milkywayidle/jokes') as f:
+            if content == '牛牛笑话':
+                return MessageChain.plain(random.choice(f), quote=message.as_quote())
+            else:
+                record_content = content[5:].strip()
+                f.append(record_content) # type: ignore
+                return MessageChain.plain(f"已记录牛牛笑话", quote=message.as_quote())
+
+
 class NFSWorNot(MessageHandler):
     name = "判断色图"
     trigger = r"这个色不色|^这个不色"
