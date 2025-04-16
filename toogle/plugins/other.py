@@ -835,7 +835,7 @@ class MilkywayidleSearch(MessageHandler):
             return MessageChain.plain(res, quote=message.as_quote())
 
 
-class MilkywayidleSearch(MessageHandler):
+class MilkywayidleJokes(MessageHandler):
     name = "银河奶牛笑话大全"
     trigger = r"^牛牛笑话"
     thread_limit = True
