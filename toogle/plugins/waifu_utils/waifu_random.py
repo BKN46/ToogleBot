@@ -316,6 +316,8 @@ def parse_anime_db(res):
 
     soup = bs4.BeautifulSoup(res.text, "html.parser")
     profile_pic = soup.find(id="profileimage").attrs.get("src") # type: ignore
+    if profile_pic.startswith("/"): # type: ignore
+        profile_pic = f'https://www.animecharactersdatabase.com{profile_pic}'
     
     profile_name = (
         soup.find('a', {"class": "fgw"})
@@ -767,6 +769,7 @@ if __name__ == "__main__":
     # calc_confirm()
 
     data, url = get_designated_search("f", ["粉毛", "动漫"]) # type: ignore
+    print(data[0])
     print(data[1], url)
     # pic_url, text, profile_id, raw = data
     # pic = waifu_card(
