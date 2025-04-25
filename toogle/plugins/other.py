@@ -819,9 +819,16 @@ class LawQuickSearch(MessageHandler):
 
 class MilkywayidleSearch(MessageHandler):
     name = "银河奶牛放置工具"
-    trigger = r"^mwi(g|l) "
+    trigger = r"^mwi(g |l |i|e )"
     thread_limit = True
-    readme = "Milkywayidle银河奶牛放置速查工具"
+    readme = (
+        f"Milkywayidle银河奶牛放置速查工具\n"
+        f"mwig #金币数# 来查询金币氪金等值\n"
+        f"mwil #起始等级# #结束等级# 来查询等级经验\n"
+        f"mwie #界面显示成功率(例如52.5)# #起始等级# #结束等级# #保护起始等级[默认5]# 模拟强化\n"
+        f"mwii 速查物品价格\n"
+        f"mwii #物品名称# 查询/记录/取消记录物品价格\n"
+    )
 
     async def ret(self, message: MessagePack) -> Optional[MessageChain]:
         content = message.message.asDisplay()
@@ -832,6 +839,55 @@ class MilkywayidleSearch(MessageHandler):
         elif content.startswith("mwil "):
             content = content[4:].strip().split(' ')
             res = Milkywayidle.get_level_info(int(content[0]), int(content[1]))
+            return MessageChain.plain(res, quote=message.as_quote())
+        elif content.startswith("mwie "):
+            content = content[5:].strip().split(' ')
+            protect_from = int(content[3]) if len(content) > 3 else 5
+            res = Milkywayidle.multiple_sim_enhancement(
+                float(content[0]),
+                initial_level=int(content[1]),
+                target_level=int(content[2]),
+                protect_from=protect_from,
+                times=10000,
+                )
+            return MessageChain.plain(f"初始成功率{content[0]},等级{content[1]}至{content[2]},自{protect_from}起保护\n强化预期{res[0]:.2f}次，使用保护{res[1]:.2f}次", quote=message.as_quote())
+        elif content.strip() == 'mwii':
+            res = []
+            with modify_json_file('milkywayidle/mwii') as f:
+                if str(message.member.id) not in f:
+                    return MessageChain.plain("你还没有记录任何物品", quote=message.as_quote())
+                else:
+                    data = Milkywayidle.load_now_price_data()
+                    for item_name in f[str(message.member.id)]:
+                        ask, bid = Milkywayidle.get_item_price(item_name, with_format=True)
+                        res.append(f"{item_name} 卖出: {ask} 买入: {bid}")
+            return MessageChain.plain('\n'.join(res), quote=message.as_quote())
+        elif content.startswith('mwii '):
+            content = content[4:].strip()
+            record=False
+            if content.startswith('+'):
+                content = content[1:].strip()
+                record=True
+            eng_name = Milkywayidle.search_item_eng_name(content)
+            if not eng_name:
+                return MessageChain.plain(f"物品{content}不存在", quote=message.as_quote())
+            if type(eng_name) == list:
+                if len(eng_name) > 1:
+                    return MessageChain.plain(f"{content}存在多个名称，请使用精准名称", quote=message.as_quote())
+                eng_name = eng_name[0]
+            ask, bid = Milkywayidle.get_item_price(eng_name, with_format=True)
+            
+            res = f"{content}({eng_name})\n卖出: {ask} 买入: {bid}"
+            if record:
+                with modify_json_file('milkywayidle/mwii') as f:
+                    if str(message.member.id) not in f:
+                        f[str(message.member.id)] = []
+                    if eng_name in f[str(message.member.id)]:
+                        f[str(message.member.id)].remove(eng_name)
+                        res += '\n已取消速查记录'
+                    else:
+                        f[str(message.member.id)].append(eng_name)
+                        res += '\n已增加速查记录'
             return MessageChain.plain(res, quote=message.as_quote())
 
 
@@ -846,6 +902,19 @@ class MilkywayidleJokes(MessageHandler):
         with modify_json_file('milkywayidle/jokes') as f:
             if content == '牛牛笑话':
                 return MessageChain.plain(random.choice(f), quote=message.as_quote())
+            elif content.startswith('牛牛笑话搜索'):
+                content = content[7:].strip()
+                res = []
+                for joke in f:
+                    if content in joke:
+                        res.append(joke)
+                if not res:
+                    return MessageChain.plain("没有找到相关烂梗", quote=message.as_quote())
+                if len(res) == 1:
+                    return MessageChain.plain(res[0], quote=message.as_quote())
+                if len(res) > 20:
+                    return MessageChain.plain("找到太多烂梗，请输入更精确的名称", quote=message.as_quote())
+                return ForwardMessage.get_quick_forward_message([MessageChain.plain(x) for x in res])
             else:
                 record_content = content[5:].strip()
                 f.append(record_content) # type: ignore
