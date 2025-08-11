@@ -22,6 +22,7 @@ from toogle.message_handler import MESSAGE_HISTORY, RECALL_HISTORY
 from toogle.nonebot2_adapter import PluginWrapper, bot_send_message
 from toogle.msg_proc import chat_earn
 from plugins.load import load_plugins
+from toogle.utils import is_admin
 
 # ping trigger
 echo = on_regex("^22222$")
@@ -43,24 +44,34 @@ async def handle_help(
     event: MessageEvent,
     message: MessageChain = EventMessage(),
 ):
+    pre_filter_plugins = [x for x in export_plugins if not x.plugin.admin_only or (is_admin(event.sender.id) and x.plugin.admin_only)]
+    
+    def get_plugin_desc(plugin, simplify=False):
+        if simplify:
+            return f"{plugin.name}\n【触发正则】 {plugin.trigger}"
+        return f"{plugin.name}\n【触发正则】 {plugin.trigger}\n【说明】 {plugin.readme}\n【触发花费】 {plugin.price}gb\n【触发间隔】 {plugin.interval}秒"
+    
     def get_help_page(page):
         res = []
         if page >= total_page:
             page = total_page - 1
         elif page < 0:
             page = 0
-        p1, p2 = page * page_size, min((page + 1) * page_size, len(export_plugins))
-        for mod in export_plugins[p1:p2]:
+        p1, p2 = page * page_size, min((page + 1) * page_size, len(pre_filter_plugins))
+        for mod in pre_filter_plugins[p1:p2]:
             res.append(
                 f"{mod.plugin.name}\n【触发正则】 {mod.plugin.trigger}\n【说明】 {mod.plugin.readme}"
             )
-        return f"\n{'#'*15}\n".join(res) + f"\n\nPage {page + 1}/{total_page}"
+        return ForwardMessage.get_quick_forward_message([
+            ToogleChain.plain(get_plugin_desc(mod.plugin))
+            for mod in pre_filter_plugins[p1:p2]
+            ], people_name="大黄狗")
 
     def fuzz_search(content):
         res = []
-        for mod in export_plugins:
+        for mod in pre_filter_plugins:
             if content in mod.plugin.name or content in mod.plugin.trigger or content in mod.plugin.readme:
-                line = f"{mod.plugin.name}\n【触发正则】 {mod.plugin.trigger}\n【说明】 {mod.plugin.readme}"
+                line = get_plugin_desc(mod.plugin)
                 if mod.plugin.price > 0:
                     line += f"\n【触发花费】 {mod.plugin.price}gb"
                 if mod.plugin.interval > 0:
@@ -70,24 +81,21 @@ async def handle_help(
 
     message_pack = PluginWrapper.get_message_pack(event, message)
 
-    page_size=5
-    total_page = math.ceil(len(export_plugins)/page_size)
+    page_size=30
+    total_page = math.ceil(len(pre_filter_plugins)/page_size)
 
     search_content = re.search(get_help_regex, message_pack.message.asDisplay()).groups()[1].strip() # type: ignore
     if search_content == "--markdown":
-        res = '\n'.join([f"{mod.__class__.__name__}: {mod.plugin.name}" for mod in export_plugins])
+        res = '\n'.join([f"{mod.__class__.__name__}: {mod.plugin.name}" for mod in pre_filter_plugins])
     elif not search_content:
-        res = ForwardMessage.get_quick_forward_message([
-            ToogleChain.plain(f"{mod.plugin.name}\n【触发正则】 {mod.plugin.trigger}\n【说明】 {mod.plugin.readme}\n【触发花费】 {mod.plugin.price}gb\n【触发间隔】 {mod.plugin.interval}秒")
-            for mod in export_plugins
-            ], people_name="大黄狗")
-        bot_send_message(message_pack, res)
-        return
+        res = get_help_page(0)
+        res.root[0].add(ToogleChain.plain(f'当前为第{1}页, 共{total_page}页')) # type: ignore
     elif str.isdigit(search_content):
         res = get_help_page(int(search_content) - 1)
+        res.root[0].add(ToogleChain.plain(f'当前为第{search_content}页, 共{total_page}页')) # type: ignore
     else:
         res = fuzz_search(search_content)
-    await get_help.send(res)
+    bot_send_message(message_pack, res)
 
 get_help.append_handler(handle_help)
 
@@ -132,6 +140,11 @@ async def all_event_handler(event: Event):
         pass
     elif event.type == "FriendRequestEvent":
         # 加好友请求事件
+        pass
+    elif event.type == "BotInvitedJoinGroupRequestEvent":
+        # 邀请加入群聊事件
+        for admin in config.get('ADMIN_LIST', []):
+            bot_send_message(int(admin), f".accept_invite {event.eventId} {event.invitorId} {event.groupId}", friend=True) # type: ignore
         pass
 
 

@@ -49,7 +49,7 @@ BOT = None
 class PluginWrapper:
     def __init__(self, plugin: MessageHandler) -> None:
         self.plugin_class = plugin
-        self.plugin = plugin()
+        self.plugin: MessageHandler = plugin()
 
     async def ret(
         self,
@@ -76,17 +76,22 @@ class PluginWrapper:
                     quote=message_pack.id
                 )
                 return
+
+        member_is_admin = is_admin(message_pack.member.id)
+
         if self.plugin.interval and not interval_limiter.user_interval(
             self.plugin.name, message_pack.member.id, interval=self.plugin.interval
-        ) and not is_admin(message_pack.member.id) and not is_admin_group(message_pack.group.id):
+        ) and not member_is_admin and not is_admin_group(message_pack.group.id):
             await matcher.send(
                 f"[{self.plugin.name}]请求必须间隔[{self.plugin.interval}]秒",
                 quote=message_pack.id
             )
             return
+        if self.plugin.admin_only and not member_is_admin:
+            return
         if get_block(message_pack, self.plugin):
             return
-        if not is_traffic_free(self.plugin, message_pack) and not is_admin(message_pack.member.id):
+        if not is_traffic_free(self.plugin, message_pack) and not member_is_admin:
             traffic_str = get_traffic_time(self.plugin, message_pack)
             if traffic_str:
                 await matcher.send(traffic_str)

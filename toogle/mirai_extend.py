@@ -100,6 +100,42 @@ def recall_msg(target, msg_id, ignore_exception=False):
         return True
 
 
+def accept_group_invite(event_id, from_id, group_id, ignore_exception=False):
+    with with_temp_verify() as session_key:
+        data = {
+            "sessionKey": session_key,
+            "eventId": int(event_id),
+            "fromId": int(from_id),
+            "groupId": int(group_id),
+            "operate": 0,
+            "message": "",
+        }
+        res = requests.post(http_path("/resp/botInvitedJoinGroupRequestEvent"), json=data)
+        if res.json()["code"] != 0:
+            if res.json()["code"] == 10:
+                return False
+            if not ignore_exception:
+                raise Exception(f"Failed to recall message: {res.text}")
+            return False
+        return True
+
+
+def quit_group_chat(group_id, ignore_exception=False):
+    with with_temp_verify() as session_key:
+        data = {
+            "sessionKey": session_key,
+            "target": int(group_id),
+        }
+        res = requests.post(http_path("/quit"), json=data)
+        if res.json()["code"] != 0:
+            if res.json()["code"] == 10:
+                return False
+            if not ignore_exception:
+                raise Exception(f"Failed to recall message: {res.text}")
+            return False
+        return True
+
+
 def mute_member(target, member_id, mute_time, ignore_exception=False):
     with with_temp_verify() as session_key:
         data = {

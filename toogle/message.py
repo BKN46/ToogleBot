@@ -244,6 +244,14 @@ class ForwardMessage(Element):
 
         return res
 
+    def add(self, message_chain: 'MessageChain', sender_id=0, sender_name="QQ用户"):
+        self.node_list.append({
+            "sender": sender_id,
+            "time": int(time.time()),
+            "senderName": sender_name,
+            "message": message_chain
+        })
+
 
 class Xml(Element):
     def __init__(self, xml: str) -> None:

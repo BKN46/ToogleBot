@@ -28,6 +28,7 @@ class ScheduleModule:
     interval = 0
     ignore_quote = False
     price = 0
+    admin_only = False
 
     single_time = False
 
