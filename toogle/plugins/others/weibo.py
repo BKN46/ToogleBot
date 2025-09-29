@@ -73,6 +73,8 @@ def get_save_old_otaku(json_dict={}, time_limit=0.0, bearable_time=60.0):
         if not json_dict:
             return []
     res = []
+    if json_dict['error']:
+        return []
     for msg in json_dict['data']['list']:
         create_time = datetime.datetime.strptime(msg['created_at'], "%a %b %d %H:%M:%S %z %Y")
         if create_time.timestamp() < time_limit - bearable_time:

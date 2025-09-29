@@ -144,9 +144,9 @@ class ScheduledMonitor(ScheduleModule):
 
     async def ret(self, message_pack: Union[MessagePack, None]):
         send_infos = {
-            # 'earth_quake': self.get_earth_quake(),
+            'earth_quake': self.get_earth_quake(),
             # 'bilibili': self.get_bilibili_update,
-            'save_old_otaku': self.get_save_old_otaku(),
+            # 'save_old_otaku': self.get_save_old_otaku(),
         }
         
         for send_title, send_content in send_infos.items():
@@ -179,23 +179,18 @@ class ScheduledMonitor(ScheduleModule):
 
 
     def get_earth_quake(self):
-        url = "https://www.ceic.ac.cn/speedsearch?time=1"
-        res = requests.get(url, verify=False)
-        print(res.text, file=open('test/earth_quake.html', 'w'))
-        bs = bs4.BeautifulSoup(res.text, 'html.parser')
-        table = bs.find('table', {'class': 'speed-table1'})
-        if not table:
+        url = "https://news.ceic.ac.cn/speedsearch.html"
+        try:
+            res = requests.get(url, verify=False)
+            data = res.text.split('const newdata = ')[1].split(';')[0]
+        except Exception as e:
             return None
-        res = []
-        for tr in table.find_all('tr'): # type: ignore
-            tds = tr.find_all('td')
-            if len(tds) < 6:
-                continue
-            level = tds[0].text
-            happen_time = datetime.datetime.strptime(tds[1].text, '%Y-%m-%d %H:%M:%S')
-            location = tds[5].text
-            if happen_time > self.last_monitor_time:
-                res.append(f"{level}级地震，发生在{happen_time}，位于{location}")
+        data = json.loads(data)
+        res = [
+            f"{x['M']}级地震，发生在{x['O_TIME']}，位于{x['LOCATION_C']}"
+            for x in data
+            if datetime.datetime.strptime(x['O_TIME'], '%Y-%m-%d %H:%M:%S') > datetime.datetime.now() - datetime.timedelta(minutes=30) and float(x['M']) > 4.0
+        ]
         if len(res) > 0:
             return MessageChain.plain('===== 地震提醒 ======\n' + '\n'.join(res) + '\n ===================')
         return None

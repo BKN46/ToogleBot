@@ -915,8 +915,17 @@ class MilkywayidleJokes(MessageHandler):
                 if len(res) > 20:
                     return MessageChain.plain("找到太多烂梗，请输入更精确的名称", quote=message.as_quote())
                 return ForwardMessage.get_quick_forward_message([MessageChain.plain(x) for x in res])
+            elif content.startswith('牛牛笑话删除'):
+                if not is_admin(message.member.id):
+                    return MessageChain.plain("无权限", quote=message.as_quote())
+                content = content[7:].strip()
+                if content in f:
+                    f.remove(content) # type: ignore
+                    return MessageChain.plain("已删除牛牛笑话", quote=message.as_quote())
+                else:
+                    return MessageChain.plain("没有找到相关烂梗", quote=message.as_quote())
             else:
-                record_content = content[5:].strip()
+                record_content = content[4:].strip()
                 f.append(record_content) # type: ignore
                 return MessageChain.plain(f"已记录牛牛笑话", quote=message.as_quote())
 

@@ -17,7 +17,7 @@ class MessageHistory:
         self.history: dict[int, List["MessagePack"]] = {}
         self.windows = windows
 
-    def add(self, id: int, message: "MessagePack"):
+    def add(self, id, message: "MessagePack"):
         if id not in self.history:
             self.history[id] = []
         self.history[id].append(message)

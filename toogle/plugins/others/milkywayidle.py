@@ -114,7 +114,7 @@ def get_level_info(start_level: int, end_level: int):
     if start_level < 1:
         start_level = 1
     exp = int(levels[end_level - 1][1].replace(',','')) - int(levels[start_level - 1][1].replace(',',''))
-    return f'{start_level}级到{end_level}级需要经验：{exp:,}点\n' \
+    return f'{start_level}级到{end_level}级需要经验：{exp:,}点\n折合{exp/500:.2f}(或{exp/50:.2f})本技能书' \
 
 
 enhancement_succes_rates = [
