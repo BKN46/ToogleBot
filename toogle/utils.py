@@ -214,7 +214,7 @@ def text2img(
     gen_image = PIL.Image.new(
         "RGBA",
         (text_width + 2 * padding[0], min(max_size[1], text_height + 2 * padding[1])),
-        bg_color,
+        bg_color, # type: ignore
     )
     draw = PIL.ImageDraw.Draw(gen_image)
 
@@ -259,7 +259,7 @@ def list2img(
             gen_image = PIL.Image.new(
                 "RGBA",
                 (pic.size[0] + 2 * padding[0], pic.size[1] + 2 * padding[1]),
-                bg_color,
+                bg_color, # type: ignore
             )
             gen_image.paste(pic, padding)
             pic_list.append(gen_image)
@@ -270,7 +270,7 @@ def list2img(
     image = PIL.Image.new(
         "RGBA",
         (total_width, total_height),
-        bg_color,
+        bg_color, # type: ignore
     )
     for item in pic_list:
         image.paste(item, (0, last_y))
@@ -394,7 +394,7 @@ def draw_rich_text(
         gen_image = PIL.Image.new(
             "RGBA",
             (total_width + padding[0] * 2, total_height + padding[1] * 2),
-            bg_color,
+            bg_color, # type: ignore
         )
     image_draw = PIL.ImageDraw.Draw(gen_image)
 
@@ -475,7 +475,7 @@ def draw_pic_text(
     gen_image = PIL.Image.new(
         "RGBA",
         (max_size[0], max(max_size[1], text_pic_size[1])),
-        bg_color,
+        bg_color, # type: ignore
     )
     gen_image.paste(pic, (padding[0], padding[1]), pic)
     gen_image.paste(text_pic, (pic_size[0] + padding[0] + word_padding[0], padding[1] + word_padding[1]))
@@ -486,32 +486,6 @@ def draw_pic_text(
         return img_bytes.getvalue()
     else:
         return gen_image
-    
-
-def detect_pic_nsfw(pic: bytes, output_repeat=False):
-    pic_md5 = hashlib.md5(pic).hexdigest()
-    if pic_md5 in SFW_BLOOM:
-        if output_repeat:
-            return -1, False
-        return -1
-    repeat = pic_md5 in PIC_BLOOM
-    PIC_BLOOM.add(pic_md5)
-
-    import opennsfw2
-    # temp file path
-    with tempfile.NamedTemporaryFile(delete=False) as f:
-        f.write(pic)
-        pic_path = f.name
-        try:
-            start_time = time.time()
-            score = opennsfw2.predict_image(pic_path)
-            use_time = (time.time() - start_time) * 1000
-            nonebot.logger.info(f"Pic analysis done, nsfw score {score:.5f}, use time {use_time:.2f}ms") # type: ignore
-        except UnidentifiedImageError as e:
-            score = -1
-    if output_repeat:
-        return score, repeat
-    return score # type: ignore
 
 
 def is_admin(id: int) -> Boolean:

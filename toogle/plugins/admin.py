@@ -2,10 +2,11 @@ import datetime
 import json
 import time
 from typing import Optional
-from toogle.message import At, MessageChain, Plain, Quote
+from toogle.message import At, Image, MessageChain, Plain, Quote
 from toogle.message_handler import MessageHandler, MessagePack
 from toogle.mirai_extend import accept_group_invite, mute_member, quit_group_chat
 from toogle.nonebot2_adapter import add_mute, bot_send_message
+from toogle.tools.pic_recognition import regist_shit_pic
 from toogle.utils import is_admin
 from toogle.configs import config
 
@@ -74,6 +75,8 @@ class VoteMute(MessageHandler):
         mute_member_cnt = len(VOTE_MUTE_DICT[vote_mute_dict_key]['vote_member'])
         if mute_member_cnt == 3:
             mute_member(message.group.id, target_id, 600)
+            if pics := message.quote.message.get(Image): 
+                regist_shit_pic(pics[0].getBytes())
         elif mute_member_cnt >= 5 and mute_member_cnt % 2 == 1:
             mute_member(message.group.id, target_id, 600 * 2 ** ((mute_member_cnt - 3) // 2))
 

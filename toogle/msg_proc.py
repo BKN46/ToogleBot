@@ -9,10 +9,12 @@ import nonebot
 from toogle.economy import get_balance, give_balance
 from toogle.message import At, ForwardMessage, Image, MessageChain, Plain
 from toogle.message_handler import MESSAGE_HISTORY, MessagePack
-from toogle.mirai_extend import recall_msg
+from toogle.mirai_extend import mute_member, recall_msg
 from toogle.nonebot2_adapter import bot_send_message
 from toogle.configs import config
-from toogle.utils import SETU_RECORD_PATH, detect_pic_nsfw, modify_json_file, print_err
+from toogle.plugins.admin import VOTE_MUTE_DICT
+from toogle.utils import SETU_RECORD_PATH, modify_json_file, print_err
+from toogle.tools.pic_recognition import detect_pic_nsfw, is_shit_pic
 from toogle.plugins.gpt import gpt_censor, GetOpenAIConversation
 
 POST_PROC_LOCK = threading.Lock()
@@ -47,6 +49,8 @@ async def chat_earn(message_pack: MessagePack):
             if len(pics) > 5:
                 pics = pics[:5]
             setu_detect(message_pack, pics)
+        if str(message_pack.group.id) in config.get('ANTI_SHIT_LIST', []):
+            shit_pic_detect(message_pack, pics)
 
 
 def setu_detect(message_pack: MessagePack, pics):
@@ -67,6 +71,25 @@ def setu_detect(message_pack: MessagePack, pics):
     if raw_cnt > 0 and not message_pack.message.get(ForwardMessage, forward_layer=1):
         if str(message_pack.group.id) in config.get('ANTI_NSFW_LIST', []):
             DelayedRecall.add_recall(message_pack.group.id, message_pack)
+
+
+def shit_pic_detect(message_pack: MessagePack, pics):
+    for pic in pics:
+        if is_shit_pic(pic.getBytes()):
+            vote_mute_dict_key = f"{message_pack.group.id}_{message_pack.member.id}"
+            VOTE_MUTE_DICT[vote_mute_dict_key] = {
+                'time': time.time(),
+                'vote_member': [0, 0, 0]
+            }
+            mute_member(message_pack.group.id, message_pack.member.id, 600)
+            recall_msg(message_pack.group.id, message_pack.id)
+            bot_send_message(
+                int(message_pack.group.id),
+                MessageChain.create([
+                    Plain(f"监测到💩图，自动封禁"),
+                ]),
+            )
+            break
 
 
 async def chat_cencor(message_pack: MessagePack):

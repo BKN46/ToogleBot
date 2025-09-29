@@ -25,12 +25,13 @@ from toogle.plugins.others.steam import source_server_info
 from toogle.plugins.others import tarkov as Tarkov
 from toogle.plugins.others.minecraft import MCRCON
 from toogle.sql import SQLConnection
-from toogle.utils import SFW_BLOOM, detect_pic_nsfw, is_admin, modify_json_file
+from toogle.utils import is_admin, modify_json_file
 from toogle.configs import config, proxies
 import toogle.plugins.others.racehorse as race_horse
 import toogle.plugins.others.csgo as CSGO
 import toogle.plugins.others.baseball as baseball
 import toogle.plugins.others.milkywayidle as Milkywayidle
+from toogle.tools.pic_recognition import SFW_BLOOM, detect_pic_nsfw
 
 try:
     JOKING_HAZARD_GAME_DATA = pickle.load(open("data/joking_hazard.pkl", "rb"))
