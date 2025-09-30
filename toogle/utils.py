@@ -532,6 +532,52 @@ def print_call(plugin, message_pack):
     return msg
 
 
+def read_chat_log(start_time: datetime.datetime, end_time: datetime.datetime, group_id_match=None):
+    log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../mirai/logs")
+    all_logs = os.listdir(log_path)
+    all_logs = list(sorted(all_logs))
+    rec_time = time.time()
+    for log_file in all_logs:
+        log_day = datetime.datetime.strptime(log_file.split('.')[0], "%Y-%m-%d")
+        if log_day < start_time - datetime.timedelta(days=1) or log_day > end_time + datetime.timedelta(days=1):
+            continue
+        with open(os.path.join(log_path, log_file), "r") as f:
+            print(f"Reading {log_file}")
+            file_line_cnt = 0
+            while True:
+                line = f.readline()
+                if not line:
+                    break
+                file_line_cnt += 1
+                if '->' not in line:
+                    continue
+                if 'mirai:app' in line or '聊天记录' in line or 'http' in line:
+                    continue
+                line_time = line.split('V/Bot')[0].strip()
+                line_time = datetime.datetime.strptime(line_time, "%Y-%m-%d %H:%M:%S")
+                if line_time < start_time or line_time > end_time:
+                    continue
+                chat_line = line.split('->')[1]
+                chat_line = re.sub(r'\[.*\]', '', chat_line)
+                chat_line = re.sub(r'\{.*\}', '', chat_line)
+                chat_line = chat_line.strip()
+                if not chat_line:
+                    continue
+                chat_info = re.findall(r'\(\d+\)', line)
+                try:
+                    group_id, member_id = chat_info[0][1:-1], chat_info[1][1:-1]
+                except Exception as e:
+                    continue
+                if group_id_match and group_id != group_id_match:
+                    continue
+
+                # 提取成员昵称
+                nickname_match = re.search(r'\] (.+)\(\d+\) ->', line)
+                nickname = nickname_match.group(1).strip() if nickname_match else ""
+                
+                yield line_time, chat_line, group_id, member_id, nickname
+
+
 if __name__ == "__main__":
     test_bytes = text2img("测试测试")
     img = PIL.Image.open(io.BytesIO(test_bytes))

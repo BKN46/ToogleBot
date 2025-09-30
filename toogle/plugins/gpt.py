@@ -14,6 +14,7 @@ from toogle.message import Image, MessageChain, Plain
 from toogle.message_handler import MESSAGE_HISTORY, MessageHandler, MessagePack, ActiveHandler
 from toogle.nonebot2_adapter import bot_send_message
 from toogle.sql import DatetimeUtils, SQLConnection
+from toogle.utils import read_chat_log
 
 api_key = config.get("GPTSecret")
 header = {"Authorization": f"Bearer {api_key}"}
@@ -522,6 +523,34 @@ class WhatIs(MessageHandler):
             else:
                 return MessageChain.plain(f"GPT模型服务可能出错，请稍后尝试\n{repr(e)}", no_interval=True)
 
+class AIConclude(MessageHandler):
+    name = "大黄狗总结"
+    trigger = r"^刚才在聊什么$"
+    thread_limit = True
+    readme = "总结刚才的聊天内容"
+    interval = 600
+    price = 30
+    
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        logs = read_chat_log(
+            datetime.datetime.now() - datetime.timedelta(hours=2),
+            datetime.datetime.now(),
+            group_id_match=str(message.group.id)
+        )
+        compressed_info = '\n'.join([
+            f"{nickname}:{line}"
+            for line_time, line, group_id, member_id, nickname in logs
+        ])
+
+        bot_send_message(message, MessageChain.plain(f"正在总结刚才的聊天内容(约{len(compressed_info)/1.5/1000000*4:.3f}元)，请稍候...", quote=message.as_quote()))
+
+        res = GetOpenAIConversation.get_chat(
+            compressed_info,
+            settings="你是一条乐于助人的大黄狗，请总结以上聊天内容，忽略掉零星发散性内容，聚焦于不同人的交互对话过程，结果精简在500字以内",
+            model=config.get("GPTModelLarge", ""),
+            url=config.get("GPTUrl", ""),
+        )
+        return MessageChain.plain(res, quote=message.as_quote())
 
 def gpt_censor(msg_list: List[Union[MessagePack, str]]):
     msg_list = [(x.message.asDisplay() if isinstance(x, MessagePack) else x) for x in msg_list]
