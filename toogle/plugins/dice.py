@@ -351,3 +351,98 @@ class Dice(MessageHandler):
         res_str = re.sub(r"#.*?#", self.rd_sel, insert_str)
         res_str = re.sub(r"(\d*)d(\d+)(kh|kl|)", self.psd, res_str)
         return Plain(res_str.replace("#", ""))
+
+
+class WarhammerD20DiceMigrate(MessageHandler):
+    name = "战锤d6骰转d20计算"
+    trigger = r"^\.whd20 "
+    readme = (
+        f"战锤d6骰转d20计算，输入骰子数量、造伤大于等于、防御大于等于，类似.whd20 6 4 5，输出d20映射表和KL散度"
+    )
+    
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        msg = message.message.asDisplay().strip()[6:].strip()
+        params = msg.split(" ")
+        if len(params) != 3:
+            n = int(params[0])
+            a = 4
+            d = 5
+        else:
+            n = int(params[0])
+            a = int(params[1])
+            d = int(params[2])
+        distribution = WarhammerD20DiceMigrate.d6roll(n, a, d)
+        mapping_string, kl_divergence = WarhammerD20DiceMigrate.d20_mapping(distribution)
+        res = f"d20映射表：\n{mapping_string}\nKL散度：{kl_divergence}"
+        return MessageChain.plain(res)
+    
+    @staticmethod
+    def d6roll(n, attack=4, defense=5):
+        possibility = (7-attack)/6 * (defense-1)/6
+        distribution = [
+            math.factorial(n) / (math.factorial(x) * math.factorial(n - x)) * possibility**x * (1 - possibility)**(n - x)
+            for x in range(0, n+1)
+        ]
+        return distribution        
+
+    @staticmethod
+    def d20_mapping(distribution):
+        """
+        将d6分布映射到20面骰子，输出映射字符串和KL散度
+        :param distribution: d6分布，长度7，概率求和为1
+        :return: (mapping_string, kl_divergence)
+        """
+        total_faces = 20
+        num_groups = len(distribution)
+        
+        # 每个组至少1个面
+        sizes = [1] * num_groups
+        remaining = total_faces - num_groups  # 13
+        
+        # 按比例分配剩余面
+        extra_sizes = [round(p * remaining) for p in distribution]
+        sizes = [sizes[i] + extra_sizes[i] for i in range(num_groups)]
+        
+        # 调整使总和为20
+        total_size = sum(sizes)
+        diff = total_size - total_faces
+        if diff > 0:
+            # 减去多的，从后往前
+            for i in range(num_groups-1, -1, -1):
+                if sizes[i] > 1:
+                    sizes[i] -= 1
+                    diff -= 1
+                    if diff == 0:
+                        break
+        elif diff < 0:
+            # 加到多的，从前往后
+            for i in range(num_groups):
+                sizes[i] += 1
+                diff += 1
+                if diff == 0:
+                    break
+        
+        # 生成映射字符串
+        mapping_lines = []
+        start = 1
+        for val, size in enumerate(sizes):
+            if size == 0:
+                continue
+            end = start + size - 1
+            if start == end:
+                mapping_lines.append(f"{start} {val}")
+            else:
+                mapping_lines.append(f"{start}-{end} {val}")
+            start = end + 1
+        mapping_string = "\n".join(mapping_lines)
+        
+        # 新分布
+        new_dist = [size / total_faces for size in sizes]
+        
+        # 计算KL散度
+        kl_div = 0.0
+        for p, q in zip(distribution, new_dist):
+            if p > 0 and q > 0:
+                kl_div += p * math.log(p / q)
+        
+        return mapping_string, kl_div
