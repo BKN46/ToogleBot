@@ -372,8 +372,8 @@ class WarhammerD20DiceMigrate(MessageHandler):
             a = int(params[1])
             d = int(params[2])
         distribution = WarhammerD20DiceMigrate.d6roll(n, a, d)
-        mapping_string, kl_divergence = WarhammerD20DiceMigrate.d20_mapping(distribution)
-        res = f"d20映射表：\n{mapping_string}\nKL散度：{kl_divergence}"
+        mapping_string, kl_divergence, ori_exp, map_exp = WarhammerD20DiceMigrate.d20_mapping(distribution)
+        res = f"d20映射表：\n{mapping_string}\n原始期望：{ori_exp:.3f}\n映射后期望：{map_exp:.3f}\nKL散度：{kl_divergence}"
         return MessageChain.plain(res)
     
     @staticmethod
@@ -388,9 +388,9 @@ class WarhammerD20DiceMigrate(MessageHandler):
     @staticmethod
     def d20_mapping(distribution):
         """
-        将d6分布映射到20面骰子，输出映射字符串和KL散度
-        :param distribution: d6分布，长度7，概率求和为1
-        :return: (mapping_string, kl_divergence)
+        将d6分布映射到20面骰子，输出映射字符串、KL散度、原始期望和映射后期望
+        :param distribution: 分布，概率求和为1
+        :return: (mapping_string, kl_divergence, original_expectation, mapped_expectation)
         """
         total_faces = 20
         num_groups = len(distribution)
@@ -445,4 +445,8 @@ class WarhammerD20DiceMigrate(MessageHandler):
             if p > 0 and q > 0:
                 kl_div += p * math.log(p / q)
         
-        return mapping_string, kl_div
+        # 计算期望
+        original_expectation = sum(i * p for i, p in enumerate(distribution))
+        mapped_expectation = sum(val * (size / total_faces) for val, size in enumerate(sizes))
+        
+        return mapping_string, kl_div, original_expectation, mapped_expectation
