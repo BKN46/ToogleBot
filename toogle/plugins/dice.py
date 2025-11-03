@@ -1,3 +1,4 @@
+import io
 import math
 import random
 import re
@@ -372,9 +373,10 @@ class WarhammerD20DiceMigrate(MessageHandler):
             a = int(params[1])
             d = int(params[2])
         distribution = WarhammerD20DiceMigrate.d6roll(n, a, d)
-        mapping_string, kl_divergence, ori_exp, map_exp = WarhammerD20DiceMigrate.d20_mapping(distribution)
+        mapping_string, kl_divergence, ori_exp, map_exp, new_dist = WarhammerD20DiceMigrate.d20_mapping(distribution)
         res = f"d20映射表：\n{mapping_string}\n原始期望：{ori_exp:.3f}\n映射后期望：{map_exp:.3f}\nKL散度：{kl_divergence}"
-        return MessageChain.plain(res)
+        plot_bytes = WarhammerD20DiceMigrate.plot_map(distribution, new_dist, 'Original d6', 'Mapped d20')
+        return MessageChain.create([Plain(res), Image(bytes=plot_bytes)])
     
     @staticmethod
     def d6roll(n, attack=4, defense=5):
@@ -449,4 +451,45 @@ class WarhammerD20DiceMigrate(MessageHandler):
         original_expectation = sum(i * p for i, p in enumerate(distribution))
         mapped_expectation = sum(val * (size / total_faces) for val, size in enumerate(sizes))
         
-        return mapping_string, kl_div, original_expectation, mapped_expectation
+        return mapping_string, kl_div, original_expectation, mapped_expectation, new_dist
+    
+    @staticmethod
+    def plot_map(dist1, dist2, label1='Distribution 1', label2='Distribution 2'):
+        """
+        对比两个概率分布的条形图，返回PNG图像二进制数据
+        :param dist1: 第一个分布
+        :param dist2: 第二个分布
+        :param label1: 第一个分布标签
+        :param label2: 第二个分布标签
+        :return: PNG图像的二进制数据
+        """
+        x1 = range(len(dist1))
+        x2 = range(len(dist2))
+        width = 0.35
+        
+        fig, ax = plt.subplots()
+        bars1 = ax.bar([i - width/2 for i in x1], dist1, width, alpha=0.7, label=label1)
+        bars2 = ax.bar([i + width/2 for i in x2], dist2, width, alpha=0.7, label=label2)
+        
+        # 添加概率标签
+        for bar, p in zip(bars1, dist1):
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2, height + 0.001, f'{p*100:.3f}%', 
+                    ha='center', va='bottom', fontsize=5)
+        
+        for bar, p in zip(bars2, dist2):
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2, height + 0.001, f'{p*100:.3f}%', 
+                    ha='center', va='bottom', fontsize=5)
+        
+        ax.set_xlabel('Value')
+        ax.set_ylabel('Probability')
+        ax.set_title('Probability Distribution Comparison')
+        ax.set_xticks(range(max(len(dist1), len(dist2))))
+        ax.legend()
+        
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', dpi=300)
+        plt.close()
+        buf.seek(0)
+        return buf.getvalue()
