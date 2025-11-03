@@ -525,16 +525,27 @@ class WhatIs(MessageHandler):
 
 class AIConclude(MessageHandler):
     name = "大黄狗总结"
-    trigger = r"^刚才在聊什么$"
+    trigger = r"^刚才在聊什么"
     thread_limit = True
     readme = "总结刚才的聊天内容"
     interval = 600
     price = 30
     
     async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        msg = message.message.asDisplay()
+        if msg != "刚才在聊什么":
+            msg_list = msg.split(' ')
+            try:
+                start_time = datetime.datetime.strptime(msg_list[1], "%Y-%m-%d_%H:%M")
+                end_time = datetime.datetime.strptime(msg_list[2], "%Y-%m-%d_%H:%M") if len(msg_list) > 1 else datetime.datetime.now()
+            except Exception as e:
+                return MessageChain.plain("时间格式错误，请使用类似“2023-10-01_12:00 2023-10-01_14:00”的格式", no_interval=True)
+        else:
+            start_time = datetime.datetime.now() - datetime.timedelta(hours=2)
+            end_time = datetime.datetime.now()
         logs = read_chat_log(
-            datetime.datetime.now() - datetime.timedelta(hours=2),
-            datetime.datetime.now(),
+            start_time,
+            end_time,
             group_id_match=str(message.group.id)
         )
         compressed_info = '\n'.join([
@@ -546,7 +557,7 @@ class AIConclude(MessageHandler):
 
         res = GetOpenAIConversation.get_chat(
             compressed_info,
-            settings="你是一条乐于助人的大黄狗，请总结以上聊天内容，忽略掉零星发散性内容，聚焦于不同人的交互对话过程，结果精简在500字以内",
+            settings="你是一条乐于助人的大黄狗，请总结以上聊天内容，忽略掉零星发散性内容，聚焦于不同人的交互对话过程，结果精简在1000字以内",
             model=config.get("GPTModelLarge", ""),
             url=config.get("GPTUrl", ""),
         )
