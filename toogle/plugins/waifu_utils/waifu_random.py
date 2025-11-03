@@ -325,7 +325,8 @@ def parse_anime_db(res):
         .strip()
     ).split(", ")[0]
     profile_name = re.sub(r"(\(.*?\))|(（.*?）)", "", profile_name).strip()
-    en_name = soup.find(id="main1").find("a", {"class": "fgw"}).text # type: ignore
+    profile_name = find_in_profile("Other Names").split(",")[0].split("（")[0].strip()
+    en_name = soup.find("figcaption").text # type: ignore
     if len(profile_name) < 1 or profile_name == "\xa0":
         profile_name = en_name
     profile_heat = (
@@ -360,7 +361,7 @@ def parse_anime_db(res):
     res = {
         "姓名": profile_name,
         "CV": find_in_profile("Voiced By"),
-        "来源": find_in_profile("From"),
+        "来源": find_in_profile("Primary Assignment"),
         "类型": find_in_profile("Media Type"),
         "年龄": find_in_profile("Age"),
         "生日": find_in_profile("Birthday"),
@@ -372,6 +373,7 @@ def parse_anime_db(res):
                 find_in_profile("Hip"),
             ]
         ),
+        "标签": find_in_profile("Tags Personality"),
         "血型": find_in_profile("Blood Type"),
         "星座": find_in_profile("Sign"),
         "TAG": find_in_profile("Tags "),
