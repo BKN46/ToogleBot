@@ -146,7 +146,7 @@ class ScheduledMonitor(ScheduleModule):
         send_infos = {
             'earth_quake': self.get_earth_quake(),
             # 'bilibili': self.get_bilibili_update,
-            # 'save_old_otaku': self.get_save_old_otaku(),
+            'save_old_otaku': self.get_save_old_otaku(),
         }
         
         for send_title, send_content in send_infos.items():

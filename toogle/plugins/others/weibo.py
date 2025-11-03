@@ -6,8 +6,19 @@ import time
 import requests
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, "
-    "like Gecko) Chrome/69.0.3497.100 Safari/537.36",
+    'Referer': 'https://weibo.com/',
+    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+    'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6',
+    'cache-control': 'max-age=0',
+    'priority': 'u=0, i',
+    'sec-ch-ua': '"Chromium";v="136", "Microsoft Edge";v="136", "Not.A/Brand";v="99"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+    'sec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'navigate',
+    'sec-fetch-site': 'same-origin',
+    'upgrade-insecure-requests': '1',
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0',
 }
 
 def get_tid():
@@ -52,6 +63,9 @@ def get_cookie():
         subp = ret['data']['subp']
     except KeyError:
         return None
+    headers.update({
+        'Cookie': f"SUB={sub}; SUBP={subp};"
+    })
     return sub, subp
 
 
@@ -60,9 +74,6 @@ def get_web_page(uid, page=1, feature=0):
     cookie = get_cookie()
     if not cookie:
         return None
-    headers.update({
-        'Cookie': f"SUB={cookie[0]}; SUBP={cookie[1]};"
-    })
     res = requests.get(url, headers=headers)
     return res.json()
 
@@ -73,7 +84,7 @@ def get_save_old_otaku(json_dict={}, time_limit=0.0, bearable_time=60.0):
         if not json_dict:
             return []
     res = []
-    if json_dict['error']:
+    if json_dict.get('error'):
         return []
     for msg in json_dict['data']['list']:
         create_time = datetime.datetime.strptime(msg['created_at'], "%a %b %d %H:%M:%S %z %Y")
@@ -104,9 +115,6 @@ def get_comments(user_id, comment_id, limit=5, refresh_cookie=False, time_order=
         cookie = get_cookie()
         if not cookie:
             return 0, ['获取cookie失败']
-        headers.update({
-            'Cookie': f"SUB={cookie[0]}; SUBP={cookie[1]};"
-        })
     res = requests.get(url, headers=headers).json()
     total_number = res['total_number']
     msg = [f"{x['text_raw']} [{x['like_counts']}点赞][{x['source']}]" for x in res['data'][:limit]]
