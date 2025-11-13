@@ -249,6 +249,19 @@ class CSGOBuff(MessageHandler):
             return MessageChain.create([Image(bytes=res_pic)])
 
 
+class UpdateBuffCookie(MessageHandler):
+    name = "更新BUFF Cookie"
+    trigger = r"\.buffcookie "
+    thread_limit = True
+    readme = "更新BUFF Cookie"
+    admin_only = True
+
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        content = message.message.asDisplay()[12:].strip()
+        open('data/buff_cookie', 'w').write(content)
+        return MessageChain.plain("已更新BUFF Cookie")
+
+
 class CSGORandomCase(MessageHandler):
     name = "CSGO开箱"
     trigger = r"^\.betcs\s"
@@ -930,6 +943,18 @@ class MilkywayidleJokes(MessageHandler):
                 f.append(record_content) # type: ignore
                 return MessageChain.plain(f"已记录牛牛笑话", quote=message.as_quote())
 
+
+class UpdateWeiboCookie(MessageHandler):
+    name = "更新微博Cookie"
+    trigger = r"\.weibocookie "
+    thread_limit = True
+    readme = "更新微博Cookie"
+    admin_only = True
+
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        content = message.message.asDisplay()[13:].strip()
+        open('data/weibo_cookie', 'w').write(content)
+        return MessageChain.plain("已更新微博Cookie")
 
 class NFSWorNot(MessageHandler):
     name = "判断色图"

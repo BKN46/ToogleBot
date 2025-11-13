@@ -68,16 +68,17 @@ class PluginWrapper:
         if not re.findall(self.plugin.trigger, message_pack.message.asDisplay().strip()):
             nonebot.logger.warning(f"错误正则匹配: [{self.plugin.trigger}] {message_pack.message.asDisplay()}") # type: ignore
             return
+
+        member_is_admin = is_admin(message_pack.member.id)
+
         if self.plugin.price > 0:
             balance = get_balance(message_pack.member.id)
-            if balance < self.plugin.price and str(message_pack.group.id) in config["ECO_GROUP"]:
+            if balance < self.plugin.price and str(message_pack.group.id) in config["ECO_GROUP"] and not member_is_admin:
                 await matcher.send(
                     f"余额不足，{self.plugin.name}功能需要{self.plugin.price}gb，您剩余{balance}gb\n请通过正常日常聊天来获取gb",
                     quote=message_pack.id
                 )
                 return
-
-        member_is_admin = is_admin(message_pack.member.id)
 
         if self.plugin.interval and not interval_limiter.user_interval(
             self.plugin.name, message_pack.member.id, interval=self.plugin.interval

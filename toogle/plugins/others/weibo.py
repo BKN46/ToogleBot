@@ -19,7 +19,16 @@ headers = {
     'sec-fetch-site': 'same-origin',
     'upgrade-insecure-requests': '1',
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0',
+    'x-xsrf-token': 'Wm2CiDPVTAgrYOYHlcTtw5jZ',
 }
+
+def get_xsrf_token():
+    url = "https://weibo.com/u/1855501681"
+    req = requests.get(url, headers={
+        **headers,
+        'upgrade-insecure-requests': '1',
+    })
+    return req
 
 def get_tid():
     """
@@ -44,7 +53,19 @@ def get_tid():
     return None
 
 
-def get_cookie():
+def read_cache_cookie():
+    cookie = open('./data/weibo_cookie', 'r').read().strip()
+    headers.update({
+        'Cookie': cookie,
+    })
+    sub = cookie.split('SUB=')[1].split(';')[0]
+    subp = cookie.split('SUBP=')[1].split(';')[0]
+    return sub, subp
+
+
+def get_cookie(use_cache=True):
+    if use_cache:
+        return read_cache_cookie()
     tid = get_tid()
     if not tid:
         return None
@@ -64,7 +85,7 @@ def get_cookie():
     except KeyError:
         return None
     headers.update({
-        'Cookie': f"SUB={sub}; SUBP={subp};"
+        'Cookie': f"SUB={sub}; SUBP={subp}; XSRF-TOKEN={headers['x-xsrf-token']};"
     })
     return sub, subp
 
@@ -75,6 +96,8 @@ def get_web_page(uid, page=1, feature=0):
     if not cookie:
         return None
     res = requests.get(url, headers=headers)
+    if res.status_code != 200:
+        raise Exception("鉴权失败")
     return res.json()
 
 
@@ -122,7 +145,7 @@ def get_comments(user_id, comment_id, limit=5, refresh_cookie=False, time_order=
 
 
 if __name__ == "__main__":
-    res = get_save_old_otaku(time_limit=time.time() - 3600 * 6)
+    res = get_save_old_otaku(time_limit=time.time() - 3600 * 12)
     print(res[0])
     pass
 

@@ -343,20 +343,20 @@ def parse_anime_db(res):
 
     profile_vs_matches = soup.find(id="mainframe2").findAll(id="besttable") # type: ignore
     profile_vs_result = []
-    for vs in profile_vs_matches:
-        against_chara_id = vs.find("td").findAll("a")[1].attrs["href"].split("?id=")[-1]
-        against_chara_name = vs.find("td").findAll("a")[1].text
-        vs_res = False
-        if profile_id == against_chara_id:
-            against_chara_id = (
-                vs.find("td").findAll("a")[2].attrs["href"].split("?id=")[-1]
-            )
-            against_chara_name = vs.find("td").findAll("a")[2].text
-            vs_res = True
-        if "won" in vs.find("td").contents[4]:
-            profile_vs_result.append([vs_res, against_chara_name, against_chara_id])
-        else:
-            profile_vs_result.append([not vs_res, against_chara_name, against_chara_id])
+    # for vs in profile_vs_matches:
+    #     against_chara_id = vs.find("td").findAll("a")[1].attrs["href"].split("?id=")[-1]
+    #     against_chara_name = vs.find("td").findAll("a")[1].text
+    #     vs_res = False
+    #     if profile_id == against_chara_id:
+    #         against_chara_id = (
+    #             vs.find("td").findAll("a")[2].attrs["href"].split("?id=")[-1]
+    #         )
+    #         against_chara_name = vs.find("td").findAll("a")[2].text
+    #         vs_res = True
+    #     if "won" in vs.find("td").contents[4]:
+    #         profile_vs_result.append([vs_res, against_chara_name, against_chara_id])
+    #     else:
+    #         profile_vs_result.append([not vs_res, against_chara_name, against_chara_id])
 
     res = {
         "姓名": profile_name,
