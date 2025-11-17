@@ -6,8 +6,10 @@ import PIL.ImageDraw
 import PIL.ImageFont
 import requests
 
+from toogle.configs import config, interval_limiter
 from toogle.message import Image, Member, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack, get_user_name
+from toogle.plugins.gpt import GetOpenAIConversation
 from toogle.plugins.remake.remake import get_remake
 from toogle.sql import DatetimeUtils, SQLConnection
 
@@ -18,6 +20,8 @@ class GetRemake(MessageHandler):
     # white_list = True
     readme = "随机remake，数据来源自世界银行"
     price = 5
+    
+    prompt_setting = '请根据remake结果，生成一段remake人生小故事，以第三人称视角，主要考虑收入水平，尽量贴切写实，不要涉及具体数字，字数在200字左右。'
 
     async def ret(self, message: MessagePack) -> MessageChain:
         # return MessageChain.create([Plain("由于敏感词封禁问题，remake暂时维护升级，未来会转换为图片形式")])
@@ -90,6 +94,12 @@ class GetRemake(MessageHandler):
             SQLConnection.update_user(
                 message.member.id, f"last_remake='{DatetimeUtils.get_now_time()}'"
             )
-            return MessageChain.create([Image.text_image(res[0])])
+            text_res = '\n人生故事: ' + GetOpenAIConversation.get_chat(
+                res[0],
+                settings=self.prompt_setting,
+                model=config.get("GPTModelLarge", ""),
+                url=config.get("GPTUrl", ""),
+            )
+            return MessageChain.create([message.as_quote(), Image.text_image(res[0]), Plain(text_res)])
         else:
-            return MessageChain.create([Plain("一天只能remake一次～")])
+            return MessageChain.create([message.as_quote(), Plain("一天只能remake一次～")])

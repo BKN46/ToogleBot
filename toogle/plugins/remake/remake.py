@@ -159,13 +159,63 @@ def nation_parse(name, out_seed):
             rae(f"你将在5岁以下死亡")
     if nation_line.get("美元人均国民收入") and not IS_POOR:
         avg_income = float(nation_line.get("美元人均国民收入"))  # type: ignore
-        income = random.gauss(avg_income, avg_income / 5)
-        score *= math.sqrt(income / avg_income)
-        rae(f"你们家人均年收入大约为{income:.2f}$")
+        # 使用二八定律的混合模型：20%的人口掌握约80%收入
+        fraction_high = 0.2
+        share_high = 0.8
+        # 由总体均值分配出高低两组的均值（保证总体均值为avg_income）
+        mean_high = (share_high / fraction_high) * avg_income  # 通常为4*avg_income
+        mean_low = ((1 - share_high) / (1 - fraction_high)) * avg_income  # 通常为0.25*avg_income
+
+        # 用对数正态分布模拟组内差异，sigma可以调节不平等程度
+        sigma_low = 0.6
+        sigma_high = 0.9
+        mu_low = math.log(max(mean_low, 1e-6)) - sigma_low**2 / 2
+        mu_high = math.log(max(mean_high, 1e-6)) - sigma_high**2 / 2
+
+        # 按比例抽样，20%概率采样高收入组
+        if random.random() < fraction_high:
+            income = random.lognormvariate(mu_high, sigma_high)
+        else:
+            income = random.lognormvariate(mu_low, sigma_low)
+        
+        # 计算混合对数正态分布在样本处的累积分布函数（考虑之后的缩放）
+        expected_mean_local = (
+            fraction_high * math.exp(mu_high + sigma_high ** 2 / 2)
+            + (1 - fraction_high) * math.exp(mu_low + sigma_low ** 2 / 2)
+        )
+        scale = avg_income / expected_mean_local if expected_mean_local > 0 else 1.0
+        scaled_income = income * scale
+
+        def _lognorm_cdf(x: float, mu: float, sigma: float) -> float:
+            if x <= 0:
+                return 0.0
+            z = (math.log(x) - mu) / sigma
+            return 0.5 * (1.0 + math.erf(z / math.sqrt(2.0)))
+
+        mixture_cdf = (
+            fraction_high * _lognorm_cdf(scaled_income, mu_high, sigma_high)
+            + (1 - fraction_high) * _lognorm_cdf(scaled_income, mu_low, sigma_low)
+        )
+        income_rank = max(0.0, min(1.0, mixture_cdf))
+
+        # p_res["income_rank"] = income_rank
+        # game_data["income_rank"] = income_rank
+
+        # 由于样本与理论期望有偏差，按理论期望做一次缩放以确保总体均值约为avg_income
+        expected_mean = (
+            fraction_high * math.exp(mu_high + sigma_high**2 / 2)
+            + (1 - fraction_high) * math.exp(mu_low + sigma_low**2 / 2)
+        )
+        if expected_mean > 0:
+            income = income * (avg_income / expected_mean)
+
+        # 更新得分（保持原逻辑：以均方根比率调整）
+        score *= math.sqrt(max(income, 0.0) / avg_income)
+        rae(f"你们家人均年收入大约为{income:.2f}$ (国内前{(1-income_rank)*100:.2f}%)")
         if nation_line.get("PPP人均国民收入"):
             ppp_income = float(nation_line.get("PPP人均国民收入"))  # type: ignore
             pt_income = income * ppp_income / avg_income / 17090 * 10550
-            ras(f"PPP后约等价为中国2021年月薪{pt_income*7/12:.2f}¥ (7汇率计算)")
+            rae(f"PPP后约等价为中国2021年月薪{pt_income*7/12:.2f}¥")
     if nation_line.get("失业率"):
         tmp = random.random() * 100
         if tmp <= float(nation_line.get("失业率")):  # type: ignore
