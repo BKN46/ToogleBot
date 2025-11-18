@@ -1,4 +1,8 @@
+import base64
 from typing import Optional
+
+import requests
+from toogle.configs import config
 from toogle.message import Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack, WaitCommandHandler
 from toogle.nonebot2_adapter import bot_send_message
@@ -165,3 +169,37 @@ class GetMidjourney(MessageHandler):
             else:
                 # bot_send_message(message, MessageChain.create([message.as_quote(), Plain("退出Midjourney模式")]))
                 break
+
+
+class GetDoubaoCompose(MessageHandler):
+    name = "豆包AI生成图片"
+    trigger = r"^\.doubao\s"
+    thread_limit = True
+    price = 30
+    interval = 300
+    readme = "获取NovelAI生成图片，注意输入文本必须英文"
+
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        content = message.message.asDisplay()[8:].strip()
+        return MessageChain.create([Image(bytes=self.generate_image(content))])
+
+    @staticmethod
+    def generate_image(content_str: str, module="doubao-seedream-4-0-250828") -> bytes:
+        url = "https://ark.cn-beijing.volces.com/api/v3/images/generations"
+        data = {
+            "model": module,
+            "prompt": content_str,
+            "size": "832x1248",
+            "sequential_image_generation": "disabled",
+            "stream": False,
+            "response_format": "b64_json",
+            "watermark": False
+        }
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {config['DOUBAO_API_KEY']}"
+        }
+        res = requests.post(url, json=data, headers=headers)
+        b64data = res.json()['data'][0]['b64_json']
+        return base64.b64decode(b64data)
+
