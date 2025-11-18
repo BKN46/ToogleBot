@@ -273,9 +273,10 @@ class Xml(Element):
         return Xml(template)
 
 class MessageChain:
-    def __init__(self, message_list: Sequence[Element], no_interval=False) -> None:
+    def __init__(self, message_list: Sequence[Element], no_interval=False, no_charge=False) -> None:
         self.root = message_list
         self.no_interval = no_interval
+        self.no_charge = no_charge
 
     def asDisplay(self) -> str:
         return "".join(i.asDisplay() for i in self.root)
@@ -294,14 +295,14 @@ class MessageChain:
         return quotes[0].id if quotes else None # type:ignore
 
     @staticmethod
-    def create(message_list: List, no_interval=False) -> "MessageChain":
-        return MessageChain(message_list, no_interval)
+    def create(message_list: List, no_interval=False, no_charge=False) -> "MessageChain":
+        return MessageChain(message_list, no_interval, no_charge)
     
     @staticmethod
-    def plain(text: str, no_interval=False, quote=None) -> "MessageChain":
+    def plain(text: str, no_interval=False, quote=None, no_charge=False) -> "MessageChain":
         if quote:
             return MessageChain([quote, Plain(text)], no_interval=no_interval)
-        return MessageChain([Plain(text)], no_interval=no_interval)
+        return MessageChain([Plain(text)], no_interval=no_interval, no_charge=no_charge)
     
     def __add__(self, message: "MessageChain") -> "MessageChain":
         return MessageChain(self.root + message.root, no_interval=self.no_interval) # type: ignore

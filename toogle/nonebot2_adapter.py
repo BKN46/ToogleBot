@@ -473,7 +473,7 @@ async def thread_worker(index):
             exec_time = (time.time() - start_time) * 1000
             if plugin.interval and not res.no_interval:
                 interval_limiter.force_user_interval(plugin.name, message_pack.member.id, interval=plugin.interval)
-            if plugin.price > 0:
+            if plugin.price > 0 and not res.no_charge:
                 take_balance(message_pack.member.id, plugin.price)
             if len(res.root) > 0:
                 bot_send_message(message_pack, res)
