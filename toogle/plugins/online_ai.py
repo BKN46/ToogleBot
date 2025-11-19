@@ -200,6 +200,9 @@ class GetDoubaoCompose(MessageHandler):
             "Authorization": f"Bearer {config['DOUBAO_API_KEY']}"
         }
         res = requests.post(url, json=data, headers=headers)
-        b64data = res.json()['data'][0]['b64_json']
+        try:
+            b64data = res.json()['data'][0]['b64_json']
+        except Exception as e:
+            raise Exception(f"{res.text}")
         return base64.b64decode(b64data)
 

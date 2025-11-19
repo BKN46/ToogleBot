@@ -29,11 +29,11 @@ for line in data:
 
 
 nation_rank = {
-    "高收入国家": 4,
+    "高收入国家": 5,
     "中高等收入国家": 3,
-    "中低等收入国家": 2,
-    "低收入国家": 1,
-    "未分类国家": 2,
+    "中低等收入国家": 1.5,
+    "低收入国家": 0.3,
+    "未分类国家": 1,
 }
 
 
@@ -86,7 +86,7 @@ def nation_parse(name, out_seed):
     if out_seed:
         res = [f"#{seed}的结果是\nremake在了{nation_line['国家']}"]
     else:
-        res = [f"{name}, 你remake在了{nation_line['国家']}"]
+        res = [f"你remake在了{nation_line['国家']}"]
     ras = lambda s: res.append("," + s)
     rae = lambda s: res.append("\n" + s)
     if nation_line.get("国家收入等级"):
@@ -158,33 +158,48 @@ def nation_parse(name, out_seed):
             score *= 0.1
             rae(f"你将在5岁以下死亡")
     if nation_line.get("美元人均国民收入") and not IS_POOR:
-        avg_income = float(nation_line.get("美元人均国民收入"))  # type: ignore
-        # 使用二八定律的混合模型：20%的人口掌握约80%收入
-        fraction_high = 0.2
-        share_high = 0.8
-        # 由总体均值分配出高低两组的均值（保证总体均值为avg_income）
-        mean_high = (share_high / fraction_high) * avg_income  # 通常为4*avg_income
-        mean_low = ((1 - share_high) / (1 - fraction_high)) * avg_income  # 通常为0.25*avg_income
-
-        # 用对数正态分布模拟组内差异，sigma可以调节不平等程度
-        sigma_low = 0.6
-        sigma_high = 0.9
-        mu_low = math.log(max(mean_low, 1e-6)) - sigma_low**2 / 2
-        mu_high = math.log(max(mean_high, 1e-6)) - sigma_high**2 / 2
-
-        # 按比例抽样，20%概率采样高收入组
-        if random.random() < fraction_high:
-            income = random.lognormvariate(mu_high, sigma_high)
-        else:
-            income = random.lognormvariate(mu_low, sigma_low)
+        gini_coeff = 0.44  # 世界平均基尼系数
+        if nation_line.get("基尼系数"):
+            gini_coeff = float(nation_line.get("基尼系数")) / 100 # type: ignore
         
-        # 计算混合对数正态分布在样本处的累积分布函数（考虑之后的缩放）
-        expected_mean_local = (
-            fraction_high * math.exp(mu_high + sigma_high ** 2 / 2)
-            + (1 - fraction_high) * math.exp(mu_low + sigma_low ** 2 / 2)
-        )
-        scale = avg_income / expected_mean_local if expected_mean_local > 0 else 1.0
-        scaled_income = income * scale
+        avg_income = float(nation_line.get("美元人均国民收入"))  # type: ignore
+        # 使用对数正态分布，通过基尼系数计算标准差σ
+        # 对数正态分布的基尼系数公式: Gini = 2*Φ(σ/√2) - 1
+        # 其中Φ是标准正态分布的累积分布函数
+        # 反推：Φ(σ/√2) = (Gini + 1) / 2
+        # 因此：σ = √2 * Φ^(-1)((Gini + 1) / 2)
+        
+        # 使用Abramowitz和Stegun的近似公式计算标准正态分布的逆累积分布函数
+        def norm_ppf(p):
+            """标准正态分布的逆累积分布函数（百分位点函数）"""
+            if p <= 0 or p >= 1:
+                raise ValueError("p must be in (0, 1)")
+            
+            # 使用有理函数近似（Abramowitz and Stegun approximation）
+            if p < 0.5:
+                # 使用对称性: ppf(p) = -ppf(1-p)
+                return -norm_ppf(1 - p)
+            
+            # 对于p >= 0.5，使用近似公式
+            t = math.sqrt(-2 * math.log(1 - p))
+            c0, c1, c2 = 2.515517, 0.802853, 0.010328
+            d1, d2, d3 = 1.432788, 0.189269, 0.001308
+            
+            numerator = c0 + c1 * t + c2 * t**2
+            denominator = 1 + d1 * t + d2 * t**2 + d3 * t**3
+            
+            return t - numerator / denominator
+        
+        # 计算σ
+        p = (gini_coeff + 1) / 2
+        sigma = float(math.sqrt(2) * norm_ppf(p))
+        
+        # 对数正态分布参数
+        # E[X] = exp(μ + σ²/2) = avg_income
+        # 因此 μ = ln(avg_income) - σ²/2
+        mu = float(math.log(avg_income) - sigma**2 / 2)
+        
+        income = random.lognormvariate(mu, sigma)
 
         def _lognorm_cdf(x: float, mu: float, sigma: float) -> float:
             if x <= 0:
@@ -192,26 +207,12 @@ def nation_parse(name, out_seed):
             z = (math.log(x) - mu) / sigma
             return 0.5 * (1.0 + math.erf(z / math.sqrt(2.0)))
 
-        mixture_cdf = (
-            fraction_high * _lognorm_cdf(scaled_income, mu_high, sigma_high)
-            + (1 - fraction_high) * _lognorm_cdf(scaled_income, mu_low, sigma_low)
-        )
+        mixture_cdf = _lognorm_cdf(income, mu, sigma)
         income_rank = max(0.0, min(1.0, mixture_cdf))
 
-        # p_res["income_rank"] = income_rank
-        # game_data["income_rank"] = income_rank
-
-        # 由于样本与理论期望有偏差，按理论期望做一次缩放以确保总体均值约为avg_income
-        expected_mean = (
-            fraction_high * math.exp(mu_high + sigma_high**2 / 2)
-            + (1 - fraction_high) * math.exp(mu_low + sigma_low**2 / 2)
-        )
-        if expected_mean > 0:
-            income = income * (avg_income / expected_mean)
-
         # 更新得分（保持原逻辑：以均方根比率调整）
-        score *= math.sqrt(max(income, 0.0) / avg_income)
-        rae(f"你们家人均年收入大约为{income:.2f}$ (国内前{(1-income_rank)*100:.2f}%)")
+        score *= pow(max(income, 0.0) / avg_income, 1/4)
+        rae(f"你父母人均年收入大约为{income:.2f}$ (国内前{(1-income_rank)*100:.2f}%)")
         if nation_line.get("PPP人均国民收入"):
             ppp_income = float(nation_line.get("PPP人均国民收入"))  # type: ignore
             pt_income = income * ppp_income / avg_income / 17090 * 10550

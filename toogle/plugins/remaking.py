@@ -7,11 +7,14 @@ import PIL.ImageFont
 import requests
 
 from toogle.configs import config, interval_limiter
+from toogle.economy import has_balance
 from toogle.message import Image, Member, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack, get_user_name
 from toogle.plugins.gpt import GetOpenAIConversation
+from toogle.plugins.online_ai import GetDoubaoCompose
 from toogle.plugins.remake.remake import get_remake
 from toogle.sql import DatetimeUtils, SQLConnection
+from toogle.utils import is_admin
 
 
 class GetRemake(MessageHandler):
@@ -19,14 +22,15 @@ class GetRemake(MessageHandler):
     trigger = r"^/remake"
     # white_list = True
     readme = "随机remake，数据来源自世界银行"
-    price = 5
+    price = 10
     
-    prompt_setting = '请根据remake结果，生成一段remake人生小故事，以第三人称视角，主要考虑收入水平，尽量贴切写实，不要涉及具体数字，字数在200字左右。'
+    prompt_setting = '请根据remake结果，生成一段remake人生小故事，以第三人称视角，主要考虑收入在国内的对应水平，尽量贴切写实，不要涉及具体数字、不要提预期寿命，字数在200字左右。'
 
     async def ret(self, message: MessagePack) -> MessageChain:
         # return MessageChain.create([Plain("由于敏感词封禁问题，remake暂时维护升级，未来会转换为图片形式")])
+        msg = message.message.asDisplay()
         user = SQLConnection.get_user(message.member.id)
-        if message.message.asDisplay().split()[-1].startswith("topd"):
+        if msg.split()[-1].startswith("topd"):
             res = "Remake世界排行:\n"
             res += "\n".join(
                 [
@@ -35,16 +39,16 @@ class GetRemake(MessageHandler):
                 ]
             )
             return MessageChain.create([Image.text_image(res)])
-        elif message.message.asDisplay().split()[-1].startswith("top"):
+        elif msg.split()[-1].startswith("top"):
             res = "Remake世界排行:\n"
             res += "\n".join(
                 [
-                    f"第{i+1}名 {x[3]}分 {x[2]} {x[4]}{x[7]}{x[8]}"
+                    f"第{i+1}名 {float(x[3]):.3f}分 {x[2]} {x[4]}{x[7]}{x[8]}"
                     for i, x in enumerate(SQLConnection.get_top_remake()) # type: ignore
                 ]
             )
             return MessageChain.create([Image.text_image(res)])
-        elif message.message.asDisplay().split()[-1].startswith("lowd"):
+        elif msg.split()[-1].startswith("lowd"):
             res = "Remake倒数世界排行:\n"
             res += "\n".join(
                 [
@@ -53,16 +57,16 @@ class GetRemake(MessageHandler):
                 ]
             )
             return MessageChain.create([Image.text_image(res)])
-        elif message.message.asDisplay().split()[-1].startswith("low"):
+        elif msg.split()[-1].startswith("low"):
             res = "Remake倒数世界排行:\n"
             res += "\n".join(
                 [
-                    f"第{i+1}名 {x[3]}分 {x[2]} {x[4]}{x[7]}{x[8]}"
+                    f"第{i+1}名 {float(x[3]):.3f}分 {x[2]} {x[4]}{x[7]}{x[8]}"
                     for i, x in enumerate(SQLConnection.get_low_remake()) # type: ignore
                 ]
             )
             return MessageChain.create([Image.text_image(res)])
-        elif message.message.asDisplay().split()[-1].startswith("#"):
+        elif msg.split()[-1].startswith("#"):
             seed = message.message.asDisplay().split("#")[-1]
             try:
                 res = get_remake(message.member.name, seed=seed)
@@ -94,12 +98,21 @@ class GetRemake(MessageHandler):
             SQLConnection.update_user(
                 message.member.id, f"last_remake='{DatetimeUtils.get_now_time()}'"
             )
-            text_res = '\n人生故事: ' + GetOpenAIConversation.get_chat(
+            story_res = GetOpenAIConversation.get_chat(
                 res[0],
                 settings=self.prompt_setting,
                 model=config.get("GPTModelLarge", ""),
                 url=config.get("GPTUrl", ""),
             )
-            return MessageChain.create([message.as_quote(), Image.text_image(res[0]), Plain(text_res)])
+            text_res = '\n人生故事: ' + story_res
+
+            try:
+                basic_info = f"{res[1]['nation']}{res[1]['race']}{res[1]['sexual']}"
+                pic_bytes = GetDoubaoCompose.generate_image(
+                    f"为以下人生故事生成一张主人公在30岁时的照片，照片风格写实: {basic_info}\n{story_res}",
+                )
+                return MessageChain.create([message.as_quote(), Image.text_image(res[0]), Image(bytes=pic_bytes), Plain(text_res)])
+            except Exception as e:
+                return MessageChain.create([message.as_quote(), Image.text_image(res[0]), Plain(text_res), Plain(f"\nremake图片生成失败: {repr(e)}")])
         else:
-            return MessageChain.create([message.as_quote(), Plain("一天只能remake一次～")])
+            return MessageChain.create([message.as_quote(), Plain("一天只能remake一次～")], no_charge=True)
