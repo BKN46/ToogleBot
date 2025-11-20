@@ -311,6 +311,14 @@ def nb2toogle(message: Union[MessageChain, list, None], parse_forward=False) -> 
         for item in message:
             if item['type'] == "Plain":
                 message_list.append(Plain(item.get("text")))
+            elif item['type'] == "At":
+                message_list.append(
+                    At(
+                        target=item.get("target"),  # type: ignore
+                    )
+                )
+            elif item['type'] == "AtAll":
+                message_list.append(AtAll())
             elif item['type'] == "Image":
                 message_list.append(
                     Image(
@@ -320,24 +328,27 @@ def nb2toogle(message: Union[MessageChain, list, None], parse_forward=False) -> 
                     )
                 )
             elif item['type'] == "Forward":
-                message_list.append(
-                    ForwardMessage(
-                        node_list=[
-                            {
-                                "sender": x.get("senderId"),
-                                "time": x.get("time"),
-                                "senderName": x.get("senderName"),
-                                "message": nb2toogle(x.get("messageChain")),
-                            }
-                            for x in item.get("nodeList") or []
-                        ],
-                        sender_id=item.get("senderLd"),
-                        sender_name=item.get("senderName"),
-                        time=item.get("time"),
-                        message_id=item.get("messageId"),
-                        message=nb2toogle(item.get("message_chain")),
+                if parse_forward:
+                    message_list.append(
+                        ForwardMessage(
+                            node_list=[
+                                {
+                                    "sender": x.get("senderId"),
+                                    "time": x.get("time"),
+                                    "senderName": x.get("senderName"),
+                                    "message": nb2toogle(x.get("messageChain")),
+                                }
+                                for x in item.get("nodeList") or []
+                            ],
+                            sender_id=item.get("senderLd"),
+                            sender_name=item.get("senderName"),
+                            time=item.get("time"),
+                            message_id=item.get("messageId"),
+                            message=nb2toogle(item.get("message_chain")),
+                        )
                     )
-                )
+                else:
+                    message_list.append(Plain("[转发消息]"))
     return ToogleChain(message_list)
 
 
