@@ -70,6 +70,7 @@ def get_random():
 
 def nation_parse(name, out_seed):
     IS_POOR = False
+    IS_DEAD_EARLY = False
     p_res = {
         "name": name,
     }
@@ -157,6 +158,7 @@ def nation_parse(name, out_seed):
         if random.random() < die_early_rate:
             score *= 0.1
             rae(f"你将在5岁以下死亡")
+            IS_DEAD_EARLY = True
     if nation_line.get("美元人均国民收入") and not IS_POOR:
         gini_coeff = 0.44  # 世界平均基尼系数
         if nation_line.get("基尼系数"):
@@ -240,7 +242,16 @@ def nation_parse(name, out_seed):
                 rae(f"你更可能会从事{work_res}工作")
     if nation_line.get("出生预期寿命"):
         avg_lt = float(nation_line.get("出生预期寿命"))  # type: ignore
-        life_time = random.gauss(avg_lt, avg_lt / 10)
+        if IS_DEAD_EARLY:
+            life_time = random.uniform(0, 5)
+        else:
+            # Weibull distribution for adult lifespan
+            # Shape parameter beta=5 gives a reasonable left-skewed distribution for aging
+            alpha = avg_lt / 0.91817
+            life_time = random.weibullvariate(alpha, 5)
+            if life_time < 5:
+                life_time = 5 + random.random() * 5
+
         score *= math.sqrt(life_time / avg_lt)
         rae(f"你的预期寿命为{life_time:.1f}年")
     rae(f"# 投胎得分: {score:.2f}")

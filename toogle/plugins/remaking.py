@@ -25,6 +25,7 @@ class GetRemake(MessageHandler):
     price = 10
     
     prompt_setting = '请根据remake结果，生成一段remake人生小故事，以第三人称视角，主要考虑收入在国内的对应水平，尽量贴切写实，不要涉及具体数字、不要提预期寿命，字数在200字左右。'
+    draw_prompt_setting = '请根据人生描述，生成一个给绘图AI使用的绘图提示词，描述主人公在30岁时的照片，风格写实。'
 
     async def ret(self, message: MessagePack) -> MessageChain:
         # return MessageChain.create([Plain("由于敏感词封禁问题，remake暂时维护升级，未来会转换为图片形式")])
@@ -108,8 +109,14 @@ class GetRemake(MessageHandler):
 
             try:
                 basic_info = f"{res[1]['nation']}{res[1]['race']}{res[1]['sexual']}"
+                draw_prompt = GetOpenAIConversation.get_chat(
+                    f'{basic_info}\n{story_res}',
+                    settings=self.draw_prompt_setting,
+                    model=config.get("GPTModelLarge", ""),
+                    url=config.get("GPTUrl", ""),
+                )
                 pic_bytes = GetDoubaoCompose.generate_image(
-                    f"为以下人生故事生成一张主人公在30岁时的照片，照片风格写实: {basic_info}\n{story_res}",
+                    f"为以下人生故事生成一张主人公在30岁时的照片，照片风格写实: {draw_prompt}",
                 )
                 return MessageChain.create([message.as_quote(), Image.text_image(res[0]), Image(bytes=pic_bytes), Plain(text_res)])
             except Exception as e:
