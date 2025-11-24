@@ -23,6 +23,7 @@ import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
 import bloom_filter
+import cv2
 import requests
 
 import nonebot
@@ -486,6 +487,68 @@ def draw_pic_text(
         return img_bytes.getvalue()
     else:
         return gen_image
+
+
+def convert_mp4_to_gif(video_bytes: bytes, *, fps: int = 24, loop: int = 0, frame_step: int = 2, max_width: int = 360) -> bytes:
+    """将MP4字节流转换为GIF字节流，完全在内存中完成。"""
+    if not video_bytes:
+        raise ValueError("video_bytes is empty")
+
+    max_size = len(video_bytes) + 1024
+    temp_buffer = tempfile.SpooledTemporaryFile(max_size=max_size)
+    temp_buffer.write(video_bytes)
+    temp_buffer.flush()
+    temp_buffer.seek(0)
+    
+    duration = int(1000 / fps * frame_step)
+
+    if os.name != "posix":
+        temp_buffer.close()
+        raise RuntimeError("convert_mp4_to_gif currently supports only POSIX systems")
+
+    video_source = f"/proc/self/fd/{temp_buffer.fileno()}"
+    capture = cv2.VideoCapture(video_source)
+
+    frames = []
+    frame_index = 0
+    try:
+        while True:
+            success, frame = capture.read()
+            if not success:
+                break
+            if frame_step > 1 and frame_index % frame_step != 0:
+                frame_index += 1
+                continue
+
+            if max_width:
+                h, w = frame.shape[:2]
+                if w > max_width:
+                    ratio = max_width / w
+                    new_h = int(h * ratio)
+                    frame = cv2.resize(frame, (max_width, new_h), interpolation=cv2.INTER_AREA)
+
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frames.append(PIL.Image.fromarray(frame_rgb))
+            frame_index += 1
+    finally:
+        capture.release()
+        temp_buffer.close()
+
+    if not frames:
+        raise ValueError("No frames decoded from provided video bytes")
+
+    gif_buffer = io.BytesIO()
+    frames[0].save(
+        gif_buffer,
+        format="GIF",
+        append_images=frames[1:],
+        save_all=True,
+        duration=duration,
+        loop=loop,
+        optimize=True,
+    )
+    gif_buffer.seek(0)
+    return gif_buffer.getvalue()
 
 
 def is_admin(id: int) -> Boolean:
