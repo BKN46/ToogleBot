@@ -1,15 +1,18 @@
 import base64
-from typing import Optional
+import time
+from typing import Literal, Optional, Union
 
 import requests
 from toogle.configs import config
 from toogle.message import Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack, WaitCommandHandler
+from toogle.mirai_extend import send_group_file
 from toogle.nonebot2_adapter import bot_send_message
 from toogle.plugins.compose.novelai import get_ai_generate, get_balance
 import toogle.economy as economy
 import toogle.plugins.compose.midjourney as midjourney
 from toogle.sql import DatetimeUtils, SQLConnection
+from toogle.utils import convert_mp4_to_gif
 
 
 class GetAICompose(MessageHandler):
@@ -172,16 +175,59 @@ class GetMidjourney(MessageHandler):
 
 
 class GetDoubaoCompose(MessageHandler):
-    name = "豆包AI生成图片"
-    trigger = r"^\.doubao\s"
+    name = "豆包AI生成图片/视频"
+    trigger = r"^/doubao(\s|v\s)"
     thread_limit = True
-    price = 30
+    price = 50
     interval = 300
-    readme = "获取NovelAI生成图片，注意输入文本必须英文"
+    readme = "获取豆包AI生成图片/视频"
+    
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {config['DOUBAO_API_KEY']}"
+    }
 
     async def ret(self, message: MessagePack) -> Optional[MessageChain]:
-        content = message.message.asDisplay()[8:].strip()
-        return MessageChain.create([Image(bytes=self.generate_image(content))])
+        content = message.message.asDisplay()
+        if content.startswith('/doubao '):
+            return MessageChain.create([Image(bytes=self.generate_image(content[8:].strip()))])
+
+        image_mode="reference_image"
+
+        content_str = '\n'.join([x.text for x in message.message.get(Plain)])
+        if content_str.startswith('f'):
+            image_mode = "first_frame"
+            content_str = content_str[1:].strip()
+
+        image = message.message.get(Image)
+        if image:
+            image = image[0]
+        else:
+            image = None
+        
+        start_time = time.time()
+        video_url, token_usage = self.generate_video(
+            content_str=content_str,
+            image=image,
+            image_mode=image_mode
+        )
+        use_time = time.time() - start_time
+        video_name = video_url.split("/")[-1].split("?")[0]
+        # send_group_file(
+        #     message.group.id,
+        #     video_name,
+        #     requests.get(video_url).content
+        # )
+        video_bytes = requests.get(video_url).content
+        gif_bytes = convert_mp4_to_gif(video_bytes, fps=24, loop=0, frame_step=2, max_width=360)
+
+        return MessageChain.create([
+            message.as_quote(),
+            Image(bytes=gif_bytes),
+            Plain(f"用时{use_time:.2f}秒\n本次生成使用Token: {token_usage}")
+        ])
+        # return MessageChain.plain(f"用时{use_time:.2f}秒\n本次生成使用Token: {token_usage}", quote=message.as_quote())
+
 
     @staticmethod
     def generate_image(content_str: str, module="doubao-seedream-4-0-250828") -> bytes:
@@ -195,14 +241,79 @@ class GetDoubaoCompose(MessageHandler):
             "response_format": "b64_json",
             "watermark": False
         }
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {config['DOUBAO_API_KEY']}"
-        }
-        res = requests.post(url, json=data, headers=headers)
+        res = requests.post(url, json=data, headers=GetDoubaoCompose.headers)
         try:
             b64data = res.json()['data'][0]['b64_json']
         except Exception as e:
             raise Exception(f"{res.text}")
         return base64.b64decode(b64data)
+
+    @staticmethod
+    def generate_video(
+        content_str: str,
+        image: Optional[Image]=None,
+        image_mode="reference_image",
+        timeout = 1200,
+        ):
+        # image_mode = reference_image, first_frame
+        url = "https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks"
+        parameters = {
+            'rs': '720p',
+            'dur': 7,
+            'fps': 24,
+            'wm': 'false',
+        }
+        parameters_str = ' '.join([f'--{k} {v}' for k, v in parameters.items()])
+        if not image:
+            data = {
+                "model": "doubao-seedance-1-0-lite-t2v-250428",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": f"{content_str} {parameters_str}"
+                    }
+                ]
+            }
+        else:
+            data = {
+                "model": "doubao-seedance-1-0-lite-i2v-250428",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": f"{content_str} {parameters_str}"
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/png;base64,{image.getBase64()}"
+                        },
+                        "role": image_mode
+                    }
+                ]
+            }
+        res = requests.post(url, json=data, headers=GetDoubaoCompose.headers)
+        try:
+            pic_id = res.json()['id']
+        except Exception as e:
+            raise Exception(f"{res.text}")
+        
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            status_res = requests.get(
+                f"https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks/{pic_id}",
+                headers=GetDoubaoCompose.headers
+            )
+            try:
+                status_json = status_res.json()
+            except Exception as e:
+                raise Exception(f"{status_res.text}")
+            if status_json['status'] == 'succeeded':
+                video_url = status_json['content']['video_url']
+                token_usage = status_json['usage']['total_tokens']
+                return video_url, token_usage
+            elif status_json['status'] == 'failed':
+                raise Exception(f"生成失败: {status_json}")
+            else:
+                time.sleep(5)
+        raise Exception("生成超时")
 
