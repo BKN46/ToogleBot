@@ -198,6 +198,16 @@ class GetDoubaoCompose(MessageHandler):
         if content_str.startswith('f'):
             image_mode = "first_frame"
             content_str = content_str[1:].strip()
+        
+        ratio = "16:9"
+        if content_str.startswith('v'):
+            ratio = "9:16"
+            content_str = content_str[1:].strip()
+            
+        resolution = "480p"
+        if content_str.startswith('h'):
+            resolution = "720p"
+            content_str = content_str[1:].strip()
 
         image = message.message.get(Image)
         if image:
@@ -209,17 +219,14 @@ class GetDoubaoCompose(MessageHandler):
         video_url, token_usage = self.generate_video(
             content_str=content_str,
             image=image,
-            image_mode=image_mode
+            image_mode=image_mode,
+            resolution=resolution,
+            ratio=ratio,
         )
         use_time = time.time() - start_time
         video_name = video_url.split("/")[-1].split("?")[0]
-        # send_group_file(
-        #     message.group.id,
-        #     video_name,
-        #     requests.get(video_url).content
-        # )
         video_bytes = requests.get(video_url).content
-        gif_bytes = convert_mp4_to_gif(video_bytes, fps=24, loop=0, frame_step=2, max_width=360)
+        gif_bytes = convert_mp4_to_gif(video_bytes, fps=24, loop=0, frame_step=2, max_width=480)
 
         return MessageChain.create([
             message.as_quote(),
@@ -254,13 +261,18 @@ class GetDoubaoCompose(MessageHandler):
         image: Optional[Image]=None,
         image_mode="reference_image",
         timeout = 1200,
+        resolution = '480p',
+        ratio = '16:9',
+        duration = 7,
+        fps = 24,
         ):
         # image_mode = reference_image, first_frame
         url = "https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks"
         parameters = {
-            'rs': '720p',
-            'dur': 7,
-            'fps': 24,
+            'rs': resolution,
+            'rt': ratio,
+            'dur': duration,
+            'fps': fps,
             'wm': 'false',
         }
         parameters_str = ' '.join([f'--{k} {v}' for k, v in parameters.items()])
@@ -275,6 +287,18 @@ class GetDoubaoCompose(MessageHandler):
                 ]
             }
         else:
+            pic_height, pic_width = image.get_size()
+            parameters['rt'] = '21:9'
+            if pic_width / pic_height < 21 / 9:
+                parameters['rt'] = '16:9'
+            elif pic_width / pic_height < 16 / 9:
+                parameters['rt'] = '4:3'
+            elif pic_width / pic_height < 4 / 3:
+                parameters['rt'] = '1:1'
+            elif pic_width / pic_height < 1 / 1:
+                parameters['rt'] = '3:4'
+            elif pic_width / pic_height < 3 / 4:
+                parameters['rt'] = '9:16'
             data = {
                 "model": "doubao-seedance-1-0-lite-i2v-250428",
                 "content": [
