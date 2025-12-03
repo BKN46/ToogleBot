@@ -218,7 +218,7 @@ def nation_parse(name, out_seed):
         if nation_line.get("PPP人均国民收入"):
             ppp_income = float(nation_line.get("PPP人均国民收入"))  # type: ignore
             pt_income = income * ppp_income / avg_income / 17090 * 10550
-            rae(f"PPP后约等价为中国2021年月薪{pt_income*7/12:.2f}¥")
+            rae(f"PPP后约等价月薪{pt_income*7/12:.2f}¥")
     if nation_line.get("失业率"):
         tmp = random.random() * 100
         if tmp <= float(nation_line.get("失业率")):  # type: ignore

@@ -116,7 +116,7 @@ class GetRemake(MessageHandler):
                     url=config.get("GPTUrl", ""),
                 )
                 pic_bytes = GetDoubaoCompose.generate_image(
-                    f"为以下人生故事生成一张主人公在30岁时的照片，照片风格写实: {draw_prompt}",
+                    f"{draw_prompt}",
                 )
                 return MessageChain.create([message.as_quote(), Image.text_image(res[0]), Image(bytes=pic_bytes), Plain(text_res)])
             except Exception as e:
