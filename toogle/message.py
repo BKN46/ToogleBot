@@ -149,6 +149,11 @@ class Image(Element):
         image_bytes = self.getBytes()
         with open(path, "wb") as f:
             f.write(image_bytes)
+            
+    def get_size(self) -> Tuple[int, int]:
+        image_bytes = self.getBytes()
+        image = PIL.Image.open(io.BytesIO(image_bytes))
+        return image.size
 
     @staticmethod
     def text_image(text: str, **kwargs) -> "Image":

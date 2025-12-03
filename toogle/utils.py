@@ -526,6 +526,10 @@ def convert_mp4_to_gif(video_bytes: bytes, *, fps: int = 24, loop: int = 0, fram
                     ratio = max_width / w
                     new_h = int(h * ratio)
                     frame = cv2.resize(frame, (max_width, new_h), interpolation=cv2.INTER_AREA)
+                elif h > max_width:
+                    ratio = max_width / h
+                    new_w = int(w * ratio)
+                    frame = cv2.resize(frame, (new_w, max_width), interpolation=cv2.INTER_AREA)
 
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             frames.append(PIL.Image.fromarray(frame_rgb))
