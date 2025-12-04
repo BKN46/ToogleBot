@@ -180,7 +180,7 @@ class GetDoubaoCompose(MessageHandler):
     thread_limit = True
     price = 50
     interval = 300
-    readme = "获取豆包AI生成图片/视频"
+    readme = "获取豆包AI生成图片/视频\n视频可选参数f、v、h、l，分别代表图像首帧生成模式、竖屏、高分辨率、长时间\n例如：/doubaov fvh一只在宇宙中飞翔的猫咪"
     
     headers = {
         "Content-Type": "application/json",
@@ -195,26 +195,29 @@ class GetDoubaoCompose(MessageHandler):
         image_mode="reference_image"
 
         content_str = '\n'.join([x.text for x in message.message.get(Plain)])
-        if content_str.startswith('f'):
-            image_mode = "first_frame"
-            content_str = content_str[1:].strip()
-        
+        content_str = content_str[8:].strip()
+
         ratio = "16:9"
-        if content_str.startswith('v'):
-            ratio = "9:16"
-            content_str = content_str[1:].strip()
-            
         resolution = "480p"
-        if content_str.startswith('h'):
-            resolution = "720p"
+        duration = 7
+        while content_str and content_str[0] in "fvhl":
+            flag = content_str[0]
             content_str = content_str[1:].strip()
+            if flag == 'f':
+                image_mode = "first_frame"
+            elif flag == 'v':
+                ratio = "9:16"
+            elif flag == 'h':
+                resolution = "720p"
+            elif flag == 'l':
+                duration = 12
 
         image = message.message.get(Image)
         if image:
             image = image[0]
         else:
             image = None
-        
+
         start_time = time.time()
         video_url, token_usage = self.generate_video(
             content_str=content_str,
@@ -222,6 +225,7 @@ class GetDoubaoCompose(MessageHandler):
             image_mode=image_mode,
             resolution=resolution,
             ratio=ratio,
+            duration=duration,
         )
         use_time = time.time() - start_time
         video_name = video_url.split("/")[-1].split("?")[0]
@@ -269,9 +273,9 @@ class GetDoubaoCompose(MessageHandler):
         # image_mode = reference_image, first_frame
         url = "https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks"
         parameters = {
-            'rs': resolution,
-            'rt': ratio,
-            'dur': duration,
+            'resolution': resolution,
+            'ratio': ratio,
+            'duration': duration,
             'fps': fps,
             'wm': 'false',
         }
@@ -299,6 +303,7 @@ class GetDoubaoCompose(MessageHandler):
                 parameters['rt'] = '3:4'
             elif pic_width / pic_height < 3 / 4:
                 parameters['rt'] = '9:16'
+            parameters_str = ' '.join([f'--{k} {v}' for k, v in parameters.items()])
             data = {
                 "model": "doubao-seedance-1-0-lite-i2v-250428",
                 "content": [
