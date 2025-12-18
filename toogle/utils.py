@@ -555,6 +555,49 @@ def convert_mp4_to_gif(video_bytes: bytes, *, fps: int = 24, loop: int = 0, fram
     return gif_buffer.getvalue()
 
 
+def convert_gif_to_h264(gif_bytes: bytes) -> bytes:
+    """将GIF字节流转换为H.264字节流，完全在内存中完成。"""
+    if not gif_bytes:
+        raise ValueError("gif_bytes is empty")
+
+    max_size = len(gif_bytes) + 1024
+    temp_buffer = tempfile.SpooledTemporaryFile(max_size=max_size)
+    temp_buffer.write(gif_bytes)
+    temp_buffer.flush()
+    temp_buffer.seek(0)
+
+    if os.name != "posix":
+        temp_buffer.close()
+        raise RuntimeError("gif_to_h264 currently supports only POSIX systems")
+
+    gif_source = f"/proc/self/fd/{temp_buffer.fileno()}"
+    capture = cv2.VideoCapture(gif_source)
+
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v') # type: ignore
+    fps = capture.get(cv2.CAP_PROP_FPS) or 10.0
+    width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    with tempfile.NamedTemporaryFile(suffix=".mp4", delete=True) as h264_file:
+        video_writer = cv2.VideoWriter(h264_file.name, fourcc, fps, (width, height))
+
+        try:
+            while True:
+                success, frame = capture.read()
+                if not success:
+                    break
+                video_writer.write(frame)
+        finally:
+            capture.release()
+            video_writer.release()
+            temp_buffer.close()
+
+        h264_file.seek(0)
+        h264_bytes = h264_file.read()
+
+    return h264_bytes
+
+
 def is_admin(id: int) -> Boolean:
     for i in config.get("ADMIN_LIST", []):
         if id == int(i):
