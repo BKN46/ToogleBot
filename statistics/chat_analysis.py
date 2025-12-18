@@ -54,8 +54,8 @@ def analysis(self_member_id, group_id_list):
     # jieba.enable_parallel(2)
     # jieba.enable_paddle()
 
-    start_time = datetime.datetime(2024, 1, 1)
-    end_time = datetime.datetime(2025, 1, 1)
+    start_time = datetime.datetime(2025, 1, 1)
+    end_time = datetime.datetime(2025, 12, 1)
     word_stats = {}
     for line, group_id, member_id in read_logs(start_time, end_time):
         if member_id in [self_member_id]:

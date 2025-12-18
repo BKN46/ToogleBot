@@ -8,7 +8,7 @@ if __name__ == "__main__":
         k: v
         for k, v in
         json.load(open("res/word_stats.json", "r", encoding="utf-8")).items()
-        if 50 < v < 5000 and (len(k) > 1 or k in ["屎", "逼", "草", "妈", "顶", "日", "批", "冲"]) and not k.isascii()
+        if 50 < v and (len(k) > 1 or k in ["屎", "逼", "草", "妈", "顶", "日", "批", "冲"] or v > 500) and not k.isascii()
     }
     word_cloud = WordCloud(
         font_path="../toogle/plugins/compose/fonts/Arial Unicode MS Font.ttf",
