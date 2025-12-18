@@ -38,7 +38,7 @@ def update_setu_record(group_id, member_id, cnt):
 
 
 async def chat_earn(message_pack: MessagePack):
-    pics = message_pack.message.get(Image, ignore_forawrd=False, forward_layer=1)
+    pics = message_pack.message.get(Image, ignore_forawrd=True, forward_layer=1)
     DelayedRecall.add_recall(message_pack.group.id, message_pack, only_repeat=True)
     if get_balance(message_pack.member.id) < 15:
         if len(MessageChain(message_pack.message.get(Plain)).asDisplay()) >= 10:
