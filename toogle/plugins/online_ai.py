@@ -1,6 +1,6 @@
 import base64
 import time
-from typing import Literal, Optional, Union
+from typing import Literal, Optional, Union, List
 
 import requests
 from toogle.configs import config
@@ -190,7 +190,15 @@ class GetDoubaoCompose(MessageHandler):
     async def ret(self, message: MessagePack) -> Optional[MessageChain]:
         content = message.message.asDisplay()
         if content.startswith('/doubao '):
-            return MessageChain.create([Image(bytes=self.generate_image(content[8:].strip()))])
+            return MessageChain.create([
+                Image(
+                    bytes=self.generate_image(
+                        content[8:].strip(),
+                        images=message.message.get(Image) or [],
+                        module="doubao-seedream-4-5-251128"
+                        )
+                    )  
+            ])
 
         image_mode="reference_image"
 
@@ -241,17 +249,31 @@ class GetDoubaoCompose(MessageHandler):
 
 
     @staticmethod
-    def generate_image(content_str: str, module="doubao-seedream-4-0-250828") -> bytes:
+    def generate_image(
+        content_str: str,
+        images: List[Image]=[],
+        size: str="832x1248",
+        module="doubao-seedream-4-0-250828"
+        ) -> bytes:
         url = "https://ark.cn-beijing.volces.com/api/v3/images/generations"
         data = {
             "model": module,
             "prompt": content_str,
-            "size": "832x1248",
+            "size": size,
             "sequential_image_generation": "disabled",
             "stream": False,
             "response_format": "b64_json",
             "watermark": False
         }
+
+        if len(images) > 1:
+            data["image"] = [
+                f"data:image/png;base64,{x.getBase64()}"
+                for x in images
+            ]
+        elif len(images) == 1:
+            data["image"] = f"data:image/png;base64,{images[0].getBase64()}"
+
         res = requests.post(url, json=data, headers=GetDoubaoCompose.headers)
         try:
             b64data = res.json()['data'][0]['b64_json']
