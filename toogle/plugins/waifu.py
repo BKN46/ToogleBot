@@ -26,12 +26,12 @@ class GetRandomAnimeFemale(MessageHandler):
     def_dice_list = ["4d6", "3d8", "5d4", "2d12", "2d10", "3d6", "2d8", "4d4", "d20kh"]
 
     async def ret(self, message: MessagePack) -> MessageChain:
+        return MessageChain.create([Plain("功能维护中")])
         user = SQLConnection.get_user(message.member.id)
         message_text = message.message.asDisplay()
         s, schn = "f", "老婆"
         if "老公" in message_text:
             s, schn = "m", "老公"
-        # return MessageChain.create([Plain("Waifu功能敏感时期暂时维护")])
         if message_text.startswith("随机"):
             if not user or not DatetimeUtils.is_today(user[2]) or user[1] > 5:
 

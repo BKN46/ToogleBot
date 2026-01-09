@@ -2,15 +2,31 @@
 import datetime
 import io
 import os
+import random
 import re
 import time
 
 import requests
 
+DEBUG_MODE = False
+
 try:
     from toogle.message import Image
 except Exception as e:
     print("debug_mode")
+    DEBUG_MODE = True
+
+HEADER = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+    "sec-ch-ua": '"Not(A:Brand";v="99", "Google Chrome";v="133", "Chromium";v="133"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"macOS"',
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "if-none-match": 'W/"6949f0a1-947e"',
+}
 
 
 def get_rainfall_graph():
@@ -43,18 +59,21 @@ def get_rainfall_graph():
     
     pics = []
     for x in range(339, 346):
-        res = requests.get(f"https://weather.cma.cn/web/channel-{x}.html").text
+        HEADER['if-none-match'] = f'W/"{random.randint(1000000, 9999999)}-947e"'
+        res = requests.get(f"https://weather.cma.cn/web/channel-{x}.html", headers=HEADER).text
         search_reg = r'(/file.*?")'
         search_res = re.findall(search_reg, res)
         if search_res:
-            res = "https://weather.cma.cn/" + search_res[0][:-1]
+            res = "https://weather.cma.cn" + search_res[0][:-1]
             pics.append(res)
+            if DEBUG_MODE:
+                print(f'added pic: {res}')
     if not pics:
         return "获取国家气象局预报数据失败"
 
     try:
         gif_frames = [
-            Image.buffered_url_pic(x, return_PIL=True)
+            Image.buffered_url_pic(x, return_PIL=True).compress(max_width=720)
             for x in pics
         ]
     except Exception as e:
@@ -96,3 +115,7 @@ def get_weather_now(place_id):
     res = requests.get(url)
     data = res.json()['data']
     return data
+
+
+if __name__ == "__main__":
+    get_rainfall_graph()

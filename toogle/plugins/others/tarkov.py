@@ -139,7 +139,7 @@ def query_tarkov_dev(query):
         # "variables": {},
         "query": query,
     }
-    return requests.post(url, json=data, proxies=proxies).json()["data"]
+    return requests.post(url, json=data).json()["data"]
 
 
 def get_tarkov_meta_data():

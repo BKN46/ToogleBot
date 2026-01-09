@@ -195,7 +195,8 @@ class GetDoubaoCompose(MessageHandler):
                     bytes=self.generate_image(
                         content[8:].strip(),
                         images=message.message.get(Image) or [],
-                        module="doubao-seedream-4-5-251128"
+                        module="doubao-seedream-4-5-251128",
+                        size="2K",
                         )
                     )  
             ])

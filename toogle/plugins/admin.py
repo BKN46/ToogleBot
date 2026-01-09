@@ -79,6 +79,18 @@ class VoteMute(MessageHandler):
                 regist_shit_pic(pics[0].getBytes())
         elif mute_member_cnt >= 5 and mute_member_cnt % 2 == 1:
             mute_member(message.group.id, target_id, 600 * 2 ** ((mute_member_cnt - 3) // 2))
+            
+
+class T800Send(MessageHandler):
+    name = "击杀成员"
+    trigger = r"^\.kill"
+    readme = "击杀成员"
+    admin_only = True
+
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        if not is_admin(message.member.id):
+            return
+        return MessageChain.plain(f'已派遣T-800机器人执行肃清')
 
 
 class QuitGroup(MessageHandler):
