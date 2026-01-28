@@ -59,6 +59,16 @@ class GPTContext:
         res = GPTContext()
         res.content = json.loads(json_text)
         return res
+    
+    @staticmethod
+    def parse_msg_chain(message_chain: MessageChain) -> List[dict]:
+        res = []
+        for el in message_chain.root:
+            if isinstance(el, Plain):
+                res.append({"type": "text", "text": el.asDisplay()})
+            elif isinstance(el, Image):
+                res.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{el.getBase64()}" }})
+        return res
 
 
 class GetOpenAIConversation(MessageHandler):
@@ -168,11 +178,13 @@ class GetOpenAIConversation(MessageHandler):
         model="gpt-4",
         url = "https://api.openai.com/v1",
         tools = [],
+        other_params = {},
     ) -> str:
         path = "/chat/completions"
         body = {
             "model": model,
-            "messages": [{"role": "user", "content": text}]
+            "messages": [{"role": "user", "content": text}],
+            **other_params
         }
         if tools:
             body['tools'] = tools
@@ -315,18 +327,27 @@ class GetOpenAIConversation(MessageHandler):
 
     @staticmethod
     def get_web_search(
-        text: str,
+        text: Union[str, list],
         model="gpt-4",
         settings = "你是一条乐于助人的大黄狗",
         url = "https://api.openai.com/v1",
     ):
-        messages = [
-            {"role": "system", "content": settings},
-        ]
-        messages.append({
-            "role": "user",
-            "content": text
-        })
+        if isinstance(text, list):
+            messages = [
+                {"role": "system", "content": settings},
+                {
+                    "role": "user",
+                    "content": [*text]
+                }
+            ]
+        else:
+            messages = [
+                {"role": "system", "content": settings},
+            ]
+            messages.append({
+                "role": "user",
+                "content": text
+            })
         finish_reason = None
         while finish_reason is None or finish_reason == "tool_calls":
             choice = GetOpenAIConversation.get_chat( # type: ignore
@@ -342,7 +363,10 @@ class GetOpenAIConversation(MessageHandler):
                             "name": "$web_search",
                         },
                     }
-                ]
+                ],
+                other_params={
+                    "thinking": {"type": "disabled"},
+                }
             )
             if 'choices' not in choice:
                 if 'Your request exceeded model token limit' in choice.get('error', {}).get('message', ''):
@@ -370,7 +394,7 @@ class GetOpenAIConversation(MessageHandler):
                         "content": json.dumps(tool_result),  # <-- 我们约定使用字符串格式向 Kimi 大模型提交工具调用结果，因此在这里使用 json.dumps 将执行结果序列化成字符串
                     })
     
-        return choice['message']['content']
+        return choice['message']['content'] # type: ignore
 
 
     @staticmethod
@@ -449,7 +473,7 @@ class ActiveAIConversation(ActiveHandler):
 
 class WhatIs(MessageHandler):
     name = "大黄狗有问必答"
-    trigger = r"^什么是|^查一下|^DS |^DSR "
+    trigger = r"^什么是|^查一下|^请问"
     thread_limit = True
     readme = "什么是什么"
     interval = 600
@@ -461,43 +485,9 @@ class WhatIs(MessageHandler):
         if len(content) > self.message_length_limit:
             return MessageChain.plain(f"请求字数超限：{len(content)} > {self.message_length_limit}", no_interval=True)
 
-        if content.startswith("DSR "):
-            content = content[4:]
-            start_output=False
-            for res in GetOpenAIConversation.get_chat_stream_logic_chain(
-                content,
-                model="deepseek-r1",
-                url="https://api.lkeap.cloud.tencent.com/v1",
-                api_key=config.get("GPTSecretTencent"),
-                max_time=300,
-            ):
-                if res['error']:
-                    return MessageChain.plain(f"\n出现错误: {res['error']}", quote=message.as_quote())
-                if not start_output and res['is_res']:
-                    start_output = True
-                    res['yield'] = f"{res['yield']}"
-                bot_send_message(message, MessageChain.plain(res['yield'].strip()))
-            return MessageChain.plain("对话结束", quote=message.as_quote())
-        elif content.startswith("DS "):
-            content = content[3:]
-            final_res = {}
-            for res in GetOpenAIConversation.get_chat_stream_logic_chain(
-                content,
-                model="deepseek-r1",
-                url="https://api.lkeap.cloud.tencent.com/v1",
-                api_key=config.get("GPTSecretTencent"),
-                max_time=300,
-            ):
-                final_res = res
-                if res['error']:
-                    return MessageChain.plain(f"\n出现错误: {res['error']}", quote=message.as_quote())
-            if not final_res['res'].strip():
-                final_res['res'] = "无输出结果，以下是推理路径：\n" + final_res['reason']
-            return MessageChain.plain(f"{final_res['res']}\n\n开销: {final_res['usage']}\n耗时: {final_res['use_time']:.2f}ms", quote=message.as_quote()) # type: ignore
-
         try:
             res = GetOpenAIConversation.get_web_search(
-                content,
+                GPTContext.parse_msg_chain(message.message),
                 model=config.get("GPTModel", ""),
                 settings="请解答以下内容，结果精简在500字以内",
                 url=config.get("GPTUrl", ""),
