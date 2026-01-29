@@ -118,7 +118,7 @@ class Mathematica(MessageHandler):
 
 class Calculator(MessageHandler):
     name = "计算器"
-    trigger = r"=$"
+    trigger = r"^[\-\d\s+*/%().x^√²³kwKWmMbB千万亿（）]+=$"
     readme = "计算器"
     price = 2
 

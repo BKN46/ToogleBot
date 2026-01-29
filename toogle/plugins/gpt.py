@@ -489,7 +489,7 @@ class WhatIs(MessageHandler):
             res = GetOpenAIConversation.get_web_search(
                 GPTContext.parse_msg_chain(message.message),
                 model=config.get("GPTModel", ""),
-                settings="请解答以下内容，结果精简在500字以内",
+                settings="请解答以下内容，结果精简在500字以内，不要使用markdown格式",
                 url=config.get("GPTUrl", ""),
             )
             return MessageChain.plain(res, quote=message.as_quote())
