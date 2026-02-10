@@ -228,6 +228,7 @@ class GetDoubaoCompose(MessageHandler):
             image = None
 
         start_time = time.time()
+        bot_send_message(message, MessageChain.create([message.as_quote(), Plain(f"收到，正在生成中\n{image_mode}\n{ratio} {resolution} {duration}sec\n预计30s-3min")]))
         video_url, token_usage = self.generate_video(
             content_str=content_str,
             image=image,
@@ -239,6 +240,7 @@ class GetDoubaoCompose(MessageHandler):
         use_time = time.time() - start_time
         video_name = video_url.split("/")[-1].split("?")[0]
         video_bytes = requests.get(video_url).content
+        send_group_file(message.group.id, video_name, video_bytes)
         gif_bytes = convert_mp4_to_gif(video_bytes, fps=24, loop=0, frame_step=2, max_width=480)
 
         return MessageChain.create([
@@ -305,7 +307,7 @@ class GetDoubaoCompose(MessageHandler):
         parameters_str = ' '.join([f'--{k} {v}' for k, v in parameters.items()])
         if not image:
             data = {
-                "model": "doubao-seedance-1-0-lite-t2v-250428",
+                "model": "doubao-seedance-1-5-pro-251215",
                 "content": [
                     {
                         "type": "text",
@@ -328,7 +330,7 @@ class GetDoubaoCompose(MessageHandler):
                 parameters['rt'] = '9:16'
             parameters_str = ' '.join([f'--{k} {v}' for k, v in parameters.items()])
             data = {
-                "model": "doubao-seedance-1-0-lite-i2v-250428",
+                "model": "doubao-seedance-1-5-pro-251215",
                 "content": [
                     {
                         "type": "text",
