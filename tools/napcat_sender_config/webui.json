@@ -1,0 +1,6 @@
+{
+  "host": "127.0.0.1",
+  "port": 6100,
+  "token": "disabled-local-sender-instance",
+  "disableWebUI": true
+}

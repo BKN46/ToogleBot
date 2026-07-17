@@ -1,0 +1,9 @@
+{
+  "fileLog": true,
+  "consoleLog": true,
+  "fileLogLevel": "info",
+  "consoleLogLevel": "info",
+  "packetBackend": "auto",
+  "packetServer": "",
+  "o3HookMode": 1
+}

@@ -2,14 +2,10 @@ import base64
 from contextlib import contextmanager
 import ctypes
 import datetime
-import hashlib
 import io
 import json
-import multiprocessing
 import os
-import pickle
 import re
-import signal
 import tempfile
 import threading
 import time
@@ -18,7 +14,6 @@ import urllib.parse
 from typing import List, Tuple, Union
 from xmlrpc.client import Boolean
 
-from PIL import UnidentifiedImageError
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
@@ -26,10 +21,9 @@ import bloom_filter
 import cv2
 import requests
 
-import nonebot
-
-from toogle.configs import config
+from configs import config
 from toogle.exceptions import VisibleException
+from toogle.logger import logger
 
 
 if not os.path.exists("log"):
@@ -65,7 +59,7 @@ class anti_cf_requests():
     def get(*args, **kwargs):
         url = args[0]
         qParams = {'url': url, 'x-api-key': anti_cf_requests.scraping_ant_token}
-        reqUrl = f'{anti_cf_requests.sa_api}?{urllib.parse.urlencode(qParams)}' 
+        reqUrl = f'{anti_cf_requests.sa_api}?{urllib.parse.urlencode(qParams)}'
         return requests.get(reqUrl, **kwargs)
 
     @staticmethod
@@ -73,7 +67,7 @@ class anti_cf_requests():
         url = args[0]
         qParams = {'url': url, 'x-api-key': anti_cf_requests.scraping_ant_token}
         header = {"Ant-Content-Type": content_type}
-        reqUrl = f'{anti_cf_requests.sa_api}?{urllib.parse.urlencode(qParams)}' 
+        reqUrl = f'{anti_cf_requests.sa_api}?{urllib.parse.urlencode(qParams)}'
         return requests.post(reqUrl, **kwargs, headers=header)
 
 
@@ -94,7 +88,7 @@ class TimeoutWrapper:
             ctypes.pythonapi.PyThreadState_SetAsyncExc(thread.ident, ctypes.py_object(SystemExit))
             raise RuntimeError("Timeout")
         return self.ret
-        
+
 
 def set_timeout(num, callback):
     def wrap(func):
@@ -197,7 +191,7 @@ def get_font_wrap(text: str, font: PIL.ImageFont.ImageFont, box_width: int):
 
 def text2img(
     text: str,
-    font_path: str = "toogle/plugins/compose/fonts/Arial Unicode MS Font.ttf",
+    font_path: str = "tools/fonts/Arial Unicode MS Font.ttf",
     word_size: int = 20,
     max_size: Tuple[int, int] = (500, 1000),
     padding: Tuple[int, int] = (20, 20),
@@ -214,7 +208,7 @@ def text2img(
 
     gen_image = PIL.Image.new(
         "RGBA",
-        (text_width + 2 * padding[0], min(max_size[1], text_height + 2 * padding[1])),
+        (int(text_width + 2 * padding[0]), int(min(max_size[1], text_height + 2 * padding[1]))),
         bg_color, # type: ignore
     )
     draw = PIL.ImageDraw.Draw(gen_image)
@@ -232,7 +226,7 @@ def text2img(
 
 def list2img(
     input_list: List[Union[str, bytes]],
-    font_path: str = "toogle/plugins/compose/fonts/Arial Unicode MS Font.ttf",
+    font_path: str = "tools/fonts/Arial Unicode MS Font.ttf",
     word_size: int = 20,
     max_size: Tuple[int, int] = (500, 1000),
     padding: Tuple[int, int] = (20, 20),
@@ -312,7 +306,7 @@ def draw_rich_text(
     bg_color: Tuple[int, int, int] = (255, 255, 255),
     font_color: Tuple[int, int, int] = (20, 20, 20),
     word_size: int = 20,
-    font_path: str = "toogle/plugins/compose/fonts/Arial Unicode MS Font.ttf",
+    font_path: str = "tools/fonts/Arial Unicode MS Font.ttf",
     byte_mode: bool = True,
     src_img: Union[None, PIL.Image.Image] = None,
     position: Tuple[int, int] = (0, 0),
@@ -394,7 +388,7 @@ def draw_rich_text(
     else:
         gen_image = PIL.Image.new(
             "RGBA",
-            (total_width + padding[0] * 2, total_height + padding[1] * 2),
+            (int(total_width + padding[0] * 2), int(total_height + padding[1] * 2)),
             bg_color, # type: ignore
         )
     image_draw = PIL.ImageDraw.Draw(gen_image)
@@ -449,7 +443,7 @@ def pic_max_resize(
 def draw_pic_text(
     pic: PIL.Image.Image,
     text: str,
-    font_path: str = "toogle/plugins/compose/fonts/Arial Unicode MS Font.ttf",
+    font_path: str = "tools/fonts/Arial Unicode MS Font.ttf",
     word_size: int = 17,
     pic_size: Tuple[int, int] = (300, 460),
     max_size: Tuple[int, int] = (1000, 500),
@@ -499,7 +493,7 @@ def convert_mp4_to_gif(video_bytes: bytes, *, fps: int = 24, loop: int = 0, fram
     temp_buffer.write(video_bytes)
     temp_buffer.flush()
     temp_buffer.seek(0)
-    
+
     duration = int(1000 / fps * frame_step)
 
     if os.name != "posix":
@@ -626,8 +620,9 @@ def print_err(e, plugin, message_pack):
         f"[{message_pack.group.id}][{message_pack.member.id}]{message_pack.message.asDisplay()}\n"
         f"\n{'*'*20}\n{traceback.format_exc()}"
     )
-    print(msg, file=open("log/err.log", "a"))
-    nonebot.logger.error(f"[{plugin.name}] {repr(e)}")  # type: ignore
+    with open("log/err.log", "a", encoding="utf-8") as error_log:
+        print(msg, file=error_log)
+    logger.error(f"[{plugin.name}] {repr(e)}")  # type: ignore
     return msg
 
 
@@ -638,54 +633,44 @@ def print_call(plugin, message_pack):
         f"{message_pack.group.id}\t"
         f"{message_pack.member.id}"
     )
-    print(msg, file=open("log/call.log", "a"))
+    with open("log/call.log", "a", encoding="utf-8") as call_log:
+        print(msg, file=call_log)
     return msg
 
 
-def read_chat_log(start_time: datetime.datetime, end_time: datetime.datetime, group_id_match=None):
-    log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../mirai/logs")
-    all_logs = os.listdir(log_path)
-    all_logs = list(sorted(all_logs))
-    rec_time = time.time()
-    for log_file in all_logs:
-        log_day = datetime.datetime.strptime(log_file.split('.')[0], "%Y-%m-%d")
-        if log_day < start_time - datetime.timedelta(days=1) or log_day > end_time + datetime.timedelta(days=1):
-            continue
-        with open(os.path.join(log_path, log_file), "r") as f:
-            print(f"Reading {log_file}")
-            file_line_cnt = 0
-            while True:
-                line = f.readline()
-                if not line:
-                    break
-                file_line_cnt += 1
-                if '->' not in line:
-                    continue
-                if 'mirai:app' in line or '聊天记录' in line or 'http' in line:
-                    continue
-                line_time = line.split('V/Bot')[0].strip()
-                line_time = datetime.datetime.strptime(line_time, "%Y-%m-%d %H:%M:%S")
-                if line_time < start_time or line_time > end_time:
-                    continue
-                chat_line = line.split('->')[1]
-                chat_line = re.sub(r'\[.*\]', '', chat_line)
-                chat_line = re.sub(r'\{.*\}', '', chat_line)
-                chat_line = chat_line.strip()
-                if not chat_line:
-                    continue
-                chat_info = re.findall(r'\(\d+\)', line)
-                try:
-                    group_id, member_id = chat_info[0][1:-1], chat_info[1][1:-1]
-                except Exception as e:
-                    continue
-                if group_id_match and group_id != group_id_match:
-                    continue
+interval_locker = threading.Lock()
 
-                # 提取成员昵称
-                nickname_match = re.search(r'\] (.+)\(\d+\) ->', line)
-                nickname = nickname_match.group(1).strip() if nickname_match else ""
-                
-                yield line_time, chat_line, group_id, member_id, nickname
+class IntervalLimiter():
+    def __init__(self) -> None:
+        self.root = {}
+
+    def user_interval(self, function_name, id, interval = 30) -> bool:
+        id = str(id)
+        now_time_sec = int(time.time())
+        if function_name not in self.root.keys():
+            return True
+        else:
+            if id not in self.root[function_name] or self.root[function_name][id] < now_time_sec:
+                return True
+            return False
+
+    def force_user_interval(self, function_name, id, interval=30):
+        id = str(id)
+        now_time_sec = int(time.time())
+        interval_locker.acquire()
+        if function_name not in self.root.keys():
+            self.root.update({
+                function_name: {
+                    id: now_time_sec + interval
+                }
+            })
+        else:
+            self.root[function_name].update({
+                id: now_time_sec + interval
+            })
+        interval_locker.release()
+
+interval_limiter = IntervalLimiter()
 
 
 if __name__ == "__main__":

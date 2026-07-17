@@ -1,11 +1,11 @@
 import datetime
 import json
 import time
-from toogle.configs import config
+from configs import config
 from toogle.economy import get_balance, give_balance
 from toogle.message import MessageChain, Plain, At
 from toogle.message_handler import MESSAGE_HISTORY
-from toogle.nonebot2_adapter import bot_send_message
+from toogle.adapter import bot_send_message
 from toogle.utils import modify_json_file
 
 

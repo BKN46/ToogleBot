@@ -5,16 +5,14 @@ import pickle
 import random
 import re
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, List, Optional, Union
 
-import nonebot
-
-from toogle.message import Group, Member, MessageChain, Plain, Quote, ForwardMessage
-
+from toogle.message import Group, Member, MessageChain, Quote, ForwardMessage
+from toogle.logger import logger
 
 class MessageHistory:
     def __init__(self, windows=500) -> None:
-        self.history: dict[int, List["MessagePack"]] = {}
+        self.history: dict[int | str, List["MessagePack"]] = {}
         self.windows = windows
 
     def add(self, id, message: "MessagePack"):
@@ -73,7 +71,7 @@ class MessageHistory:
     def load(self, path: str):
         if os.path.exists(path):
             with open(path, "rb") as f:
-                self.history: dict[int, List["MessagePack"]] = pickle.load(f)
+                self.history: dict[int | str, List["MessagePack"]] = pickle.load(f)
 
     @staticmethod
     def seq_as_forward(message_list: List["MessagePack"]) -> MessageChain:
@@ -115,6 +113,7 @@ class MessagePack:
         group: Group,
         member: Member,
         quote: Optional[Quote],
+        message_type: str = "group",
     ) -> None:
         self.id = id
         self.message = message
@@ -122,6 +121,7 @@ class MessagePack:
         self.member = member
         self.quote = quote
         self.time = time.time()
+        self.message_type = message_type
         
         self.member.name = get_user_name(self)
 
@@ -200,7 +200,7 @@ class ActiveHandler:
 
     def is_trigger_random(self, message: Optional[MessagePack] = None):
         if random.random() < self.trigger_rate:
-            nonebot.logger.success(f"Triggered [{self.name}]")  # type: ignore
+            logger.info(f"Triggered [{self.name}]")  # type: ignore
             return True
         return False
 
@@ -211,7 +211,7 @@ class ActiveHandler:
         try:
             return await self.ret(message)
         except Exception as e:
-            nonebot.logger.error(f"[{self.name}]{repr(e)}") # type: ignore
+            logger.error(f"[{self.name}]{repr(e)}") # type: ignore
             return 
 
 

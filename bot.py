@@ -1,37 +1,38 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import nonebot
-from nonebot.adapters.mirai2 import Adapter as MiraiAdapter
+import asyncio
 
-# Custom your logger
-# 
-# from nonebot.log import logger, default_format
-# logger.add("error.log",
-#            rotation="00:00",
-#            diagnose=False,
-#            level="ERROR",
-#            format=default_format)
+from adapter import msg_queue
+from adapter.server import main as server_main
+from adapter.worker import process_loop, worker_shutdown, worker_start
+from adapter.schedule import register_schedules
+from adapter.post_process import on_shutdown
+from toogle.index import load_plugins
+from toogle.scheduler import scheduler_shutdown, scheduler_start
 
-# You can pass some keyword args config to init function
-nonebot.init()
-app = nonebot.get_asgi()
-
-driver = nonebot.get_driver()
-driver.register_adapter(MiraiAdapter)
-
-nonebot.load_plugins("plugins")
-
-# Please DO NOT modify this file unless you know what you are doing!
-# As an alternative, you should use command `nb` or modify `pyproject.toml` to load plugins
-nonebot.load_from_toml("pyproject.toml")
-
-# Modify some config / config depends on loaded configs
-# 
-# config = driver.config
-# do something...
-
+async def main():
+    msg_queue.reset_queues()
+    load_plugins(strict_core=True)
+    register_schedules()
+    worker_start()
+    scheduler_start()
+    runtime_tasks = [
+        asyncio.create_task(server_main(), name="napcat-server"),
+        asyncio.create_task(process_loop(), name="message-dispatch"),
+    ]
+    try:
+        await asyncio.gather(*runtime_tasks)
+    finally:
+        for task in runtime_tasks:
+            task.cancel()
+        await asyncio.gather(*runtime_tasks, return_exceptions=True)
+        scheduler_shutdown()
+        await worker_shutdown()
+        await on_shutdown()
 
 if __name__ == "__main__":
-    # nonebot.logger.warning("Always use `nb run` to start the bot instead of manually running!")
-    nonebot.run(app="__mp_main__:app")
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass

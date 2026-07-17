@@ -11,7 +11,7 @@ if __name__ == "__main__":
         if 50 < v and (len(k) > 1 or k in ["屎", "逼", "草", "妈", "顶", "日", "批", "冲"] or v > 500) and not k.isascii()
     }
     word_cloud = WordCloud(
-        font_path="../toogle/plugins/compose/fonts/Arial Unicode MS Font.ttf",
+        font_path="../tools/fonts/Arial Unicode MS Font.ttf",
         width=1920,
         height=1080,
         background_color="white",

@@ -1,4 +1,4 @@
-CREATE TABLE `qq_user` (
+CREATE TABLE IF NOT EXISTS `qq_user` (
   `id` char(20) NOT NULL DEFAULT '',
   `auth` int DEFAULT NULL,
   `last_luck` timestamp NULL DEFAULT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE `qq_user` (
   PRIMARY KEY (`id`)
 );
 
-CREATE TABLE `qq_waifu` (
+CREATE TABLE IF NOT EXISTS `qq_waifu` (
   `id` char(40) NOT NULL DEFAULT '',
   `waifuId` char(40) NOT NULL DEFAULT '',
   `waifuDict` longtext NOT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE `qq_waifu` (
   PRIMARY KEY (`id`)
 );
 
-CREATE TABLE `remake_data` (
+CREATE TABLE IF NOT EXISTS `remake_data` (
   `seed` varchar(50) NOT NULL DEFAULT '',
   `time` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `name` varchar(50) NOT NULL DEFAULT '',

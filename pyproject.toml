@@ -1,20 +1,34 @@
-[tool.poetry]
+[project]
 name = "ToogleBot"
 version = "0.1.0"
 description = "ToogleBot"
-authors = []
 readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "APScheduler>=3.11.2",
+    "beautifulsoup4>=4.14.3",
+    "bloom-filter>=1.3.3",
+    "Flask>=3.1.2",
+    "gdown>=5.2.1",
+    "h5py>=3.15.1",
+    "ImageHash>=4.3.2",
+    "jieba>=0.42.1",
+    "keras>=3.13.2",
+    "matplotlib>=3.10.8",
+    "opencv-python>=4.13.0.90",
+    "opennsfw2>=0.15.2",
+    "pillow>=12.1.0",
+    "pycryptodome>=3.23.0",
+    "qdata>=0.3.0",
+    "RapidFuzz>=3.14.3",
+    "requests>=2.32.5",
+    "rich>=14.3.2",
+    "scikit-image>=0.26.0",
+    "scipy>=1.17.0",
+    "shshsh>=1.0.6",
+    "thefuzz>=0.22.1",
+    "websockets>=16.0",
+]
 
-[tool.poetry.dependencies]
-python = "^3.7.3"
-nonebot2 = "^2.0.0-beta.1"
-
-[tool.poetry.dev-dependencies]
-nb-cli = "^0.6.0"
-
-[tool.nonebot]
-plugin_dirs = ["src/plugins"]
-
-[build-system]
-requires = ["poetry_core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.uv]
+package = false

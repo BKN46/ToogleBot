@@ -1,0 +1,26 @@
+{
+  "network": {
+    "httpServers": [
+      {
+        "enable": true,
+        "name": "ToogleBotSenderHTTP",
+        "host": "127.0.0.1",
+        "port": 6544,
+        "enableCors": false,
+        "enableWebsocket": false,
+        "messagePostFormat": "array",
+        "token": "",
+        "debug": false
+      }
+    ],
+    "httpSseServers": [],
+    "httpClients": [],
+    "websocketServers": [],
+    "websocketClients": [],
+    "plugins": []
+  },
+  "musicSignUrl": "",
+  "enableLocalFile2Url": false,
+  "parseMultMsg": false,
+  "imageDownloadProxy": ""
+}

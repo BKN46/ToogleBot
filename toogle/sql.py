@@ -1,10 +1,34 @@
 import datetime
 import json
+import threading
+from functools import wraps
+from pathlib import Path
 from typing import Dict
 
 import sqlite3
 
 from toogle.utils import filter_emoji
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DB_PATH = PROJECT_ROOT / "data" / "toogle.db"
+SCHEMA_PATH = PROJECT_ROOT / "sqlite.sql"
+_SCHEMA_LOCK = threading.Lock()
+_SCHEMA_READY = False
+
+
+def ensure_schema() -> None:
+    global _SCHEMA_READY
+    if _SCHEMA_READY:
+        return
+    with _SCHEMA_LOCK:
+        if _SCHEMA_READY:
+            return
+        DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+        schema = SCHEMA_PATH.read_text(encoding="utf-8")
+        with sqlite3.connect(DB_PATH) as db:
+            db.executescript(schema)
+        _SCHEMA_READY = True
 
 
 class DatetimeUtils:
@@ -22,12 +46,12 @@ class DatetimeUtils:
 
 
 def db_connect(func):
+    @wraps(func)
     def a_func(*args, **kwargs):
-        db = sqlite3.connect('data/toogle.db')
-        cursor = db.cursor()
-        res = func(*args, db=db, cursor=cursor, **kwargs)
-        db.close()
-        return res
+        ensure_schema()
+        with sqlite3.connect(DB_PATH) as db:
+            cursor = db.cursor()
+            return func(*args, db=db, cursor=cursor, **kwargs)
 
     return a_func
 
@@ -147,84 +171,17 @@ class SQLConnection:
 
     @staticmethod
     @db_connect
-    def insert_crond(
-        content,
-        creator_id,
-        group_id,
-        year=-1,
-        month=-1,
-        day=-1,
-        week=-1,
-        day_of_week=-1,
-        hour=-1,
-        minute=-1,
-        second=-1,
-        db=None,
-        cursor=None,
-    ):
-        sql_cmd = (
-            f"INSERT INTO `scheduler` "
-            f"(`content`, `year`, `month`, `day`, `week`, `day_of_week`, `hour`, `minute`, `second`, `creator`, `group`) "
-            f"VALUES "
-            f"('{content}', {year}, {month}, {day}, {week}, {day_of_week}, {hour}, {minute}, {second}, '{creator_id}', '{group_id}');"
-        )
-        try:
-            cursor.execute(sql_cmd) # type: ignore
-            # 提交到数据库执行
-            db.commit() # type: ignore
-            return True
-        except Exception as e:
-            db.rollback() # type: ignore
-            return False
-
-    @staticmethod
-    @db_connect
-    def get_crond(id=None, db=None, cursor=None):
-        sql_cmd = f"SELECT * FROM scheduler"
-        if id:
-            sql_cmd += f" WHERE creator={id};"
-        cursor.execute(sql_cmd) # type: ignore
-        res = cursor.fetchall() # type: ignore
-        if res:
-            return res
-        else:
-            return
-
-    @staticmethod
-    @db_connect
-    def del_crond(id, creator, db=None, cursor=None):
-        sql_cmd = f"DELETE FROM scheduler WHERE id={id} AND creator={creator};"
-        try:
-            cursor.execute(sql_cmd) # type: ignore
-            db.commit() # type: ignore
-            return True
-        except:
-            db.rollback() # type: ignore
-            return False
-
-    @staticmethod
-    @db_connect
     def get_top_remake(db=None, cursor=None):
         sql_cmd = f"SELECT * FROM remake_data ORDER BY score DESC LIMIT 5"
         cursor.execute(sql_cmd) # type: ignore
-        res = cursor.fetchall() # type: ignore
-        if res:
-            return res
-        else:
-            SQLConnection.insert_user(id)
-            return None
+        return cursor.fetchall() # type: ignore
 
     @staticmethod
     @db_connect
     def get_low_remake(db=None, cursor=None):
         sql_cmd = f"SELECT * FROM remake_data ORDER BY score ASC LIMIT 5"
         cursor.execute(sql_cmd) # type: ignore
-        res = cursor.fetchall() # type: ignore
-        if res:
-            return res
-        else:
-            SQLConnection.insert_user(id)
-            return None
+        return cursor.fetchall() # type: ignore
         
     @staticmethod
     def get_user_data(id):

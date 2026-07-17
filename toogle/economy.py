@@ -1,7 +1,6 @@
 from contextlib import contextmanager
 
 from toogle.sql import SQLConnection
-from toogle.configs import config
 
 def get_balance(user_id):
     res = SQLConnection.get_user(user_id)

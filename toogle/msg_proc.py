@@ -1,21 +1,19 @@
 import datetime
 import json
-import os
 import threading
 import time
 
-import nonebot
-
+from toogle.logger import logger
 from toogle.economy import get_balance, give_balance
 from toogle.message import At, ForwardMessage, Image, MessageChain, Plain
 from toogle.message_handler import MESSAGE_HISTORY, MessagePack
-from toogle.mirai_extend import mute_member, recall_msg
-from toogle.nonebot2_adapter import bot_send_message
-from toogle.configs import config
-from toogle.plugins.admin import VOTE_MUTE_DICT
-from toogle.utils import SETU_RECORD_PATH, modify_json_file, print_err
-from toogle.tools.pic_recognition import detect_pic_nsfw, is_shit_pic
-from toogle.plugins.gpt import gpt_censor, GetOpenAIConversation
+from adapter.http_request import mute_member, recall_msg
+from toogle.adapter import bot_send_message
+from configs import config
+from plugins.admin import VOTE_MUTE_DICT
+from toogle.utils import SETU_RECORD_PATH, print_err
+from tools.pic_recognition import detect_pic_nsfw, is_shit_pic
+from plugins.gpt import gpt_censor, GetOpenAIConversation
 
 POST_PROC_LOCK = threading.Lock()
 DELAY_RECALL_POOL = []
@@ -59,7 +57,7 @@ def setu_detect(message_pack: MessagePack, pics):
         start_time = time.time()
         score, repeat = detect_pic_nsfw(pic.getBytes(), output_repeat=True) # type: ignore
         use_time = (time.time() - start_time) * 1000
-        nonebot.logger.info(f"Pic analysis done, nsfw score {score:.5f}, use time {use_time:.2f}ms") # type: ignore
+        logger.info(f"Pic analysis done, nsfw score {score:.5f}, use time {use_time:.2f}ms") # type: ignore
         if score >= 0.25:
             if not repeat:
                 cnt +=1
@@ -82,7 +80,7 @@ def shit_pic_detect(message_pack: MessagePack, pics):
                 'vote_member': [0, 0, 0]
             }
             mute_member(message_pack.group.id, message_pack.member.id, 600)
-            recall_msg(message_pack.group.id, message_pack.id)
+            recall_msg(message_pack.id)
             bot_send_message(
                 int(message_pack.group.id),
                 MessageChain.create([
@@ -128,14 +126,14 @@ class DelayedRecall:
             self.msg_list.append(msg)
             if add_delay:
                 self.end_time = time.time() + self.delay
-                nonebot.logger.info(f"Refreshed recall thread for {msg.member.id}") # type: ignore
+                logger.info(f"Refreshed recall thread for {msg.member.id}") # type: ignore
 
     def recall(self):
         while time.time() < self.end_time and not time.time() > self.end_time + self.max_delay:
             time.sleep(1)
         send_list = []
         for msg in self.msg_list:
-            if recall_msg(self.target, msg.id, ignore_exception=True):
+            if recall_msg(msg.id):
                 send_list.append((msg.member.id, msg.member.name, msg.message))
             time.sleep(0.3)
             
@@ -159,10 +157,11 @@ class DelayedRecall:
                 return
         if not only_repeat:
             recall_thread = DelayedRecall(target, msg, delay, max_delay)
-            nonebot.logger.info(f"Add recall thread for {msg.member.id} in {target}") # type: ignore
+            logger.info(f"Add recall thread for {msg.member.id} in {target}") # type: ignore
             DELAY_RECALL_POOL.append(recall_thread)
             recall_thread.run()
             
     def log(self, content):
         log_path = "log/recall.log"
-        print(content, file=open(log_path, "a"))
+        with open(log_path, "a", encoding="utf-8") as log_file:
+            print(content, file=log_file)

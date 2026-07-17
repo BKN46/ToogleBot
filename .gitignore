@@ -145,5 +145,8 @@ debug.py
 test/
 .vscode/
 log/
+logs/
+
+guild1.*
 
 # End of https://www.toptal.com/developers/gitignore/api/python

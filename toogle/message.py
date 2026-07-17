@@ -1,6 +1,5 @@
 import io
 import os
-import pickle
 import time
 from typing import List, Optional, Sequence, Tuple, Union
 
@@ -172,7 +171,7 @@ class Image(Element):
             else:
                 return PIL.Image.open(buffer_path + trans_url)
 
-        pil_image = PIL.Image.open(requests.get(pic_url, stream=True).raw)
+        pil_image = PIL.Image.open(io.BytesIO(requests.get(pic_url, stream=True).content))
         pil_image.save(buffer_path + trans_url, format="PNG")
         if not return_PIL:
             return Image.fromLocalFile(buffer_path + trans_url)
@@ -200,8 +199,6 @@ class ForwardMessage(Element):
         self.message_id = message_id
         self.time = time
         self.message = message
-        # pickle.dump(self, open("debug_forward.pkl", "wb"))
-        # print(repr(self.asDisplay()), file=open("debug.log", "a"))
 
     def asDisplay(self) -> str:
         msgs = ", ".join([x['message'].asDisplay() for x in self.node_list])
@@ -304,106 +301,32 @@ class MessageChain:
         return MessageChain(message_list, no_interval, no_charge)
     
     @staticmethod
-    def plain(text: str, no_interval=False, quote=None, no_charge=False) -> "MessageChain":
+    def plain(text: str, no_interval=False, quote: Optional[Quote]=None, no_charge=False) -> "MessageChain":
         if quote:
-            return MessageChain([quote, Plain(text)], no_interval=no_interval)
+            return MessageChain(
+                [quote, Plain(text)],
+                no_interval=no_interval,
+                no_charge=no_charge,
+            )
         return MessageChain([Plain(text)], no_interval=no_interval, no_charge=no_charge)
     
     def __add__(self, message: "MessageChain") -> "MessageChain":
-        return MessageChain(self.root + message.root, no_interval=self.no_interval) # type: ignore
+        return MessageChain(
+            self.root + message.root,
+            no_interval=self.no_interval or message.no_interval,
+            no_charge=self.no_charge or message.no_charge,
+        ) # type: ignore
 
     def __repr__(self) -> str:
         return repr(self.root)
     
     def to_dict(self) -> dict:
-        return {"root": [x.to_dict() for x in self.root], "no_interval": self.no_interval}
+        return {
+            "root": [x.to_dict() for x in self.root],
+            "no_interval": self.no_interval,
+            "no_charge": self.no_charge,
+        }
     
-    @staticmethod
-    def to_mirai(
-        message: 'MessageChain',
-        length_limit: int = 0,
-        depth_limit = 3,
-    ) -> List:
-        message_list = []
-        for item in message.root:
-            if isinstance(item, Plain):
-                message_list.append({
-                    "type": "Plain",
-                    "text": item.text
-                })
-            elif isinstance(item, Quote):
-                message_list.append({
-                    "type": "Quote",
-                    "id": item.id,
-                    "groupId": item.group_id,
-                    "senderId": item.sender_id,
-                    "targetId": item.target_id,
-                    "origin": MessageChain.to_mirai(item.message, length_limit=length_limit, depth_limit=depth_limit-1) if depth_limit > 0 else [{
-                        "type": "Plain",
-                        "text": "[引用消息]"
-                    }],
-                })
-            elif isinstance(item, Image):
-                if item.url:
-                    message_list.append({
-                        "type": "Image",
-                        "url": item.url,
-                    })
-                else:
-                    message_list.append({
-                        "type": "Image",
-                        "base64": item.getBase64(),
-                    })
-            elif isinstance(item, At):
-                message_list.append({
-                    "type": "At",
-                    "target": item.target,
-                })
-            elif isinstance(item, AtAll):
-                message_list.append({
-                    "type": "AtAll",
-                })
-            elif isinstance(item, ForwardMessage):
-                if depth_limit > 0:
-                    message_list.append({
-                        "type": "Forward",
-                        "display": {
-                            "title": "聊天记录",
-                            "brief": "[聊天记录]",
-                            "source": "聊天记录",
-                            "preview": [
-                                x["message"].asDisplay()
-                                for x in item.node_list[:4]
-                            ],
-                            "summary": f"查看{len(item.node_list)}条转发消息"
-                        },
-                        "nodeList": [
-                            {
-                                "senderId": int(x["sender"]),
-                                "time": int(x["time"]),
-                                "senderName": x["senderName"],
-                                "messageChain": MessageChain.to_mirai(x["message"], length_limit=length_limit, depth_limit=depth_limit-1),
-                            }
-                            for x in item.node_list
-                        ]
-                    })
-                else:
-                    message_list.append({
-                        "type": "Plain",
-                        "text": "[转发消息]"
-                    })
-            elif isinstance(item, Xml):
-                message_list.append({
-                    "type": "Xml",
-                    "xml": item.xml,
-                })
-
-        if length_limit:
-            return message_list[:length_limit]
-        else:
-            return message_list
-
-
 def json_to_msg(msg: Union[str, List[dict], dict]) -> MessageChain:
     if isinstance(msg, list):
         tmp_message = MessageChain([])
