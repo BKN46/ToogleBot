@@ -473,7 +473,7 @@ class ActiveAIConversation(ActiveHandler):
 
 class WhatIs(MessageHandler):
     name = "大黄狗有问必答"
-    trigger = r"^什么是|^查一下|^请问"
+    trigger = r"^查一下"
     thread_limit = True
     readme = "什么是什么"
     interval = 600
@@ -494,7 +494,7 @@ class WhatIs(MessageHandler):
             )
             return MessageChain.plain(res, quote=message.as_quote())
         except ReadTimeout as e:
-            return MessageChain.plain("请求GPT模型超时，请稍后尝试", no_interval=True)
+            return MessageChain.plain("请求GPT模型超时，请稍后尝试", no_interval=True, no_charge=True)
         except Exception as e:
             if "model token limit exceeded" in repr(e):
                 bot_send_message(message, MessageChain.plain("请求GPT模型token数量超限，正在切换更大模型尝试回答...", quote=message.as_quote()))
@@ -507,11 +507,11 @@ class WhatIs(MessageHandler):
                     )
                     return MessageChain.plain(res, quote=message.as_quote())
                 except ReadTimeout as e:
-                    return MessageChain.plain("请求GPT模型超时，请稍后尝试", no_interval=True)
+                    return MessageChain.plain("请求GPT模型超时，请稍后尝试", no_interval=True, no_charge=True)
                 except Exception as e:
-                    return MessageChain.plain(f"GPT模型服务可能出错，请稍后尝试\n{repr(e)}", no_interval=True)
+                    return MessageChain.plain(f"GPT模型服务可能出错，请稍后尝试\n{repr(e)}", no_interval=True, no_charge=True)
             else:
-                return MessageChain.plain(f"GPT模型服务可能出错，请稍后尝试\n{repr(e)}", no_interval=True)
+                return MessageChain.plain(f"GPT模型服务可能出错，请稍后尝试\n{repr(e)}", no_interval=True, no_charge=True)
 
 class AIConclude(MessageHandler):
     name = "大黄狗总结"

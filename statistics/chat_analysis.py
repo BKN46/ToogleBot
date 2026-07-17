@@ -46,7 +46,7 @@ def read_logs(start_time: datetime.datetime, end_time: datetime.datetime):
                 if file_line_cnt % 1000 == 0:
                     use_time = (time.time() - rec_time) * 1000
                     rec_time = time.time()
-                    print(f"Read {file_line_cnt} lines, use {use_time:.2f} ms")
+                    # print(f"Read {file_line_cnt} lines, use {use_time:.2f} ms")
 
 
 def analysis(self_member_id, group_id_list):
@@ -82,5 +82,23 @@ def analysis(self_member_id, group_id_list):
     print(json.dumps(word_stats, ensure_ascii=False, indent=4), file=open("res/word_stats.json", "w", encoding="utf-8"))
 
 
+def member_analysis(member_id):
+    start_time = datetime.datetime(2023, 1, 1)
+    end_time = datetime.datetime(2025, 12, 1)
+    first_time = None
+    last_time = None
+    res = {}
+    for line, group_id, tmp_member_id in read_logs(start_time, end_time):
+        if str(member_id) == str(tmp_member_id):
+            if not first_time:
+                first_time = line.split('->')[0].strip()
+            last_time = line.split('->')[0].strip()
+            res[group_id] = res.get(group_id, 0) + 1
+    print(json.dumps(res, ensure_ascii=False, indent=4))
+    print(f"First chat time: {first_time}")
+    print(f"Last chat time: {last_time}")
+
+
 if __name__ == "__main__":
-    analysis(sys.argv[1], sys.argv[2:])
+    # analysis(sys.argv[1], sys.argv[2:])
+    member_analysis('1149887546')
