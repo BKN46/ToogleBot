@@ -94,7 +94,11 @@ class GetOpenAIConversation(MessageHandler):
             message_content = match_group.group(3)
 
         if len(message_content) > self.message_length_limit:
-            return MessageChain.plain(f"请求字数超限：{len(message_content)} > {self.message_length_limit}", no_interval=True)
+            return MessageChain.plain(
+                f"请求字数超限：{len(message_content)} > {self.message_length_limit}",
+                no_interval=True,
+                no_charge=True,
+            )
 
         max_time, context_content = 45, []
         if extra=='all':
@@ -102,7 +106,12 @@ class GetOpenAIConversation(MessageHandler):
 
         pics = message.message.get(Image)
         if pics:
-            return MessageChain.plain("deepseek暂不支持多模态对话", quote=message.as_quote(), no_interval=True)
+            return MessageChain.plain(
+                "deepseek暂不支持多模态对话",
+                quote=message.as_quote(),
+                no_interval=True,
+                no_charge=True,
+            )
             model = config.get("GPTModel", "")
             message_content = [
                 {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{x.getBase64()}" }} if isinstance(x, Image) 
@@ -113,7 +122,11 @@ class GetOpenAIConversation(MessageHandler):
             model = config.get("GPTModel", "")
             history_context = MESSAGE_HISTORY.get(message.group.id)
             if not history_context:
-                return MessageChain.plain("无记录聊天历史", no_interval=True)
+                return MessageChain.plain(
+                    "无记录聊天历史",
+                    no_interval=True,
+                    no_charge=True,
+                )
             context_content = GetOpenAIConversation.parse_history_context(history_context)
         else:
             model = config.get("GPTModel", "")
@@ -121,7 +134,12 @@ class GetOpenAIConversation(MessageHandler):
         if setting:
             setting = setting[1:-1]
             if setting not in default_settings:
-                return MessageChain.plain(f"预设[{setting}]场景不存在，请使用以下场景：{'、'.join(default_settings.keys())}", no_interval=True)
+                return MessageChain.plain(
+                    f"预设[{setting}]场景不存在，请使用以下场景："
+                    f"{'、'.join(default_settings.keys())}",
+                    no_interval=True,
+                    no_charge=True,
+                )
 
         try:
             # res = GetOpenAIConversation.get_completion(message_content)
@@ -134,11 +152,18 @@ class GetOpenAIConversation(MessageHandler):
                 url=config.get("GPTUrl", ""),
             )
             return MessageChain.plain(res, quote=message.as_quote())
-        except ReadTimeout as e:
-            return MessageChain.plain("请求OpenAI GPT模型超时，请稍后尝试", no_interval=True)
-        except Exception as e:
-            # return MessageChain.plain(f"出现错误: {repr(e)}")
-            return MessageChain.plain(f"OpenAI GPT模型服务可能出错，请稍后尝试\n{repr(e)}", no_interval=True)
+        except ReadTimeout:
+            return MessageChain.plain(
+                "请求OpenAI GPT模型超时，请稍后尝试",
+                no_interval=True,
+                no_charge=True,
+            )
+        except Exception:
+            return MessageChain.plain(
+                "OpenAI GPT模型服务可能出错，请稍后尝试",
+                no_interval=True,
+                no_charge=True,
+            )
 
     @staticmethod
     def get_completion(
@@ -472,9 +497,9 @@ class ActiveAIConversation(ActiveHandler):
 
 class WhatIs(MessageHandler):
     name = "大黄狗有问必答"
-    trigger = r"^什么是|^查一下|^请问"
+    trigger = r"^查一下"
     thread_limit = True
-    readme = "什么是什么"
+    readme = "查一下 <问题>"
     interval = 600
     message_length_limit = 1000
     price = 12
@@ -482,7 +507,11 @@ class WhatIs(MessageHandler):
     async def ret(self, message: MessagePack) -> Optional[MessageChain]:
         content = message.message.asDisplay()
         if len(content) > self.message_length_limit:
-            return MessageChain.plain(f"请求字数超限：{len(content)} > {self.message_length_limit}", no_interval=True)
+            return MessageChain.plain(
+                f"请求字数超限：{len(content)} > {self.message_length_limit}",
+                no_interval=True,
+                no_charge=True,
+            )
 
         try:
             res = GetOpenAIConversation.get_web_search(
@@ -492,8 +521,12 @@ class WhatIs(MessageHandler):
                 url=config.get("GPTUrl", ""),
             )
             return MessageChain.plain(res, quote=message.as_quote())
-        except ReadTimeout as e:
-            return MessageChain.plain("请求GPT模型超时，请稍后尝试", no_interval=True)
+        except ReadTimeout:
+            return MessageChain.plain(
+                "请求GPT模型超时，请稍后尝试",
+                no_interval=True,
+                no_charge=True,
+            )
         except Exception as e:
             if "model token limit exceeded" in repr(e):
                 bot_send_message(message, MessageChain.plain("请求GPT模型token数量超限，正在切换更大模型尝试回答...", quote=message.as_quote()))
@@ -505,12 +538,24 @@ class WhatIs(MessageHandler):
                         url=config.get("GPTUrl", ""),
                     )
                     return MessageChain.plain(res, quote=message.as_quote())
-                except ReadTimeout as e:
-                    return MessageChain.plain("请求GPT模型超时，请稍后尝试", no_interval=True)
-                except Exception as e:
-                    return MessageChain.plain(f"GPT模型服务可能出错，请稍后尝试\n{repr(e)}", no_interval=True)
+                except ReadTimeout:
+                    return MessageChain.plain(
+                        "请求GPT模型超时，请稍后尝试",
+                        no_interval=True,
+                        no_charge=True,
+                    )
+                except Exception:
+                    return MessageChain.plain(
+                        "GPT模型服务可能出错，请稍后尝试",
+                        no_interval=True,
+                        no_charge=True,
+                    )
             else:
-                return MessageChain.plain(f"GPT模型服务可能出错，请稍后尝试\n{repr(e)}", no_interval=True)
+                return MessageChain.plain(
+                    "GPT模型服务可能出错，请稍后尝试",
+                    no_interval=True,
+                    no_charge=True,
+                )
 
 class AIConclude(MessageHandler):
     name = "大黄狗总结"

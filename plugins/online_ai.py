@@ -1,12 +1,17 @@
+import asyncio
 import base64
+import tempfile
 import time
+from pathlib import Path
 from typing import List, Optional
+from urllib.parse import unquote, urlparse
 
 import requests
 from configs import config
 from toogle.message import Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack, WaitCommandHandler
-from toogle.adapter import bot_send_message
+from toogle.adapter import bot_send_message, bot_upload_group_file
+from toogle.logger import logger
 from plugins.compose.novelai import get_ai_generate, get_balance
 import toogle.economy as economy
 import plugins.compose.midjourney as midjourney
@@ -181,26 +186,40 @@ class GetDoubaoCompose(MessageHandler):
     interval = 300
     readme = "获取豆包AI生成图片/视频\n视频可选参数f、v、h、l，分别代表图像首帧生成模式、竖屏、高分辨率、长时间\n例如：/doubaov fvh一只在宇宙中飞翔的猫咪"
     
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {config['DOUBAO_API_KEY']}"
-    }
+    @staticmethod
+    def _headers() -> dict[str, str]:
+        api_key = str(config.get("DOUBAO_API_KEY", "")).strip()
+        if not api_key:
+            raise RuntimeError("DOUBAO_API_KEY 未配置")
+        return {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        }
 
     async def ret(self, message: MessagePack) -> Optional[MessageChain]:
         content = message.message.asDisplay()
         if content.startswith('/doubao '):
-            return MessageChain.create([
-                Image(
-                    bytes=self.generate_image(
-                        content[8:].strip(),
-                        images=message.message.get(Image) or [],
-                        module="doubao-seedream-4-5-251128",
-                        size="2K",
-                        )
-                    )  
-            ])
+            try:
+                image_bytes = await asyncio.to_thread(
+                    self.generate_image,
+                    content[8:].strip(),
+                    message.message.get(Image) or [],
+                    "2K",
+                )
+            except Exception as exc:
+                logger.error(
+                    "Doubao image generation failed: %s",
+                    type(exc).__name__,
+                )
+                return MessageChain.plain(
+                    "豆包图片生成失败，请稍后尝试",
+                    quote=message.as_quote(),
+                    no_charge=True,
+                    no_interval=True,
+                )
+            return MessageChain.create([Image(bytes=image_bytes)])
 
-        image_mode="reference_image"
+        image_mode = "reference_image"
 
         content_str = '\n'.join([x.text for x in message.message.get(Plain)])
         content_str = content_str[8:].strip()
@@ -227,37 +246,107 @@ class GetDoubaoCompose(MessageHandler):
             image = None
 
         start_time = time.time()
-        video_url, token_usage = self.generate_video(
-            content_str=content_str,
-            image=image,
-            image_mode=image_mode,
-            resolution=resolution,
-            ratio=ratio,
-            duration=duration,
+        bot_send_message(
+            message,
+            MessageChain.create(
+                [
+                    message.as_quote(),
+                    Plain(
+                        "收到，正在生成中\n"
+                        f"{image_mode}\n{ratio} {resolution} {duration}sec\n"
+                        "预计30s-3min"
+                    ),
+                ]
+            ),
         )
+        try:
+            video_url, token_usage = await asyncio.to_thread(
+                self.generate_video,
+                content_str=content_str,
+                image=image,
+                image_mode=image_mode,
+                resolution=resolution,
+                ratio=ratio,
+                duration=duration,
+            )
+            video_bytes = await asyncio.to_thread(self.download_video, video_url)
+        except Exception as exc:
+            logger.error(
+                "Doubao video generation failed: %s",
+                type(exc).__name__,
+            )
+            return MessageChain.plain(
+                "豆包视频生成失败，请稍后尝试",
+                quote=message.as_quote(),
+                no_charge=True,
+                no_interval=True,
+            )
+
         use_time = time.time() - start_time
-        video_name = video_url.split("/")[-1].split("?")[0]
-        video_bytes = requests.get(video_url).content
-        gif_bytes = convert_mp4_to_gif(video_bytes, fps=24, loop=0, frame_step=2, max_width=480)
+        video_name = self.video_file_name(video_url)
+        upload_ok = False
+        if message.message_type == "group" and message.group.id > 0:
+            try:
+                await asyncio.to_thread(
+                    self.upload_group_video,
+                    message.group.id,
+                    video_name,
+                    video_bytes,
+                )
+                upload_ok = True
+            except Exception as exc:
+                logger.error(
+                    "Doubao video group-file upload failed: %s",
+                    type(exc).__name__,
+                )
+
+        try:
+            gif_bytes = await asyncio.to_thread(
+                convert_mp4_to_gif,
+                video_bytes,
+                fps=24,
+                loop=0,
+                frame_step=2,
+                max_width=480,
+            )
+        except Exception as exc:
+            logger.error(
+                "Doubao video GIF conversion failed: %s",
+                type(exc).__name__,
+            )
+            if upload_ok:
+                return MessageChain.plain(
+                    "原视频已上传，但 GIF 预览生成失败",
+                    quote=message.as_quote(),
+                )
+            return MessageChain.plain(
+                "视频文件上传及 GIF 预览均失败",
+                quote=message.as_quote(),
+                no_charge=True,
+                no_interval=True,
+            )
 
         return MessageChain.create([
             message.as_quote(),
             Image(bytes=gif_bytes),
-            Plain(f"用时{use_time:.2f}秒\n本次生成使用Token: {token_usage}")
-        ])
-        # return MessageChain.plain(f"用时{use_time:.2f}秒\n本次生成使用Token: {token_usage}", quote=message.as_quote())
+            Plain(
+                f"用时{use_time:.2f}秒\n本次生成使用Token: {token_usage}"
+                + ("\n原视频文件上传失败，仅返回 GIF 预览" if not upload_ok else "")
+            )
+        ], no_charge=not upload_ok)
 
 
-    @staticmethod
+    @classmethod
     def generate_image(
+        cls,
         content_str: str,
-        images: List[Image]=[],
-        size: str="832x1248",
-        module="doubao-seedream-4-0-250828"
-        ) -> bytes:
+        images: Optional[List[Image]] = None,
+        size: str = "832x1248",
+    ) -> bytes:
+        images = images or []
         url = "https://ark.cn-beijing.volces.com/api/v3/images/generations"
         data = {
-            "model": module,
+            "model": str(config["DOUBAO_IMAGE_MODEL"]),
             "prompt": content_str,
             "size": size,
             "sequential_image_generation": "disabled",
@@ -274,24 +363,31 @@ class GetDoubaoCompose(MessageHandler):
         elif len(images) == 1:
             data["image"] = f"data:image/png;base64,{images[0].getBase64()}"
 
-        res = requests.post(url, json=data, headers=GetDoubaoCompose.headers)
+        res = requests.post(
+            url,
+            json=data,
+            headers=cls._headers(),
+            timeout=(5, 180),
+        )
+        res.raise_for_status()
         try:
             b64data = res.json()['data'][0]['b64_json']
-        except Exception as e:
-            raise Exception(f"{res.text}")
+        except (KeyError, IndexError, TypeError, ValueError) as exc:
+            raise RuntimeError("豆包图片接口返回格式无效") from exc
         return base64.b64decode(b64data)
 
-    @staticmethod
+    @classmethod
     def generate_video(
+        cls,
         content_str: str,
-        image: Optional[Image]=None,
-        image_mode="reference_image",
+        image: Optional[Image] = None,
+        image_mode = "reference_image",
         timeout = 1200,
         resolution = '480p',
         ratio = '16:9',
         duration = 7,
         fps = 24,
-        ):
+    ):
         # image_mode = reference_image, first_frame
         url = "https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks"
         parameters = {
@@ -302,9 +398,10 @@ class GetDoubaoCompose(MessageHandler):
             'wm': 'false',
         }
         parameters_str = ' '.join([f'--{k} {v}' for k, v in parameters.items()])
+        model = str(config["DOUBAO_VIDEO_MODEL"])
         if not image:
             data = {
-                "model": "doubao-seedance-1-0-lite-t2v-250428",
+                "model": model,
                 "content": [
                     {
                         "type": "text",
@@ -327,7 +424,7 @@ class GetDoubaoCompose(MessageHandler):
                 parameters['rt'] = '9:16'
             parameters_str = ' '.join([f'--{k} {v}' for k, v in parameters.items()])
             data = {
-                "model": "doubao-seedance-1-0-lite-i2v-250428",
+                "model": model,
                 "content": [
                     {
                         "type": "text",
@@ -342,28 +439,69 @@ class GetDoubaoCompose(MessageHandler):
                     }
                 ]
             }
-        res = requests.post(url, json=data, headers=GetDoubaoCompose.headers)
+        headers = cls._headers()
+        res = requests.post(
+            url,
+            json=data,
+            headers=headers,
+            timeout=(5, 30),
+        )
+        res.raise_for_status()
         try:
             pic_id = res.json()['id']
-        except Exception as e:
-            raise Exception(f"{res.text}")
+        except (KeyError, TypeError, ValueError) as exc:
+            raise RuntimeError("豆包视频接口返回格式无效") from exc
         
         start_time = time.time()
         while time.time() - start_time < timeout:
             status_res = requests.get(
                 f"https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks/{pic_id}",
-                headers=GetDoubaoCompose.headers
+                headers=headers,
+                timeout=(5, 30),
             )
+            status_res.raise_for_status()
             try:
                 status_json = status_res.json()
-            except Exception as e:
-                raise Exception(f"{status_res.text}")
+            except (TypeError, ValueError) as exc:
+                raise RuntimeError("豆包视频任务接口返回格式无效") from exc
             if status_json['status'] == 'succeeded':
                 video_url = status_json['content']['video_url']
                 token_usage = status_json['usage']['total_tokens']
                 return video_url, token_usage
             elif status_json['status'] == 'failed':
-                raise Exception(f"生成失败: {status_json}")
+                raise RuntimeError("豆包视频生成任务失败")
             else:
                 time.sleep(5)
         raise Exception("生成超时")
+
+    @staticmethod
+    def download_video(video_url: str) -> bytes:
+        response = requests.get(video_url, timeout=(5, 120))
+        response.raise_for_status()
+        return response.content
+
+    @staticmethod
+    def video_file_name(video_url: str) -> str:
+        name = Path(unquote(urlparse(video_url).path)).name
+        if not name:
+            return "doubao-video.mp4"
+        return name if Path(name).suffix else f"{name}.mp4"
+
+    @staticmethod
+    def upload_group_video(
+        group_id: int,
+        file_name: str,
+        video_bytes: bytes,
+    ):
+        suffix = Path(file_name).suffix or ".mp4"
+        with tempfile.NamedTemporaryFile(
+            prefix="tooglebot-doubao-",
+            suffix=suffix,
+            delete=False,
+        ) as temp_file:
+            temp_file.write(video_bytes)
+            temp_path = Path(temp_file.name)
+        try:
+            return bot_upload_group_file(group_id, file_name, str(temp_path))
+        finally:
+            temp_path.unlink(missing_ok=True)

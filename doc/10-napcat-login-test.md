@@ -85,6 +85,20 @@ uv run python tools/napcat_dual_account_check.py \
   --scenario active --confirm-send
 ```
 
+Markdown 消息由已登录主实例发送，并从 `.env` 读取主账号、独立观察账号和测试群。
+工具必须按模块运行；默认仅验证主账号、群和项目序列化，不发送，也不要求第二实例
+在线：
+
+```bash
+venv/bin/python -m tools.napcat_markdown_check
+venv/bin/python -m tools.napcat_markdown_check --confirm-send
+```
+
+执行 `--confirm-send` 前必须先用 `tools/start_napcat_sender.sh` 启动第二实例。发送验收
+以独立观察账号的发送前群历史为基线；仅当该账号的历史出现来自配置主账号、完整
+content 相同且不在基线中的新 Markdown 段时才能判定通过。action 返回 message id 或
+主账号本地历史出现消息都不能单独证明送达；action timeout 后继续观察但不自动重发。
+
 超时失败后不得自动重发，避免故障期间刷群。token 只通过环境变量注入，工具不会输出。
 
 ## 阶段 A：本地首次授权
@@ -159,7 +173,7 @@ python tools/napcat_login_check.py --account "$NAPCAT_MAIN_ACCOUNT" --timeout 18
    `~/.local/state/tooglebot/napcat-sender-<account>`，HTTP 仅监听 `127.0.0.1:6544`，WebUI 关闭。
    首次启动扫描终端二维码，图片同时保存到脚本输出的 `cache/qrcode.png`。
 
-3. 模板只在运行配置不存在时复制，不覆盖已有 token/登录实例配置。当前 4.15.4 的
+3. 模板只在运行配置不存在时复制，不覆盖已有 token/登录实例配置。当前 4.18.9 的
    `NAPCAT_WORKDIR` 可隔离 NapCat 配置；NTQQ native 仍可能在共享 `~/.config/QQ` 下按账号
    保存数据，需要更强隔离时使用单独 Linux 用户，不能假设 `--user-data-dir` 覆盖全部数据。
 4. 确认 `BLACK_LIST` 不包含配置发送账号，`CHAT_GROUP_LIST` 包含配置测试群，并设置唯一的
@@ -186,9 +200,17 @@ python tools/napcat_login_check.py --account "$NAPCAT_MAIN_ACCOUNT" --timeout 18
 
 2026-07-17 在 CentOS 8 x86_64 本地主机完成阶段 A/B/D：
 
-- NapCat Core 4.15.4、NTQQ 3.2.21-42086 使用 `3888217194` 扫码登录成功；昵称为
-  `Geeha`。
+- NapCat Core 4.15.4、NTQQ 3.2.21-42086 首次使用 `3888217194` 扫码登录成功；同日
+  NapCat Core 更新到 4.18.9，随后将本地 NTQQ 更新到 3.2.28-48517。主账号和第二账号
+  均沿用现有数据无扫码快速登录；旧 Core 和旧 QQ 均保留同级备份用于回滚。
+- 腾讯历史 deb 地址失效后，本次 QQ 程序从 NapCat-Docker v4.18.9 amd64 OCI 镜像中的
+  QQ 安装层离线提取。镜像 SLSA provenance 指向官方 `NapNeko/NapCat-Docker` 仓库，
+  layer SHA-256 为
+  `b6e45bc3e921b46f8b7649e1bf672e1ab25b4c098d8a5ddefd8513816a94d663`；仅访问 OCI
+  registry 和解包文件，没有创建或启动 Docker 容器。
 - `get_status` 返回 online/good，`get_login_info` 账号严格匹配，`get_group_list` 成功。
+- 4.18.9/48517 的主、副实例启动日志均确认 `NativePacketClient Hook 初始化成功`；主实例
+  `nc_get_packet_status` 返回 `status=ok, retcode=0`。
 - 正向 WebSocket `127.0.0.1:3456` 的 `/`、`/ws`、`/bot/ws` 都能完成 query token
   鉴权及带 echo 的 `get_status` action。
 - 保留 QQ 数据后重启本地进程，快速登录成功且不需要再次扫码。
@@ -211,6 +233,18 @@ python tools/napcat_login_check.py --account "$NAPCAT_MAIN_ACCOUNT" --timeout 18
   发送端群历史确认一条来自 `3888217194` 的新插件说明回复，基础群文本阶段 D 已通过。
 - 配置化主动探针也完成双账号往返；最近一次发送消息 `538513951`，主账号主动回复
   `1866019684`，日志确认命中 `message_post_process -> ActivePathProbe`，不是普通 worker。
+- JSON/Ark 卡片链路已通过：主实例调用 `send_group_ark_share` 生成配置测试群的合法 Ark，
+  经项目 `JsonCard -> type=json` 序列化后只发送一次；主端 action 返回 `393834187`，第二
+  账号从发送前历史基线确认完整 JSON 等价的新消息 `1683463177`。生成 Ark 的 action 本身
+  不算发送成功，验收仍以独立账号历史为准。
+- Markdown 已按官方 `type=markdown` / `data.content` 完成内部模型、双向转换和 fixture。
+  真实投递尚未通过：4.15.4/42086、4.18.9/42086、4.18.9/48517 三次测试均发生
+  `NodeIKernelMsgService/sendMsg`/HTTP timeout，主实例自身历史分别生成消息
+  `2099370023`、`798967633`、`83519291`，但独立观察账号未收到。最新一次发送目标已由
+  双端只读探针确认是群 `1070265969`，且 PacketBackend 状态正常；三个 message id 都只
+  是本地回显。官方兼容表已确认 Markdown 不能直接发送，只支持放在双层合并转发内；
+  后续先实现双层 `node` 出站，再由第二账号观察嵌套 Markdown。不能继续直发，也不能把
+  主端 action/local history 当作投递成功。
 - 实测暴露的空 SQLite schema 和 scheduler `is_trigger()` 已修复。基础 schema 会幂等
   bootstrap；scheduler 的 3 个代码任务及手动 direct/program/single/error/delete、时区和
   生命周期已通过自动测试与 registry smoke。监测任务只访问实际订阅的数据源，空订阅

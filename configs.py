@@ -7,6 +7,10 @@ import toogle.logger as logger
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 DEFAULT_CONFIG_PATH = PROJECT_ROOT / ".env"
+CONFIG_DEFAULTS: dict[str, Any] = {
+    "DOUBAO_IMAGE_MODEL": "doubao-seedream-5-0-260128",
+    "DOUBAO_VIDEO_MODEL": "doubao-seedance-1-5-pro-251215",
+}
 config: dict[str, Any] = {}
 
 
@@ -43,7 +47,7 @@ def load_config(path: Path) -> dict[str, Any]:
 
 
 def reload_config(path: Path = DEFAULT_CONFIG_PATH) -> None:
-    loaded = load_config(path)
+    loaded = {**CONFIG_DEFAULTS, **load_config(path)}
     config.clear()
     config.update(loaded)
     if "proxies" in globals():
@@ -72,6 +76,7 @@ key_check = {
     "SCRIPING_ANT_TOKEN": "涉及Cloudflare反反爬功能",
     "REQUEST_PROXY_HTTP": "部分需翻墙功能",
     "REQUEST_PROXY_HTTPS": "部分需翻墙功能",
+    "DOUBAO_API_KEY": "豆包图片/视频生成功能",
     "HEALTHCARE_GROUP_LIST": "提肛喝水小助手",
     "HISTORY_SAVE_PATH": "消息记录持久化路径",
 }

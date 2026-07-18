@@ -68,8 +68,9 @@ OneBot payload。迁移是否成功，应以这个隔离边界和端到端行为
 
 ## 归档分支的正确用途
 
-`origin/archived-mirai2-version` 比主线共同基点多出 AI 文档相关提交，并保存完整
-Mirai/NoneBot2 实现。它适合回答：
+`origin/archived-mirai2-version` 保存完整 Mirai/NoneBot2 实现。只读取其中的代码和提交
+差异核对旧业务行为；该分支文档属于另一套架构，不作为迁移事实来源，也不迁入当前文档。
+它适合回答：
 
 - 旧事件怎样转换成 `MessagePack`。
 - 旧发送函数怎样处理群聊、私聊、图片、引用和转发。
@@ -89,7 +90,9 @@ Mirai/NoneBot2 实现。它适合回答：
 - Mirai 可执行文件、启动脚本、扩展 API 和 NoneBot adapter 已从工作树移除。
 - 字体和图片识别工具已移动到根 `tools/`。
 - 2026-07-17 本地 NapCat 4.15.4 已使用测试号 `3888217194` 完成首次扫码和无扫码
-  重启登录，HTTP 基础 action 与正向 WebSocket action 可达。
+  重启登录；同日更新到 4.18.9 后两个配置账号均无扫码恢复，HTTP 基础 action 与正向
+  WebSocket action 可达。当前本地运行基线已更新为 NTQQ 3.2.28-48517；两个账号继续
+  无扫码快速登录，Native PacketBackend 状态检查通过，升级过程未启动 Docker。
 - 正向 WebSocket 已完成 JSON 收发、echo action 路由、退避重连和有界队列；只读真实
   action 往返通过。
 - plugin registry 连续 load/reload 为 79/2/3 且失败为 0；worker 已改为单 event loop，
@@ -98,6 +101,8 @@ Mirai/NoneBot2 实现。它适合回答：
   ID 只保留在 10 的验收记录中。
 - scheduler 已显式 start/stop，3 个代码任务和手动 direct/program/single/error/delete
   主路径已修复并测试。
+- `toogle.adapter` 已增加平台无关的群文件上传门面，`bot.py` 在本地 NapCat 生命周期中
+  注册 HTTP uploader；豆包视频以临时文件调用该门面并保证清理。
 
 尚不能宣称完成的部分见 `TODO.md`。当前仍缺 clean 构建、版本化 SQLite migration、媒体和
 合并转发、完整 notice/request、同步插件 I/O 治理、API 与更多插件域业务冒烟。

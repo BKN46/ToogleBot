@@ -1,7 +1,9 @@
+import copy
 import io
+import json
 import os
 import time
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import Any, List, Optional, Sequence, Tuple, Union
 
 import PIL.Image
 import requests
@@ -86,6 +88,53 @@ class Plain(Element):
 
     def asDisplay(self) -> str:
         return self.text
+
+
+class Markdown(Element):
+    def __init__(self, content: str) -> None:
+        self.content = content
+
+    def __str__(self) -> str:
+        return self.content
+
+    def asDisplay(self) -> str:
+        return self.content
+
+
+class JsonCard(Element):
+    def __init__(self, data: Union[str, dict[str, Any]]) -> None:
+        if isinstance(data, str):
+            try:
+                parsed = json.loads(data)
+            except json.JSONDecodeError as exc:
+                raise ValueError("JSON card string must contain valid JSON") from exc
+            if not isinstance(parsed, dict):
+                raise ValueError("JSON card root must be an object")
+            self.data: Union[str, dict[str, Any]] = data
+        elif isinstance(data, dict):
+            try:
+                json.dumps(data, ensure_ascii=False, allow_nan=False)
+            except (TypeError, ValueError) as exc:
+                raise ValueError("JSON card object must be JSON serializable") from exc
+            self.data = copy.deepcopy(data)
+        else:
+            raise TypeError("JSON card data must be a string or object")
+
+    def __str__(self) -> str:
+        return self.asDisplay()
+
+    def asDisplay(self) -> str:
+        return "[卡片消息]"
+
+    def as_payload(self) -> Union[str, dict[str, Any]]:
+        return copy.deepcopy(self.data)
+
+    def to_dict(self) -> dict:
+        return {
+            "type": self.__class__.__name__,
+            "data": "[redacted]",
+            "data_type": "string" if isinstance(self.data, str) else "object",
+        }
 
 
 class Image(Element):
@@ -363,6 +412,13 @@ def json_to_msg(msg: Union[str, List[dict], dict]) -> MessageChain:
             return res
         elif msg["type"] == "at":
             return MessageChain([At(int(msg["content"]))])
+        elif msg["type"] == "markdown":
+            return MessageChain([Markdown(str(msg["content"]))])
+        elif msg["type"] in {"json", "json_card"}:
+            try:
+                return MessageChain([JsonCard(msg["content"])])
+            except (TypeError, ValueError):
+                return MessageChain.plain("[无效的卡片消息]")
         else:
             return MessageChain.plain("[未知消息类型]")
     else:

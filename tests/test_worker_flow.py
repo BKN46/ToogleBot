@@ -60,6 +60,43 @@ class WorkerFlowTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(source.message.asDisplay(), "command")
         self.assertEqual(len(sent), 1)
 
+    async def test_no_charge_result_skips_balance_and_cooldown(self):
+        class FixturePlugin(MessageHandler):
+            name = "no-charge-fixture"
+            trigger = r"^command$"
+            price = 12
+            interval = 600
+
+            async def ret(self, message):
+                return MessageChain.plain(
+                    "service failed",
+                    no_charge=True,
+                    no_interval=True,
+                )
+
+        source = MessagePack(
+            id=1,
+            message=MessageChain.plain("command"),
+            group=Group(100, "group"),
+            member=Member(200, "member"),
+            quote=None,
+            message_type="group",
+        )
+        wrapper = adapter.PluginWrapper(FixturePlugin)
+        with patch("toogle.adapter.is_admin", return_value=True), patch(
+            "adapter.worker.adapter.take_balance"
+        ) as take_balance, patch(
+            "adapter.worker.adapter.interval_limiter.force_user_interval"
+        ) as force_interval, patch(
+            "adapter.worker.adapter.bot_send_message", return_value=True
+        ), patch(
+            "adapter.worker.adapter.print_call"
+        ):
+            await worker._run_plugin(wrapper, source, worker_index=0)
+
+        take_balance.assert_not_called()
+        force_interval.assert_not_called()
+
     async def test_schedule_registration_is_idempotent(self):
         class FixtureSchedule(ScheduleModule):
             name = "fixture-schedule-idempotency"

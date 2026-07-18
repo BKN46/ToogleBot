@@ -12,9 +12,9 @@
 | `plugins/currencyExchange.py` | 货币转换 | 外部汇率 API。 |
 | `plugins/dice.py` | 通用骰子、战锤骰制转换 | NumPy、SciPy、Matplotlib。 |
 | `plugins/economy.py` | 赞助入口、余额管理 | SQLite 余额、会员。 |
-| `plugins/gpt.py` | GPT 对话、主动聊天、问答、总结 | OpenAI 兼容 API、当前消息历史、价格和冷却。 |
+| `plugins/gpt.py` | GPT 对话、主动聊天、“查一下”、总结 | OpenAI 兼容 API、当前消息历史、价格和冷却；失败结果免扣费/冷却。 |
 | `plugins/math.py` | 数学绘图、计算器、Wolfram、勾股、坠落、单位转换 | Matplotlib、Wolfram 辅助模块。 |
-| `plugins/online_ai.py` | NovelAI、Midjourney、豆包图片/视频 | 多个付费外部 API、交互等待、视频转换。 |
+| `plugins/online_ai.py` | NovelAI、Midjourney、豆包图片/视频 | 豆包模型由根配置选择；重型步骤 offload，视频原文件经群文件 action 上传并附 GIF 预览。 |
 | `plugins/other.py` | 游戏、站点、服务器、法律、NSFW、磁链等垂直功能 | 最大业务文件；依赖 `plugins/others/` 和大量本地数据。 |
 | `plugins/pic.py` | 趣图、龙图、黑历史、塔罗、GIF、像素字 | 群图片目录、字体、图像处理。 |
 | `plugins/remaking.py` | 科学 remake | `plugins/remake/`、SQLite；仓库静态资源已按模块路径定位。 |
@@ -44,6 +44,17 @@
 
 这证明 registry 可构建，不代表每个外部 API 或数据插件已通过业务冒烟。下一步仍需维护
 预期 manifest，并为各插件输出 available/degraded 状态。
+
+2026-07-17 已核对并恢复两个付费功能的产品边界：
+
+- “查一下”只匹配显式 `^查一下`，价格 12 gb、冷却 600 秒；只有获得模型回答才结算，
+  输入超限、超时、主/备用模型失败均免扣费且不写冷却。
+- `.gpt` 价格仍为 5 gb、冷却 600 秒；输入/能力校验失败和模型服务错误同样不结算。
+- 豆包图片/视频价格仍为 50 gb、冷却 300 秒。图片成功即正常结算；视频要求群文件上传
+  成功才结算，上传失败但 GIF 预览成功时返回预览并免扣费。私聊没有群文件目标，也按
+  预览降级并免扣费。
+
+以上结算和 action 使用 mock/fixture 验证，尚未调用真实付费模型或在真实群上传文件。
 
 ## 组合与渲染
 
@@ -95,7 +106,8 @@
 
 ## 工具和统计
 
-- `tools/pic_recognition.py`：NSFW 模型调用、图片平均哈希、BloomFilter 重复/黑名单。
+- `tools/pic_recognition.py`：NSFW 模型调用、图片平均哈希、BloomFilter 重复/黑名单；
+  无法计算的空哈希不会写入 BloomFilter，也不会被判为命中。
 - `tools/napcat_login_check.py`：只读轮询 NapCat 状态并校验配置/参数账号，详见 10。
 - `tools/start_napcat_sender.sh`、`tools/napcat_sender_config/`：按配置账号启动本地发送
   NapCat 实例，并动态生成账号文件名；模板不含账号和密钥。

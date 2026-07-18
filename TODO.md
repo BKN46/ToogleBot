@@ -97,6 +97,12 @@ failed=0；帮助页 smoke 通过。缺可选依赖/数据的聚合模块改为�
   账号，接口依据和流程见 `doc/10-napcat-login-test.md`。
 - [x] 2026-07-17 本地进程为 `3888217194` 完成首次人工扫码授权；NapCat Core 4.15.4、
   NTQQ 3.2.21-42086，`get_status`、`get_login_info`、`get_group_list` 均通过。
+- [x] 2026-07-17 从官方 Release 更新 NapCat Core 到 4.18.9，SHA-256 与发布资产一致；
+  QQ 版本和登录数据未改动，主账号与第二账号均无扫码恢复并通过双账号只读探针。
+- [x] 2026-07-17 将本地 NTQQ 更新到 3.2.28-48517：因上游 deb 链接已失效，从带
+  NapCat-Docker 官方仓库 SLSA 来源证明的 v4.18.9 amd64 OCI 层离线提取并核对 layer
+  SHA-256，全程未启动 Docker。两个账号均无扫码快速登录，`nc_get_packet_status`
+  返回 `status=ok, retcode=0`；旧 3.2.21-42086 目录完整保留用于回滚。
 - [x] 2026-07-17 保留本地 QQ 数据后重启进程，无需再次扫码，快速登录及 HTTP/WS 服务
   自动恢复。
 - [x] 2026-07-17 启动本地第二 NapCat 实例并扫码登录发送账号 `3560612394`；两个账号
@@ -120,12 +126,42 @@ failed=0；帮助页 smoke 通过。缺可选依赖/数据的聚合模块改为�
 
 - [x] 入站 `at` 读取 OneBot `data.qq`，`qq=all` 转 `AtAll`。
 - [x] 出站 `AtAll` 使用标准 `at` 段；文本和 @ 已有 fixture。
+- [x] 按 NapCat `OB11MessageMarkdown` schema 新增内部 `Markdown(content)`，覆盖入站、
+  出站、`json_to_msg()` 和 fixture 单测。
+- [ ] 完成 Markdown 真实群投递。2026-07-17 依次在 Core/QQ 4.15.4/42086、
+  4.18.9/42086、4.18.9/48517 上各测试一次，均发生 `sendMsg`/HTTP timeout；主实例
+  本地历史生成消息 `2099370023`、`798967633`、`83519291`，但独立观察账号未收到。
+  2026-07-17 官方兼容表已明确 Markdown “发是在双层合并转发内，无法直接发送”，
+  三次直发失败不再作为账号/风控问题继续排查。先完成 `node` 双层转发出站，再以第二
+  账号历史验证嵌套 Markdown；不得继续直发试错。
 - [ ] 为图片 URL/base64/file 增加 fixture 和本地 NapCat 媒体冒烟。
+- [x] 新增无损 `JsonCard`/Ark 内部元素并完成 `type=json` 双向 fixture；字符串/对象载荷
+  会校验 JSON object、深拷贝保存，显示和 `to_dict()` 不泄露卡片正文。2026-07-17 使用
+  `send_group_ark_share` 生成合法 Ark 后经项目序列化发送，独立账号在配置群确认完整 JSON
+  等价的新消息 `1683463177`（主端 action message `393834187`）。
+- [ ] 补 `face`、`mface`、`dice`、`rps` 的入站显示和出站转换；商城表情入站还要覆盖
+  NapCat 以带 emoji 元数据的 `image` 段上报的形态。
+- [ ] 补 `record`、`video`、`file` 内部元素及 fixture；真实发送需等待 FFmpeg/媒体环境
+  阻断解除。`onlinefile`、`flashtransfer` 走专用 action，不与普通 `File` 混用。
+- [ ] 小程序卡片采用 `get_mini_app_ark -> json segment` 两阶段流程，并复用 PacketBackend
+  前置检查；联系人/群推荐卡片采用 `contact` 或 Ark 生成 action。不得把 action 返回的
+  Ark JSON 当成已发送结果。
+- [ ] `poke` 作为 notice/action 接入，不实现成普通出站消息段；内联键盘当前只有点击
+  action、没有公开 OB11 keyboard segment，取得脱敏 fixture 前不新增内部类型。
 - [x] reply 使用 `data.id` 查询本地历史；查询为空不再访问 `msg[0]`；正确填充
   `MessagePack.quote` 和 sender 的 `user_id`。
-- [ ] 合并转发使用 NapCat 支持的 nodes/action，移除固定伪造 forward id。
-- [ ] 明确 XML、语音、视频、文件、表情和未知段的支持/降级策略。
+- [ ] 合并转发使用 NapCat 支持的 `node`/action，支持 Markdown 所需双层节点并移除固定
+  伪造 forward id；`node` 不能与普通 segment 混发。
+- [ ] 明确 XML 和其余未知段的支持/降级策略。NapCat 4.18.9 虽保留 `xml` schema，但
+  出站 converter 返回 `undefined`；现有 `Xml` 只能兼容旧数据，不能声称可发送。
 - [x] `MessageChain.plain(..., quote=..., no_charge=True)` 及消息链相加正确保留结果 flags。
+- [x] 恢复 GPT 计费失败语义：“查一下”仅匹配显式命令；`.gpt`/“查一下”的输入、能力、
+  超时及服务错误均 `no_charge/no_interval`，并有 worker 层不扣余额/不写冷却测试。
+- [x] 豆包图片/视频模型移到根配置默认值并允许 `.env` 覆盖；API key 改为调用时校验，
+  付费请求、下载和转换均有 timeout/offload，异常不回显接口 body 且不扣费。
+- [x] 按 2026-07-17 NapCat Apifox 契约重构群文件上传：业务层经平台无关门面调用
+  `upload_group_file`，校验 HTTP 与 OneBot 结果，视频临时文件始终清理；字段、失败响应、
+  私聊不误调用和上传失败 GIF 降级均有 mock 测试。真实群文件上传按安全约束尚未执行。
 
 ### 7. 恢复群聊、私聊和事件
 
@@ -147,7 +183,8 @@ failed=0；帮助页 smoke 通过。缺可选依赖/数据的聚合模块改为�
 - [ ] 明确 `white_list`、`thread_limit`、`to_me_trigger` 等历史属性是实现还是删除。
 - [x] 移除“10 个线程各自一个 event loop、共享同一插件实例”的模型，改为单 event loop
   + 有界 asyncio queue，默认一个 worker。
-- [ ] 将同步 HTTP、SQLite、模型和 CPU 渲染按调用显式 async 化或 offload。
+- [ ] 将同步 HTTP、SQLite、模型和 CPU 渲染按调用显式 async 化或 offload。豆包图片/视频
+  生成轮询、下载、GIF 转换和群文件上传已用 `asyncio.to_thread()` 完成，其他插件待审计。
 - [x] 修复真实群消息暴露的 clean data 阻断：首次 SQLite 连接在锁保护下幂等执行
   `sqlite.sql`；空库会创建 3 张基础表并有临时库单测、本机空库实测。版本升级 migration
   仍作为 P2 独立任务保留。
@@ -194,7 +231,7 @@ failed=0；帮助页 smoke 通过。缺可选依赖/数据的聚合模块改为�
 - [x] 删除未使用的 `MessageChain.to_mirai()`、scheduler NoneBot/调试注释、SQL scheduler
   死方法、未启用 B 站监测分支和 `.mirai` 图片扩展。
 - [x] 删除未被发现或引用的旧 Markov 模块、HTTP 手工调试入口和过期插件地图描述；
-  修复图片识别临时文件泄漏及 `regist_*` 历史拼写。
+  修复图片识别临时文件泄漏、空哈希 BloomFilter 污染及 `regist_*` 历史拼写。
 - [x] 更新/删除运行代码中 `toogle/plugins`、Mirai、NoneBot 和旧 scheduler 名称；源码
   扫描无命中。
 - [x] 扫描当前 Python 运行目录，NoneBot/Mirai import、旧 scheduler 名称和真实验证账号
@@ -214,6 +251,8 @@ failed=0；帮助页 smoke 通过。缺可选依赖/数据的聚合模块改为�
   普通测试不连接真实 QQ、群管理或付费 API。
 - [x] 增加配置驱动的双账号/群真实消息检查工具及虚构 ID 单测；默认只读，只有显式
   `--confirm-send` 才发送 command/active 场景配置文本并等待配置主账号新回复。
+- [x] Markdown smoke 默认只读；显式发送强制由不同的配置账号观察群历史，发送账号的
+  本地回显不能作为送达证据。
 - [ ] 为重要爬虫保存脱敏 fixture，把实时冒烟与确定性解析测试分开。
 - [ ] CI 至少运行 compile、测试、`git diff --check` 和旧依赖/路径扫描。
 - [ ] 自托管串行 job 按 `doc/10-napcat-login-test.md` 定期执行主账号阶段 B 和双账号
@@ -231,7 +270,8 @@ failed=0；帮助页 smoke 通过。缺可选依赖/数据的聚合模块改为�
 
 ### 14. 安全和阻塞 I/O
 
-- [ ] 管理 HTTP client 统一 timeout、状态/retcode 校验、重试边界和脱敏日志。
+- [ ] 管理 HTTP client 统一 timeout、状态/retcode 校验、重试边界和脱敏日志。HTTP 状态、
+  OneBot `status/retcode` 及群文件 120 秒 timeout 已统一，重试和结构化脱敏日志仍待补。
 - [ ] 审计同步 requests、模型推理和 CPU 渲染，不阻塞主 event loop。
 - [ ] 隔离或移除 `RunPython` / `RunLua` 用户代码执行风险。
 - [ ] 移除 `draw_rich_text()` 等位置的 `eval()`。

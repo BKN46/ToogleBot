@@ -134,6 +134,8 @@ uv run python -W error::ResourceWarning -m unittest discover -s tests -p 'test_*
   `tools/napcat_dual_account_check.py --scenario active` 先只读探测，再显式确认发送。
 - 当前先对本地 NapCat 进程执行登录、HTTP/WS action 和无扫码重启验证。
 - 文本、图片、@、引用、私聊、转发、撤回事件。
+- Markdown 使用 `tools.napcat_markdown_check` 先只读校验；显式发送前启动第二 NapCat
+  实例，并且只以第二账号观察到的新 Markdown 段作为送达证据。
 - 定时消息、启动/重连通知、API 主动发送。
 - Docker 重启、登录数据和 data volume 持久化在代码迁移完成后执行。
 

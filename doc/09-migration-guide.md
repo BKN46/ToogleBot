@@ -80,7 +80,9 @@ Hatchling 根包发现失败；直接依赖审计、可选依赖分层和 `.env.
 
 状态：registry 可重复 load/reload，当前本地加载 79/2/3 且失败为 0；worker 和 scheduler
 已显式 start/stop。主动插件完成双账号 L3 往返；scheduler 的代码/手动主路径、时区、
-misfire、单实例和持久化已有测试与 smoke。其他插件同步 I/O 和 Flask API 仍待处理。
+misfire、单实例和持久化已有测试与 smoke。豆包生成、轮询、下载、视频转换和群文件上传
+已 offload 并用 mock 验证，其他插件同步 I/O 和 Flask API 仍待处理；真实付费模型和群文件
+上传尚未验收。
 
 ### 阶段 4：插件兼容
 

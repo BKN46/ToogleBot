@@ -114,6 +114,14 @@ uv run python tools/napcat_dual_account_check.py \
   --scenario active --confirm-send
 ```
 
+Markdown 段默认只探测主账号和项目序列化，不发送消息。显式发送时必须先启动第二
+NapCat 实例；工具只在第二账号的群历史确实收到新 Markdown 段后判定投递成功：
+
+```bash
+venv/bin/python -m tools.napcat_markdown_check
+venv/bin/python -m tools.napcat_markdown_check --confirm-send
+```
+
 ### Docker 部署（迁移完成后启用）
 
 当前阶段不要执行本节命令。下面仅保留目标部署入口，待 `TODO.md` 的核心收发和构建

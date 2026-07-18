@@ -26,7 +26,10 @@ class ConfigTest(unittest.TestCase):
                 path.write_text("VALUE=updated\n", encoding="utf-8")
                 configs.reload_config(path)
             self.assertIs(configs.config, reference)
-            self.assertEqual(reference, {"VALUE": "updated"})
+            self.assertEqual(
+                reference,
+                {**configs.CONFIG_DEFAULTS, "VALUE": "updated"},
+            )
         finally:
             configs.config.clear()
             configs.config.update(original)

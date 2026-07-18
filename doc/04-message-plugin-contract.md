@@ -26,6 +26,8 @@
 | 元素 | 主要字段 | `asDisplay()` |
 | --- | --- | --- |
 | `Plain` | `text` | 原文本。 |
+| `Markdown` | `content` | 原始 Markdown 内容。 |
+| `JsonCard` | `data`（JSON 字符串或对象） | `[卡片消息]`。 |
 | `At` | `target` | `@<QQ>`。 |
 | `AtAll` | 无 | `@all`。 |
 | `Image` | `id/path/url/base64/cache` | `[图片]`。 |
@@ -39,6 +41,8 @@
 MessageChain.plain("hello")
 MessageChain.plain("hello", quote=message.as_quote())
 MessageChain.create([Plain("结果：\n"), Image(bytes=png_bytes)])
+MessageChain.create([Markdown("# 标题\n\n- 列表项")])
+MessageChain.create([JsonCard(ark_data)])
 ForwardMessage.get_quick_forward_message([
     MessageChain.plain("第一段"),
     MessageChain.plain("第二段"),
@@ -50,6 +54,30 @@ ForwardMessage.get_quick_forward_message([
 
 未使用的 Mirai 消息序列化器已经删除。平台出站转换只允许位于
 `adapter/msg_queue.py::toogle2nb()`，业务插件不得自行构造 Mirai/OneBot payload。
+`Markdown` 在适配层固定映射到 `type=markdown` / `data.content`；不要把 Markdown 文本
+包装成 `Plain` 来冒充富文本，也不要在插件内手写 OneBot segment。
+
+`JsonCard` 已进入稳定契约：构造时只接受能解析为 JSON object 的字符串或可序列化对象，
+对象会深拷贝，`asDisplay()` 和 `to_dict()` 不输出正文；适配层固定映射到
+`type=json` / `data.data`。插件应使用 NapCat action 或可信结构化数据生成卡片，不能拼接
+包含用户输入的 JSON 字符串。
+
+NapCat 4.18.9 还公开表情、语音、视频、文件、音乐、联系人、位置、在线文件和闪传等
+类型，但它们尚未进入本项目稳定契约。新增时按以下边界处理：
+
+- `JsonCard` 不在业务层暴露 `ElementType.ARK` 等 NapCat 类型；链接分享、位置、音乐和
+  小程序接收时都可能复用它。
+- `Face`/`MarketFace` 保存平台 ID 和显示摘要；骰子、猜拳结果不能只压成 Plain。
+- `Record`/`Video`/`File` 复用统一资源来源约定，但保留不同元素类型和媒体字段。
+- `ForwardMessage` 负责 node 层级；`node` 不是插件可以单独返回的顶层元素。
+- `Poke`、群签到、AI 语音属于事件或 action，不放进通用 `MessageChain`。
+- `OnlineFile`/`FlashTransfer` 有独立生命周期和 action，不与普通 `File` 合并。
+- 小程序 Ark 由适配层调用 `get_mini_app_ark` 生成，再转换为 `JsonCard`；插件不得直接
+  依赖 packet schema。
+
+官方兼容表说明 Markdown 不能直接发送，只能嵌在双层合并转发中。当前 `Markdown`
+类型仍保留为内容模型，但真实出站要等待 `ForwardMessage -> node` 转换完成，不能由插件
+自行拼 OneBot 双层 payload 绕过适配层。
 
 ## 消息历史
 
@@ -130,6 +158,10 @@ import I/O、建立预期插件 manifest，并把指定 reload 优化成真正�
 - 无需响应或实际未命中：`None`。
 - 参数错误/外部失败：可见 `MessageChain`，通常设置 `no_charge=True`，按产品语义
   决定 `no_interval`。
+
+计费插件只有在取得可用业务结果后才应扣费。当前 `.gpt` 和“查一下”在输入不合法、
+上下文/能力缺失、模型超时或服务异常时均返回 `no_charge=True, no_interval=True`；worker
+层测试确认这两个 flag 会分别跳过余额扣除和冷却写入。
 
 空 `MessageChain([])` 当前会按静默处理且不扣费、不写冷却；新插件仍优先返回 `None`，
 语义更明确。

@@ -3,7 +3,7 @@ import datetime
 import os
 import re
 import time
-from typing import Callable, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 from configs import config
 from toogle.message import Group, Member
@@ -26,6 +26,7 @@ else:
     logger.warning("Traffic time control is not available. please check `data/traffic_control.py`")  # type: ignore
 
 BOT_SEND: Optional[Callable] = None
+GROUP_FILE_UPLOAD: Optional[Callable[[int, str, str], Any]] = None
 
 class PluginWrapper:
     def __init__(self, plugin: MessageHandler) -> None:
@@ -191,6 +192,19 @@ def bot_send_message(
     except Exception:
         logger.exception("发送消息入队失败: message_type=%s", message_type)
         return False
+
+
+def register_group_file_uploader(
+    uploader: Optional[Callable[[int, str, str], Any]],
+) -> None:
+    global GROUP_FILE_UPLOAD
+    GROUP_FILE_UPLOAD = uploader
+
+
+def bot_upload_group_file(group_id: int, file_name: str, file_path: str) -> Any:
+    if not GROUP_FILE_UPLOAD:
+        raise RuntimeError("群文件上传器未初始化")
+    return GROUP_FILE_UPLOAD(group_id, file_name, file_path)
 
 
 def send_admins(message: Union[ToogleChain, str]):

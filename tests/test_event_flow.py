@@ -6,7 +6,18 @@ from unittest.mock import patch
 from adapter import action_router, msg_queue
 from adapter.server import decode_frame, encode_action, recv_loop, send_loop
 from toogle import adapter
-from toogle.message import At, AtAll, Group, Member, MessageChain, Plain, Quote
+from toogle.message import (
+    At,
+    AtAll,
+    Group,
+    JsonCard,
+    Markdown,
+    Member,
+    MessageChain,
+    Plain,
+    Quote,
+    json_to_msg,
+)
 from toogle.message_handler import (
     MESSAGE_HISTORY,
     RECALL_HISTORY,
@@ -93,6 +104,78 @@ class EventConversionTest(unittest.TestCase):
     def test_at_all_uses_standard_onebot_segment(self):
         result = msg_queue.toogle2nb(MessageChain([AtAll()]))
         self.assertEqual(result, [{"type": "at", "data": {"qq": "all"}}])
+
+    def test_markdown_segment_round_trip(self):
+        content = "# Fixture\n\n- **bold**\n- `code`"
+        chain = msg_queue.nb2toogle(
+            [{"type": "markdown", "data": {"content": content}}]
+        )
+
+        self.assertEqual(chain.get(Markdown)[0].content, content)
+        self.assertEqual(chain.asDisplay(), content)
+        self.assertEqual(
+            msg_queue.toogle2nb(chain),
+            [{"type": "markdown", "data": {"content": content}}],
+        )
+
+    def test_json_message_supports_markdown(self):
+        chain = json_to_msg({"type": "markdown", "content": "**fixture**"})
+
+        self.assertEqual(chain.get(Markdown)[0].content, "**fixture**")
+
+    def test_json_card_segment_round_trip(self):
+        payload = {
+            "app": "com.tencent.structmsg",
+            "prompt": "[fixture card]",
+            "meta": {"news": {"title": "Fixture"}},
+        }
+        chain = msg_queue.nb2toogle(
+            [{"type": "json", "data": {"data": payload}}]
+        )
+
+        card = chain.get(JsonCard)[0]
+        payload["prompt"] = "mutated after parsing"
+        self.assertEqual(card.data["prompt"], "[fixture card]")
+        self.assertEqual(chain.asDisplay(), "[卡片消息]")
+        self.assertEqual(
+            card.to_dict(),
+            {"type": "JsonCard", "data": "[redacted]", "data_type": "object"},
+        )
+        self.assertEqual(
+            msg_queue.toogle2nb(chain),
+            [
+                {
+                    "type": "json",
+                    "data": {
+                        "data": {
+                            "app": "com.tencent.structmsg",
+                            "prompt": "[fixture card]",
+                            "meta": {"news": {"title": "Fixture"}},
+                        }
+                    },
+                }
+            ],
+        )
+
+    def test_json_card_string_and_internal_json_builder_are_lossless(self):
+        payload = '{"app":"com.tencent.structmsg","prompt":"fixture"}'
+        chain = json_to_msg({"type": "json_card", "content": payload})
+
+        card = chain.get(JsonCard)[0]
+        self.assertEqual(card.data, payload)
+        self.assertEqual(
+            msg_queue.toogle2nb(chain),
+            [{"type": "json", "data": {"data": payload}}],
+        )
+
+    def test_invalid_json_card_degrades_without_exposing_payload(self):
+        chain = msg_queue.nb2toogle(
+            [{"type": "json", "data": {"data": ["not", "an", "object"]}}]
+        )
+
+        self.assertEqual(chain.asDisplay(), "[无效的卡片消息]")
+        with self.assertRaises(ValueError):
+            JsonCard('["not", "an", "object"]')
 
     def test_group_recall_notice_moves_message_to_recall_history(self):
         original = make_pack(message_id=42, text="recalled")

@@ -1,3 +1,6 @@
+from functools import wraps
+from typing import Any
+
 import requests
 
 import configs
@@ -7,8 +10,25 @@ PORT = configs.config.get("HTTP_PORT", "3457")
 TOKEN = configs.config.get("HTTP_TOKEN", "")
 
 
-def bot_http(method="POST", path="/"):
+class NapCatHttpActionError(RuntimeError):
+    pass
+
+
+def _require_success(payload: Any, path: str) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        raise NapCatHttpActionError(f"NapCat action {path} returned a non-object")
+    if payload.get("status") != "ok" or payload.get("retcode") != 0:
+        message = payload.get("message") or payload.get("wording") or "unknown error"
+        raise NapCatHttpActionError(
+            f"NapCat action {path} failed: retcode={payload.get('retcode')!r}, "
+            f"message={message!r}"
+        )
+    return payload
+
+
+def bot_http(method="POST", path="/", timeout=(3, 10)):
     def decorator(func):
+        @wraps(func)
         def wrapper(*args, **kwargs):
             url = f"http://{HOST}:{PORT}{path}"
             data = func(*args, **kwargs) or {}
@@ -20,12 +40,13 @@ def bot_http(method="POST", path="/"):
                 url,
                 headers=header,
                 json=data,
-                timeout=(3, 10),
+                timeout=timeout,
             )
             res.raise_for_status()
-            return res.json()
+            return _require_success(res.json(), path)
 
         return wrapper
+
     return decorator
 
 
@@ -46,7 +67,7 @@ def mute_member(group_id: int, user_id: int, duration: int):
     }
 
 
-@bot_http(method="POST", path="/upload_group_file")
+@bot_http(method="POST", path="/upload_group_file", timeout=(3, 120))
 def upload_group_file(group_id: int, file_name: str, file_path: str):
     return {
         "group_id": str(group_id),

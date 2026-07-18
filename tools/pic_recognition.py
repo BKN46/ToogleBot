@@ -69,6 +69,8 @@ def register_shit_pic(pic_bytes: bytes):
     if len(pic_bytes) > 5 * 1024 * 1024:
         return
     pic_md5 = get_pic_average_hash(pic_bytes)
+    if not pic_md5:
+        return
     SHIT_BLOOM.add(pic_md5)
 
 
@@ -76,4 +78,6 @@ def is_shit_pic(pic_bytes: bytes):
     if len(pic_bytes) > 5 * 1024 * 1024:
         return False
     pic_md5 = get_pic_average_hash(pic_bytes)
+    if not pic_md5:
+        return False
     return pic_md5 in SHIT_BLOOM

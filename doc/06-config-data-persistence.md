@@ -53,7 +53,8 @@
 
 - GPT：`GPTSecret`、`GPTModel`、`GPTModelLarge`、`GPTUrl`。
 - NovelAI：`NovelAISecret`。
-- 豆包：`DOUBAO_API_KEY`。
+- 豆包：`DOUBAO_API_KEY`、`DOUBAO_IMAGE_MODEL`、`DOUBAO_VIDEO_MODEL`。两个模型 key 在
+  `configs.CONFIG_DEFAULTS` 中有当前默认值，可由 `.env` 覆盖；插件内不再写死模型名。
 - 战雷：`WT_DATAMINE_GIT`。
 - 塔科夫：`TARKOV_MARKET_SECRET`。
 - 反爬和代理：`SCRIPING_ANT_TOKEN`、`REQUEST_PROXY_HTTP`、`REQUEST_PROXY_HTTPS`。

@@ -38,9 +38,12 @@ import I/O 风险见 02、05。
 
 - `PluginWrapper.prepare()`：余额、冷却、权限、黑名单、分时控制和引用派生视图。
 - `bot_send_message()`：把目标和内部消息交给注册的 `BOT_SEND` transport。
+- `bot_upload_group_file()`：把群号、文件名和本地路径交给注册的上传 transport；业务插件
+  不直接 import NapCat HTTP client。
 - `send_admins()`：私聊群发管理员。
 
-`BOT_SEND` 当前由 `adapter/msg_queue.py` 注册，发送不会新建线程；transport 未 ready
+`BOT_SEND` 当前由 `adapter/msg_queue.py` 注册，发送不会新建线程；群文件 uploader 由
+`bot.py` 在进程生命周期内注册 NapCat HTTP action。transport 未 ready
 会返回可观察失败，跨线程生产者使用绑定 loop 的 thread-safe callback。后续可进一步
 把注册动作移到 `bot.py`，完全消除模块赋值。
 
@@ -125,8 +128,9 @@ API 安全要求：
 `toogle/utils.py` 提供 `text2img()`、`list2img()`、`draw_rich_text()`、
 `draw_pic_text()`、缩放和 MP4/GIF 转换。字体统一从 `tools/fonts/` 读取。
 
-`tools/pic_recognition.py` 使用 BloomFilter、imagehash 和 `opennsfw2`。首次模型 import
-或推理很慢，不应阻塞 WebSocket loop；测试可覆盖哈希和错误图片，模型冒烟应单独标记。
+`tools/pic_recognition.py` 使用 BloomFilter、imagehash 和 `opennsfw2`。平均哈希为空时
+注册和查询都会直接返回，避免污染 BloomFilter 或把损坏图片误判为命中。首次模型 import
+或推理很慢，不应阻塞 WebSocket loop；模型冒烟应单独标记。
 
 `draw_rich_text()` 对富文本参数使用 `eval()`，解释器插件也执行用户代码；这两处是
 独立安全债务，迁移完成后应优先隔离或替换，不要暴露到新增 HTTP 接口。

@@ -14,7 +14,9 @@ from toogle.message import (
     ForwardMessage,
     Group,
     Image,
+    JsonCard,
     Member,
+    Markdown,
     MessageChain,
     Plain,
     Quote,
@@ -282,6 +284,13 @@ def nb2toogle(raw_message: Any, parse_forward: bool = False) -> MessageChain:
         data = item.get("data") if isinstance(item.get("data"), dict) else {}
         if segment_type == "text":
             message_list.append(Plain(str(data.get("text") or "")))
+        elif segment_type == "markdown":
+            message_list.append(Markdown(str(data.get("content") or "")))
+        elif segment_type == "json":
+            try:
+                message_list.append(JsonCard(data.get("data")))
+            except (TypeError, ValueError):
+                message_list.append(Plain("[无效的卡片消息]"))
         elif segment_type == "at":
             target = data.get("qq")
             if str(target) == "all":
@@ -323,6 +332,14 @@ def toogle2nb(chain: MessageChain) -> list[dict[str, Any]]:
     for item in chain.root:
         if isinstance(item, Plain):
             message_list.append({"type": "text", "data": {"text": item.text}})
+        elif isinstance(item, Markdown):
+            message_list.append(
+                {"type": "markdown", "data": {"content": item.content}}
+            )
+        elif isinstance(item, JsonCard):
+            message_list.append(
+                {"type": "json", "data": {"data": item.as_payload()}}
+            )
         elif isinstance(item, Quote):
             message_list.append({"type": "reply", "data": {"id": item.id}})
         elif isinstance(item, Image):

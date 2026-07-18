@@ -127,7 +127,8 @@ event -> history -> active registry -> `ret_wrapper()` -> outbound queue -> NapC
 
 主要剩余风险是大量插件的 `async ret()` 内仍直接调用同步 requests、SQLite、模型推理和
 图片渲染。默认单 worker 保证正确性，但这些调用仍可能阻塞 WebSocket event loop；需要按
-插件标注执行类型并逐步改为 async client 或受控 `asyncio.to_thread()`。
+插件标注执行类型并逐步改为 async client 或受控 `asyncio.to_thread()`。豆包图片/视频的
+生成轮询、下载、GIF 转换和群文件上传已在 2026-07-17 offload；这不代表其他插件已完成。
 
 ## 发消息链路
 
@@ -144,12 +145,31 @@ plugin result / bot_send_message()
 
 `bot_send_message()` 不再为每次发送创建未跟踪线程；跨线程调用通过 transport loop 的
 `call_soon_threadsafe()` 入队。私聊回复使用原消息 `member.id`，不会再向 group 0 发送。
-text/image/reply/at/at-all 已生成标准段；合并转发发送目前降级为摘要文本，仍需实现
-NapCat nodes action。
+text/image/reply/at/at-all/markdown/json 已生成标准段；其中 JSON/Ark 卡片已完成独立账号
+真实投递，Markdown 需嵌在双层合并转发，不能直接发送。合并转发当前仍降级为摘要文本，
+需实现 NapCat node action。
+
+群文件不是普通消息段。豆包视频当前走另一条 action 链路：
+
+```text
+plugin bytes
+  -> temporary local file
+  -> toogle.adapter.bot_upload_group_file()
+  -> adapter.http_request.upload_group_file()
+  -> POST /upload_group_file
+  -> status/retcode validation
+  -> remove temporary file
+```
+
+`bot.py` 在启动时注册 uploader、关闭时注销。当前只适用于 NapCat 与机器人共享本机文件
+系统的本地进程阶段；未来容器化时必须改为共享 volume 或流式上传，不能假定容器可读
+宿主机 `/tmp`。
 
 `adapter.action_router.call_action()` 提供带 timeout 的 action/response 关联。2026-07-17
-已用本地 NapCat 4.15.4 对 `get_status`、`get_login_info`、`get_group_list` 完成只读往返，
-账号按配置严格匹配。同日先完成 `.help ping` 普通插件往返，随后发送配置主动探针文本；
+已用本地 NapCat 4.15.4，并在更新到 4.18.9 后对 `get_status`、`get_login_info`、
+`get_group_list` 完成只读往返；当前 4.18.9/NTQQ 3.2.28-48517 又通过
+`nc_get_packet_status`，账号按配置严格匹配。同日先完成 `.help ping` 普通插件往返，
+随后发送配置主动探针文本；
 主账号在 `message_post_process()` 命中主动插件并经正常 outbound queue 回复，发送端群历史
 确认新回复来自配置主账号。具体账号、群和 message id 只记录在 10 的本机验收结果中。
 
