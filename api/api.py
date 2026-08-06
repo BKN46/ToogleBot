@@ -12,12 +12,12 @@ from toogle.membership import recv_afdian_msg
 app = flask.Flask(__name__)
 
 @app.get("/api")
-async def custom_api():
+def custom_api():
     return {"message": "Hello, world!"}
 
 
 @app.post("/api")
-async def custom_post_api():
+def custom_post_api():
     data = flask.request.json
     req_body = json.dumps(data, ensure_ascii=False)
     print(f"{datetime.datetime.now()}\t{flask.request.remote_addr}\t{req_body}", file=open("log/api.log", "a"))
@@ -25,7 +25,7 @@ async def custom_post_api():
 
 
 @app.post("/afdian")
-async def afdian_webhook_api():
+def afdian_webhook_api():
     data = flask.request.json
     req_body = json.dumps(data, ensure_ascii=False)
     recv_afdian_msg(data)
@@ -36,7 +36,7 @@ async def afdian_webhook_api():
 SEND_LIMIT = {}
 
 @app.post("/send")
-async def send_message():
+def send_message():
     '''
     POST /send
     BODY {
@@ -82,4 +82,10 @@ async def send_message():
 
 
 def start_api():
-    app.run(host="0.0.0.0", port=int(configs.config.get("API_PORT", 8080)))
+    host = str(configs.config.get("API_HOST", "0.0.0.0"))
+    port = int(configs.config.get("API_PORT", 36001))
+    app.run(host=host, port=port)
+
+
+if __name__ == "__main__":
+    start_api()

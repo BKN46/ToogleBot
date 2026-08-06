@@ -106,13 +106,16 @@ content 相同且不在基线中的新 Markdown 段时才能判定通过。actio
 首次登录必然可能需要扫码或设备确认，因此这是唯一允许人工介入的阶段：
 
 1. 使用独立测试主机/runner 和专用 NapCat/QQ 数据目录；不要复用生产机器人目录。
-2. 从 QQ 安装目录启动本地进程。当前验证机示例：
+2. 从 QQ 安装目录启动本地进程。当前验证机可以直接使用 systemd unit（它会隔离
+   `NAPCAT_MAIN_WORKDIR` 和 QQ 数据目录）：
 
    ```bash
-   cd /root/Napcat/opt/QQ
-   xvfb-run -a ./qq --no-sandbox -q "$NAPCAT_MAIN_ACCOUNT"
+   sudo tools/install_systemd_services.sh
+   sudo systemctl start tooglebot-napcat.service
    ```
 
+   也可以按上面的 unit 配置手工执行 `tools/start_napcat_main.sh`。二维码保存在
+   `NAPCAT_MAIN_WORKDIR/cache/qrcode.png`，不会写入仓库。
 3. 同时以 `--timeout 600` 启动登录探针。
 4. 操作者扫描进程生成的二维码，并在手机 QQ 完成安全确认。
 5. 只有探针同时确认 online/good 和配置主账号一致才算首次授权成功。
@@ -125,7 +128,7 @@ content 相同且不在基线中的新 Markdown 段时才能判定通过。actio
 
 在阶段 A 成功且不删除 QQ 数据目录的前提下：
 
-1. 通过专用 supervisor/systemd unit 停止测试进程，并确认 `3456`、`6099`、`6543`
+1. 通过 `tooglebot-napcat.service` 停止测试进程，并确认 `3456`、`6099`、`6543`
    已释放。不要使用可能误杀其他 QQ 实例的全局 `pkill qq`。
 2. 使用与阶段 A 相同的账号、安装目录和 QQ 数据目录重新启动本地进程。
 3. 自动执行：
@@ -143,7 +146,7 @@ content 相同且不在基线中的新 Markdown 段时才能判定通过。actio
 - 180 秒内 online/good。
 - 登录号严格等于配置主账号。
 - 进程重启前后使用同一专用 QQ/NapCat 数据目录。
-- 停止动作能回收全部 QQ/Xvfb 子进程，退出异常会被 supervisor 记录。
+- 停止动作能回收全部 QQ/Xvfb 子进程，退出异常会由 systemd journal 记录。
 
 ## 阶段 C：Docker 自动重建登录（延后）
 
@@ -200,6 +203,14 @@ python tools/napcat_login_check.py --account "$NAPCAT_MAIN_ACCOUNT" --timeout 18
 
 2026-07-17 在 CentOS 8 x86_64 本地主机完成阶段 A/B/D：
 
+2026-08-06 在同一主机为正式主账号使用 `tooglebot-napcat.service` 完成首次扫码授权；
+`tools/napcat_login_check.py --check-group-list` 通过，随后 `tooglebot.service` 已启动并
+报告插件 registry、worker、scheduler 和 NapCat WebSocket 均 ready。账号值只保存在本机
+`.env`，不在本文或 unit 中记录。
+
+同日重启 NapCat unit 后，保留同一 QQ 数据目录即可在 180 秒内无扫码通过相同探针；
+ToogleBot 在 WS 端口短暂不可用时按 `run.sh` 预检策略重试，随后重新连回 NapCat。
+
 - NapCat Core 4.15.4、NTQQ 3.2.21-42086 首次使用 `3888217194` 扫码登录成功；同日
   NapCat Core 更新到 4.18.9，随后将本地 NTQQ 更新到 3.2.28-48517。主账号和第二账号
   均沿用现有数据无扫码快速登录；旧 Core 和旧 QQ 均保留同级备份用于回滚。
@@ -221,8 +232,9 @@ python tools/napcat_login_check.py --account "$NAPCAT_MAIN_ACCOUNT" --timeout 18
   登录和 OneBot API 不受影响，图片/音视频转换尚不能判定可用。
 - WebUI 当前监听所有接口的 `6099`，HTTP/WS 则只监听 `127.0.0.1`；WebUI 应收敛监听
   或由主机防火墙限制。
-- 直接 `Ctrl-C` 停止时 Electron 报 `Failed to shutdown` 并非零退出，需要正式的本地
-  进程守护/停止策略。
+- 2026-08-06 已安装 `tooglebot-napcat.service` 和 `tooglebot.service`；两个 unit 均
+  使用控制组停止，NapCat 首次扫码和 online/good 探针仍需单独完成。unit 不把账号、token
+  或二维码写入仓库。
 - 第二实例在一次启动中出现 NapCat worker 退出码 139，但 launcher 自动拉起后恢复
   online/good；自动化必须以登录探针为准，不能只检查父进程存在。
 - ToogleBot transport 已完成 JSON 边界、有界 asyncio queue、echo 路由和重连，并用本地

@@ -111,9 +111,13 @@ notice/request 尚未迁移。
 - `POST /afdian`：处理爱发电订单。
 - `POST /send`：按 `data/send_api.json` 的 secret、目标群和 qpm 主动发送。
 
-`start_api()` 使用 `API_PORT`，当前没有从 `bot.py` 调用。因此 README 中配置 API
-并不代表接口会监听。接入时需要决定独立进程还是同一生命周期；Flask async view
-也不能直接当作 asyncio server task 使用而不做服务封装。
+`start_api()` 使用 `API_HOST`/`API_PORT`，由独立的 `tooglebot-api.service` 调用，不从
+`bot.py` 的 asyncio 生命周期启动。当前 Flask 只监听回环 `127.0.0.1:36002`，nginx 在
+`0.0.0.0:36001` 代理 `/api`、`/send` 和 `/afdian`；API unit 依赖
+`tooglebot.service` 后再启动。systemd API active 只表示 Flask 进程存在，不代表 NapCat
+或 worker 健康。Flask async view 仍不能直接当作 asyncio server task 使用而不做服务封装。
+代理片段由安装脚本放到 `/etc/nginx/conf.d/tooglebot-api-locations.conf`，修改后必须先
+执行 `nginx -t` 再 reload；该路径满足当前主机 SELinux 策略。
 
 API 安全要求：
 

@@ -17,7 +17,8 @@ WebSocket JSON 边界、基础 action 路由和单 event loop worker 的第一�
 
 `toogle.index` 和 `adapter.worker` 已没有“import 即扫描插件/启动线程”的副作用。插件模块
 本身仍可能在 import 时读取数据、加载模型或创建目录，这部分要继续按插件域收敛。
-Flask API 仍未接入主生命周期。
+Flask API 不并入 `bot.py` 的 asyncio 生命周期，由独立 `tooglebot-api.service` 启动并依赖
+机器人服务；API 的监听和关闭不代表 NapCat/worker 健康。
 
 ## 插件加载链路
 

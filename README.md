@@ -68,7 +68,9 @@ WS_TOKEN=your_token            # NapCat access_token
 HTTP_HOST=127.0.0.1            # HTTP API 地址
 HTTP_PORT=6543                 # HTTP API 端口
 HTTP_TOKEN=your_http_token     # HTTP API token
-API_PORT=5701                  # ToogleBot 自有 Flask API 端口（当前尚未启动）
+API_HOST=127.0.0.1             # ToogleBot Flask API 内部监听地址
+API_PORT=36002                 # Flask 内部端口（nginx 对外代理 36001）
+API_PUBLIC_PORT=36001          # 对外 API 端口
 WORKER_NUM=1                   # 同一 event loop 的插件 worker 数
 
 SUPERUSERS=[]                  # 管理员QQ号列表
@@ -103,6 +105,33 @@ RUN_DRY_RUN=1 ./run.sh              # 只执行启动前检查
 RUN_SKIP_NAPCAT_CHECK=1 ./run.sh    # 跳过 NapCat TCP 探测
 PYTHON_BIN=/path/to/python ./run.sh # 指定解释器
 ```
+
+### systemd 正式运行
+
+本地正式 QQ/NapCat 使用仓库内的 systemd unit，账号、HTTP/WS token 和路径仍由本机
+`.env` 提供：
+
+```bash
+sudo tools/install_systemd_services.sh
+sudo systemctl start tooglebot-napcat.service
+# 首次运行打开启动器输出的 NAPCAT_MAIN_WORKDIR/cache/qrcode.png 完成 QQ 授权
+uv run python tools/napcat_login_check.py --account "$NAPCAT_MAIN_ACCOUNT" --check-group-list
+sudo systemctl start tooglebot.service
+sudo systemctl start tooglebot-api.service
+```
+
+状态、日志和重启：
+
+```bash
+systemctl status tooglebot-napcat.service tooglebot.service
+systemctl status tooglebot-api.service nginx.service
+journalctl -u tooglebot-napcat.service -u tooglebot.service -f
+sudo systemctl restart tooglebot-napcat.service
+```
+
+NapCat 使用独立 QQ 数据目录和回环 HTTP/WS 监听；两个 unit 使用控制组停止并支持异常
+重启。首次扫码后重启 NapCat 应按登录验收流程无扫码恢复，不能只以 systemd 进程存在
+判断账号已登录。
 
 双账号真实群文本验证从 `.env` 读取账号、群和探针文本，完整流程见
 [NapCat 登录与双账号验收](./doc/10-napcat-login-test.md)。检查工具默认只读，只有

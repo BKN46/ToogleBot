@@ -105,6 +105,11 @@ failed=0；帮助页 smoke 通过。缺可选依赖/数据的聚合模块改为�
   返回 `status=ok, retcode=0`；旧 3.2.21-42086 目录完整保留用于回滚。
 - [x] 2026-07-17 保留本地 QQ 数据后重启进程，无需再次扫码，快速登录及 HTTP/WS 服务
   自动恢复。
+- [x] 2026-08-06 正式主账号通过 `tooglebot-napcat.service` 完成首次人工扫码；只读
+  `tools/napcat_login_check.py --check-group-list` 确认 online/good、登录账号和群列表，
+  随后 `tooglebot.service` 通过 WS 启动 worker。账号值仅保存在本机 `.env`。
+- [x] 2026-08-06 重启 NapCat unit 后在 180 秒内无扫码恢复登录；ToogleBot 预检重试后
+  重新加载 registry、启动 worker 并连回 WS。
 - [x] 2026-07-17 启动本地第二 NapCat 实例并扫码登录发送账号 `3560612394`；两个账号
   均通过 online/good、账号和群 `1070265969` 校验。发送端调用 `send_group_msg` 发送
   `.help ping`，主账号命中帮助插件并回复，发送端历史确认新回复来自 `3888217194`。
@@ -114,8 +119,10 @@ failed=0；帮助页 smoke 通过。缺可选依赖/数据的聚合模块改为�
   FFmpeg CLI 的问题；在解决前将图片/音视频转换标记为未验收。
 - [ ] 将本地 NapCat WebUI 从全接口监听收敛到回环地址或增加主机防火墙规则；HTTP/WS
   当前已仅监听 `127.0.0.1`。
-- [ ] 为本地进程提供可控的停止/守护方式；当前 `Ctrl-C` 退出会触发 Electron
-  `Failed to shutdown` 并以非零状态结束。
+- [x] 2026-08-06 为本地进程提供可控的停止/守护方式：新增
+  `deploy/systemd/tooglebot-napcat.service`、`tooglebot.service` 和安装脚本；NapCat
+  使用 `KillMode=control-group` 回收 `xvfb-run`/QQ 子进程，ToogleBot 按 WS 依赖自动重试。
+  首次账号授权仍需按文档人工扫码，不能把 unit active 等同于账号 online/good。
 
 验收：clean Docker build 不包含本机密钥/数据库；`3888217194` 首次登录、自动重启/
 重建登录、消息往返和 volume 持久化通过；错误账号会在任何消息/管理测试前失败。
@@ -216,8 +223,11 @@ failed=0；帮助页 smoke 通过。缺可选依赖/数据的聚合模块改为�
 
 ### 10. 恢复 API 和后处理生命周期
 
-- [ ] 决定 Flask API 独立进程或同进程服务方式，并把 start/stop 接入生命周期。
-- [ ] 统一 `API_PORT` 命名，移除/迁移 README 中未使用的 `API_HTTP_PORT`。
+- [x] 2026-08-06 将 Flask API 定为独立进程并接入 `tooglebot-api.service` 的 start/stop；
+  unit 依赖 ToogleBot worker，不并入 `bot.py` 的 asyncio loop。
+- [x] 2026-08-06 统一 `API_HOST`/`API_PORT` 配置，移除本机 `.env` 中未使用的
+  `API_HTTP_PORT`；Flask 内部监听 `127.0.0.1:36002`，由 nginx 对外暴露 `:36001`，
+  `curl http://127.0.0.1:36001/api` 返回 200。
 - [ ] `/afdian` 增加验签和敏感数据脱敏；`/send` 并发限流、输入校验、发送失败响应。
 - [ ] 明确 `chat_earn`、图片检测、内容审查哪些默认开启；不要保留“代码存在但调用注释”。
 - [ ] 将启动通知定义为每进程一次或每连接一次，并防止重连刷屏。

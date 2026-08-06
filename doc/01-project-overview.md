@@ -42,7 +42,7 @@ OneBot payload。迁移是否成功，应以这个隔离边界和端到端行为
 | 路径 | 职责 |
 | --- | --- |
 | `adapter/` | WebSocket/HTTP 接入、OneBot 转换、消息队列、worker、后处理和调度注册。 |
-| `api/` | Flask webhook 和受密钥保护的主动发送接口；当前未从 `bot.py` 启动。 |
+| `api/` | Flask webhook 和受密钥保护的主动发送接口；由独立 `tooglebot-api.service` 启动。 |
 | `toogle/` | 框架无关的消息模型、插件策略、加载器、调度、经济、会员、SQL、日志和工具。 |
 | `plugins/` | 动态发现的顶层业务插件，以及 `compose/`、`others/`、`dnd/`、`remake/`、`thunderskill/`、`waifu_utils/` 辅助模块。 |
 | `tools/` | 图片识别和字体文件。 |

@@ -16,7 +16,10 @@
 | `WS_URL` | `adapter/server.py` | 可选完整正向 WebSocket URL；设置时优先于拆分字段。 |
 | `WS_HOST`、`WS_PORT`、`WS_PATH`、`WS_TOKEN` | `adapter/server.py` | 拆分的 NapCat 正向 WebSocket 配置；默认 path 为 `/`。 |
 | `HTTP_HOST`、`HTTP_PORT`、`HTTP_TOKEN` | `adapter/http_request.py` | NapCat HTTP action endpoint。 |
-| `API_PORT` | `api/api.py` | ToogleBot 自有 Flask API 端口；本机 `.env` 仍有旧 `API_HTTP_PORT`，待安全配置迁移时处理。 |
+| `NAPCAT_QQ_BIN` | `tools/start_napcat_main.sh` | systemd 启动的 QQ/NapCat 可执行文件，默认 `/root/Napcat/opt/QQ/qq`。 |
+| `NAPCAT_MAIN_WORKDIR` | `tools/start_napcat_main.sh` | 主账号 NapCat 配置、日志和二维码目录；默认 `~/.local/state/tooglebot/napcat-main-<account>`。 |
+| `NAPCAT_MAIN_QQ_DATA_DIR` | `tools/start_napcat_main.sh` | 主账号 QQ 登录数据目录；默认 `~/.config/QQ-ToogleBot-Main-<account>`，首次授权后不得清空。 |
+| `API_HOST`、`API_PORT`、`API_PUBLIC_PORT` | `api/api.py` / `tooglebot-api.service` / nginx | Flask 内部监听 `127.0.0.1:36002`，nginx 对外代理到 `:36001`。 |
 | `RECV_QUEUE_SIZE`、`SEND_QUEUE_SIZE`、`WORK_QUEUE_SIZE` | adapter queue/worker | 有界队列容量，非法值回退到内置默认值。 |
 | `WORKER_NUM` | `adapter/worker.py` | 同一 event loop 的 worker task 数，当前默认 1；并发审计完成前不要提高。 |
 | `BOT_TIMEZONE` | `toogle/scheduler.py` | APScheduler 时区，默认 `Asia/Shanghai`。 |
@@ -31,6 +34,16 @@
 双账号验收使用 `NAPCAT_MAIN_ACCOUNT`、`NAPCAT_SENDER_ACCOUNT`、`NAPCAT_TEST_GROUP`；
 主动探针另用 `NAPCAT_ACTIVE_PROBE_ENABLED/TRIGGER/REPLY/EXPECT`。这些值只存在于本机
 `.env`/CI secret，源码和 NapCat JSON 模板不得包含真实账号或群号。
+
+本地 systemd unit 由 `tools/install_systemd_services.sh` 安装。主账号启动器只从本机
+`.env` 读取主账号、HTTP/WS token，在独立 workdir 生成 NapCat JSON；HTTP/WS 默认只绑定
+`127.0.0.1`，WebUI 默认关闭。unit 文件不包含 token，且通过 `KillMode=control-group`
+管理 `xvfb-run` 和 QQ 子进程。主账号 NapCat 配置关闭自身 console/file 日志，避免首次
+扫码时的二维码 URL 进入 systemd journal；二维码仅临时保存在 workdir 的 `cache/qrcode.png`。
+
+API 的 nginx location 片段安装到 `/etc/nginx/conf.d/tooglebot-api-locations.conf`，只允许
+由已有 `36001` server 代理 `/api`、`/send` 和 `/afdian`；不要把 Flask 内部端口直接暴露到
+公网，也不要把片段放在 `/root` 下绕过 SELinux。
 
 ## 权限、群组和后处理
 

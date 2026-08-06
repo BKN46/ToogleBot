@@ -1,0 +1,24 @@
+[Unit]
+Description=ToogleBot HTTP API
+Requires=tooglebot.service
+Wants=nginx.service
+After=network-online.target tooglebot.service nginx.service
+StartLimitIntervalSec=300
+StartLimitBurst=10
+
+[Service]
+Type=simple
+WorkingDirectory=/root/ToogleBot
+Environment=HOME=/root
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/.local/bin
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/bin/bash /root/ToogleBot/tools/start_api.sh
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=30
+KillMode=control-group
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

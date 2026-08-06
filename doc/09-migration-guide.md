@@ -81,8 +81,8 @@ Hatchling 根包发现失败；直接依赖审计、可选依赖分层和 `.env.
 状态：registry 可重复 load/reload，当前本地加载 79/2/3 且失败为 0；worker 和 scheduler
 已显式 start/stop。主动插件完成双账号 L3 往返；scheduler 的代码/手动主路径、时区、
 misfire、单实例和持久化已有测试与 smoke。豆包生成、轮询、下载、视频转换和群文件上传
-已 offload 并用 mock 验证，其他插件同步 I/O 和 Flask API 仍待处理；真实付费模型和群文件
-上传尚未验收。
+已 offload 并用 mock 验证；Flask API 已由独立 systemd 服务启动，监听配置端口，但验签、
+脱敏、并发限流和错误响应仍待处理；真实付费模型和群文件上传尚未验收。
 
 ### 阶段 4：插件兼容
 
@@ -94,6 +94,9 @@ misfire、单实例和持久化已有测试与 smoke。豆包生成、轮询、�
 
 - 使用 `.env`/runner secret 配置的专用测试账号；当前本机账号的首次扫码和无扫码重启
   已于 2026-07-17 完成，具体值仅记录在 10。
+- 本地长期运行使用 `deploy/systemd/tooglebot-napcat.service` 和
+  `deploy/systemd/tooglebot.service`；NapCat 的登录、HTTP/WS readiness 和 ToogleBot
+  worker 必须分别探针确认，不能只看 systemd 主进程存在。
 - 代码迁移完成后，按 10 再执行 Docker 自动重启和重建登录，不复用生产数据。
 - data/NapCat/QQ volume 重启后持久化。
 - healthcheck 能区分进程、NapCat 登录、WS 连接和 worker 健康。

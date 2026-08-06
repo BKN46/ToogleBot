@@ -29,6 +29,24 @@ RUN_DRY_RUN=1 ./run.sh
 
 `RUN_SKIP_NAPCAT_CHECK=1` 只用于明确需要离线调试连接重试的场景。
 
+### 本地 systemd 守护
+
+生产或长期运行的本地 QQ/NapCat 使用仓库内的两个 unit，不直接依赖交互式 shell：
+
+```bash
+sudo tools/install_systemd_services.sh
+sudo systemctl start tooglebot-napcat.service
+sudo systemctl status tooglebot-napcat.service
+sudo systemctl start tooglebot.service
+```
+
+`tooglebot-napcat.service` 调用 `tools/start_napcat_main.sh`，从 `.env` 读取主账号和
+NapCat HTTP/WS token，在独立 workdir 生成配置并使用 `xvfb-run` 启动 QQ。首次登录必须
+扫描 `NAPCAT_MAIN_WORKDIR/cache/qrcode.png`；先用 `tools/napcat_login_check.py` 确认 online/good 和账号一致，
+再启动 ToogleBot。停止或重启使用 `systemctl stop|restart`，unit 会回收整个 QQ 子进程组。
+机器人 unit 依赖 NapCat，但 NapCat 首次扫码未完成时会按 systemd 重试，不应据此判断登录
+成功。
+
 ## 当前可执行检查
 
 项目是从仓库根直接运行的非打包应用，`[tool.uv] package = false` 阻止 uv/Hatchling
