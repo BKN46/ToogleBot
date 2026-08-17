@@ -1,4 +1,6 @@
 import base64
+import json
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -36,6 +38,35 @@ class ArchivedFixTest(unittest.IsolatedAsyncioTestCase):
             self.assertFalse(pic_recognition.is_shit_pic(b"invalid image"))
 
         add.assert_not_called()
+
+    def test_shit_picture_exemption_overrides_bloom_and_can_be_registered_again(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            exemption_path = Path(temp_dir) / "not_shit_pics.json"
+            with patch.object(
+                pic_recognition,
+                "SHIT_PIC_EXEMPTIONS_PATH",
+                exemption_path,
+            ), patch.object(
+                pic_recognition,
+                "_SHIT_PIC_EXEMPTIONS",
+                None,
+            ), patch.object(
+                pic_recognition,
+                "get_pic_average_hash",
+                return_value="fixture-hash",
+            ), patch.object(
+                pic_recognition,
+                "SHIT_BLOOM",
+            ) as bloom:
+                bloom.__contains__.return_value = True
+                pic_recognition.unregister_shit_pic(b"fixture")
+                self.assertFalse(pic_recognition.is_shit_pic(b"fixture"))
+                self.assertEqual(json.loads(exemption_path.read_text()), ["fixture-hash"])
+
+                pic_recognition.register_shit_pic(b"fixture")
+                bloom.add.assert_called_once_with("fixture-hash")
+                self.assertTrue(pic_recognition.is_shit_pic(b"fixture"))
+                self.assertEqual(json.loads(exemption_path.read_text()), [])
 
     def test_what_is_only_matches_explicit_lookup_command(self):
         plugin = WhatIs()

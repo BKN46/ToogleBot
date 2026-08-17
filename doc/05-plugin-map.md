@@ -7,9 +7,10 @@
 | 文件 | 插件/功能 | 主要依赖或状态 |
 | --- | --- | --- |
 | `plugins/meta.py` | ping、帮助列表 | 通过只读 provider 使用当前 registry；旧 `MIRAI_QQ` 依赖已移除。 |
-| `plugins/admin.py` | 临时禁用、自动禁言、退群 | NapCat 禁言/退群 HTTP action，图片哈希。高副作用。 |
+| `plugins/admin.py` | 临时禁用、自动禁言、退群、取消屎图标记 | NapCat 禁言/退群 HTTP action，图片哈希。高副作用；管理员可回复图片发送 `这个不屎` 撤销屎图注册。 |
 | `plugins/basic.py` | 随机选择、世界时间、骂人、抽奖、反撤回、投票、吃什么、昵称 | `data/lottery/`、`user_info.json`、撤回事件。 |
 | `plugins/currencyExchange.py` | 货币转换 | 外部汇率 API。 |
+| `plugins/debug.py` | 微博/撤回统计/服务器查询/竞猜/异步等待/日志/GB 红包/生图 | 当前 11 个插件类；高权限调试命令使用 `admin_only`，外部 I/O 已移出 event loop，专属配置和本地数据见 06。 |
 | `plugins/dice.py` | 通用骰子、战锤骰制转换 | NumPy、SciPy、Matplotlib。 |
 | `plugins/economy.py` | 赞助入口、余额管理 | SQLite 余额、会员。 |
 | `plugins/gpt.py` | GPT 对话、主动聊天、“查一下”、总结 | OpenAI 兼容 API、当前消息历史、价格和冷却；失败结果免扣费/冷却。 |
@@ -28,8 +29,12 @@
 
 ## 当前加载审计
 
-2026-07-17 修复后，本地 venv 连续 load/reload 都得到 79 个普通、2 个主动、3 个定时
-插件，`PluginLoadReport.failed` 为 0；帮助页可以从当前 registry 生成转发结果。
+2026-08-17 对不含本机私有扩展的公开 registry 执行 smoke，得到 90 个普通、2 个主动、
+3 个定时插件，4 个按配置禁用，`PluginLoadReport.failed` 为 0；其中 11 个 debug 插件类均已
+注册。帮助页可以从当前 registry 生成转发结果。
+
+Git 忽略的 `private/` 及其本机兼容入口不计入上述公开基线；本机插件总数不能写回公开
+registry 审计结果。
 
 此前阻断整个模块的可选条件现在按功能降级：
 
@@ -55,6 +60,11 @@
   预览降级并免扣费。
 
 以上结算和 action 使用 mock/fixture 验证，尚未调用真实付费模型或在真实群上传文件。
+
+`plugins/debug.py` 的导入、registry、微博转发结构、撤回统计、A2S 查询、竞猜题库、GPT
+审查、等待消息、日志 tail、GB 红包全部份额以及 TooglePicGen HTTP/poll/result 路径已有
+14 条 mock 单测。测试没有调用真实微博、GPT、生图服务或 QQ 发送；相关功能仍取决于 06
+中的本机配置、外部服务和运行数据。
 
 ## 组合与渲染
 

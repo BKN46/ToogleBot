@@ -7,7 +7,7 @@
 
 action 路径、请求字段、响应和数据模型优先参考
 [NapCat Apifox 接口文档](https://napcat.apifox.cn/)。该文档随 NapCat 更新自动生成，
-本页最后核对日期为 2026-07-17。版本升级或修改 action 时必须重新核对对应页面并用
+本页最后核对日期为 2026-08-10。版本升级或修改 action 时必须重新核对对应页面并用
 脱敏 fixture 固化实际 payload。
 
 常用入口：[`get_status`](https://napcat.apifox.cn/226657083e0)、
@@ -15,6 +15,9 @@ action 路径、请求字段、响应和数据模型优先参考
 [`get_group_list`](https://napcat.apifox.cn/226656992e0)、
 [`send_group_msg`](https://napcat.apifox.cn/226656598e0)、
 [`send_private_msg`](https://napcat.apifox.cn/226656553e0)、
+[`send_group_forward_msg`](https://napcat.apifox.cn/226657396e0)、
+[`send_private_forward_msg`](https://napcat.apifox.cn/226657399e0)、
+[`OB11MessageNode`](https://napcat.apifox.cn/246111207d0)、
 [`OB11MessageMarkdown`](https://napcat.apifox.cn/246111204d0)。Apifox 主要描述 API schema；
 WebSocket URL/path、token 和正向/反向模式仍需按实际 NapCat 配置验证。
 
@@ -37,7 +40,7 @@ PacketBackend 扩展能力，并说明受支持平台的 Native 实现无需外�
 | `server.py` | 建立 WebSocket、收帧、发帧、连接钩子。 | JSON、echo 路由、ready、任务回收和退避重连已实现；进程级健康检查待补。 |
 | `action_router.py` | action future、echo 响应关联、超时和断线失败。 | 已用本地 NapCat 完成只读 action 往返。 |
 | `msg_queue.py` | 事件分类、OneBot/内部消息互转、有界收发队列。 | message、recall notice 和 JSON/Ark 卡片已接入；其余 notice/request 仍待实现。 |
-| `http_request.py` | 调用 NapCat HTTP action：退群、禁言、文件、撤回、转发和历史。 | 已有分 action timeout、HTTP 状态及 OneBot status/retcode 校验；仍为同步调用，重试/脱敏日志待收敛。 |
+| `http_request.py` | 调用 NapCat HTTP action：退群、禁言、文件、撤回、转发和历史。 | 已有分 action timeout、HTTP 状态及 OneBot status/retcode 校验；底层仍为同步调用，自动禁言/撤回调用点已用 `asyncio.to_thread()` offload，重试/脱敏日志待收敛。 |
 | `worker.py` | 插件匹配和执行。 | 已改为显式单 event loop worker；同步插件 I/O 仍会阻塞。 |
 | `post_process.py` | 消息历史、主动插件、经济后处理、启动/关闭钩子。 | 已按阶段隔离错误并区分私聊历史；重型 I/O 待迁移。 |
 | `schedule.py` | 注册代码型和手动定时任务。 | 已接入 start/stop，真实时间与持久化策略待测。 |
@@ -67,7 +70,7 @@ NapCat WebSocket 上至少要区分：
 | `AtAll` | `type=at`, `data.qq=all` | 同左 | 基础往返已实现。 |
 | `Image` | `type=image`, `data.file/url/...` | `data.file=url/base64://.../path` | 基础字段已修复，真实媒体仍受本机 FFmpeg 限制。 |
 | `Quote` | `type=reply`, `data.id` | `type=reply`, `data.id` | 本地 history 补全，未命中时保留占位且不阻塞收帧。 |
-| `ForwardMessage` | `type=forward`, `data.id/content` | 通常需 forward nodes action | 入站内联节点可解析；出站暂降级摘要文本。 |
+| `ForwardMessage` | `type=forward`, `data.id/content` | `send_*_forward_msg` + `messages` node[] | 入站内联节点可解析；出站节点递归转换，顶层不与普通段混发。 |
 | `Xml` | OneBot 扩展段 | OneBot 扩展段 | 当前出站转换未实现，应明确降级策略。 |
 
 未知消息段不应抛弃整条消息。建议转换成可诊断的占位 `Element`，日志记录段类型但
@@ -80,8 +83,9 @@ NapCat WebSocket 上至少要区分：
 分别生成消息 `2099370023`、`798967633`、`83519291`，但独立观察账号未收到，因此只能
 视为本地回显。最新一次 NativePacketClient Hook 和 `nc_get_packet_status` 都正常，已排除
 旧 QQ 版本或 PacketBackend 未初始化这一层。官方当前[消息兼容表](https://napneko.github.io/develop/msg)
-进一步明确 Markdown 只能在双层合并转发内发送、不能直接发送；后续应实现双层
-`node`/forward，不再继续直发或为此修改 Markdown schema。
+进一步明确 Markdown 只能在双层合并转发内发送、不能直接发送。适配层现在已将
+`ForwardMessage` 转换为 `node`，并递归支持节点正文中的第二层 `node`；真实账号投递
+仍需用独立观察账号确认，不能只看 action 成功或主账号本地回显。
 
 Markdown smoke 的成功条件必须是：发送前从独立观察账号建立 message id 基线，发送后
 该账号看到来自主账号、完整 content 相同、且不在基线中的新 Markdown 段。action 成功
@@ -102,7 +106,7 @@ Markdown smoke 的成功条件必须是：发送前从独立观察账号建立 m
 | 小程序卡片 | 接收表现为 lightapp/JSON；发送先调用依赖 PacketBackend 的 `get_mini_app_ark`，再发送返回的 Ark JSON。 | 未实现。 | P1：采用生成、发送、独立观察三阶段验收。 |
 | QQ/商城表情 | `face/mface/dice/rps`；`mface` 入站也可能是带 emoji 元数据的 `image`。 | 普通图片可读，其余降级。 | P1：独立表情元素，保留 ID、包 ID、key 和结果。 |
 | 语音/视频/文件 | `record/video/file` 均支持；在线文件是 `onlinefile`，QQ 闪传是 `flashtransfer`。 | 只有 Image。 | 普通媒体建模；在线文件和闪传使用专用 action，不伪装成普通 File。 |
-| 合并转发 | `node` 仅用于发送节点，`forward` 用于上报；node 不能与普通 segment 混发。 | 入站部分解析，出站降级摘要文本。 | P1：先补双层 node，这也是 Markdown 真实投递前置。 |
+| 合并转发 | `node` 仅用于发送节点，`forward` 用于上报；node 不能与普通 segment 混发。 | 入站部分解析；出站使用 `send_group_forward_msg`/`send_private_forward_msg`，节点正文递归转换。 | 已有 fixture 单测；待独立账号真实投递，Markdown 需验证双层节点。 |
 | 戳一戳 | 接收走 notice，发送走 `send_poke`/group/friend action，不是普通消息段。 | notice 仅记录，未形成业务事件。 | 放在事件/action 层，不新增普通 Message 元素。 |
 | XML | 类型 schema 仍存在，但 4.18.9 出站 converter 返回 `undefined`，官方兼容表也未列为可发。 | 保留旧 `Xml`，出站只会降级显示文本。 | 仅兼容旧历史；取得真实 fixture 前不承诺收发。 |
 | 内联键盘 | Core 有 keyboard element 和 `click_inline_keyboard_button` action，但公开 OB11 segment union 没有 keyboard。 | 未实现。 | 先采集脱敏入站 fixture，避免凭 Core 私有结构设计稳定类型。 |
@@ -156,8 +160,11 @@ Markdown smoke 的成功条件必须是：发送前从独立观察账号建立 m
 - `get_group_msg_history(group_id, message_seq, count=20)`
 
 这些函数有真实副作用。自动测试必须 mock HTTP transport；不得对真实 QQ、群或文件
-执行验收。当前退群、群文件字段、bounded timeout、`raise_for_status()` 和 OneBot
-`status/retcode` 失败均有单测；统一 client 仍需补重试、脱敏日志和异步 transport。
+执行验收。`mute_member` 对应官方[群组禁言](https://napcat.apifox.cn/226656791e0)，
+请求使用字符串 `group_id`/`user_id` 和秒数 `duration`。当前底层 client 仍同步，但
+投票禁言和图片自动禁言的调用点已通过 `asyncio.to_thread()` offload；退群、群文件字段、
+bounded timeout、`raise_for_status()` 和 OneBot `status/retcode` 失败均有单测，统一
+client 的重试、脱敏日志和异步 API 仍待补。
 
 2026-07-17 重新核对 NapCat Apifox
 [上传群文件](https://napcat.apifox.cn/226658753e0)：action 为 `POST /upload_group_file`，

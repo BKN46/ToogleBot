@@ -25,6 +25,9 @@ NapCat (OneBot 11 WebSocket) ←→ adapter/server.py (原生 WS 客户端)
 第一轮修复；双测试账号的普通插件与主动插件真实群消息往返均已通过。但构建、媒体/
 转发、完整事件、其余同步插件 I/O 和 API 仍未闭合，暂不能声明端到端迁移完成。
 
+合并转发的出站适配已使用 NapCat 的 `send_*_forward_msg` action 和 `node` 节点结构，
+并支持递归节点正文；真实账号投递（包括 Markdown 双层转发）仍需独立观察账号验收。
+
 - [渐进式开发文档](./doc/README.md)
 - [迁移 TODO](./TODO.md)
 - [AI 开发约定](./AGENTS.md)
@@ -49,8 +52,11 @@ NapCat (OneBot 11 WebSocket) ←→ adapter/server.py (原生 WS 客户端)
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # 安装 Python 依赖
-uv sync
+uv sync --frozen
 ```
+
+锁定依赖包含图片 NSFW 检测所需的 TensorFlow；修改 `pyproject.toml` 后先运行
+`uv lock` 再重新同步。
 
 ### 2. 配置 NapCat
 

@@ -58,6 +58,15 @@ uv run python -m compileall -q bot.py configs.py adapter api toogle plugins tool
 uv run python -W error::ResourceWarning -m unittest discover -s tests -p 'test_*.py'
 ```
 
+上述命令只验证 Git 可见的公开基线。存在本机 `private/` 扩展时，其测试需在本机另行执行
+`uv run python -W error::ResourceWarning -m unittest discover -s private/tests -p 'test_*.py'`；
+私有目录及兼容入口不进入 Git 或普通 CI，也不计入公开 registry 数量。
+
+当前依赖清单还显式包含图片 NSFW 检测所需的 TensorFlow，以及 `python-a2s`、
+`libtorrent`、`lupa`、MySQL connector、`wordcloud` 和 `tqdm` 等可选/离线功能库。
+TensorFlow 2.21 与 `h5py` 3.14 系列绑定；修改任一版本约束后必须重新运行
+`uv lock` 和 `uv sync --frozen`。
+
 本机旧 `venv/bin/python` 只作为迁移期应急解释器，不能替代 clean `uv sync` 验收。
 
 源码 import 有线程、文件和插件加载副作用。没有隔离环境时，不运行 `import bot` 作为

@@ -9,6 +9,7 @@ from toogle import adapter
 from toogle.message import (
     At,
     AtAll,
+    ForwardMessage,
     Group,
     JsonCard,
     Markdown,
@@ -212,6 +213,75 @@ class EventConversionTest(unittest.TestCase):
         self.assertTrue(result.no_charge)
         self.assertTrue(result.no_interval)
 
+    def test_forward_message_serializes_as_node_segments(self):
+        chain = MessageChain(
+            [
+                ForwardMessage(
+                    ForwardMessage.get_node_list(
+                        [
+                            (
+                                123,
+                                1700000000,
+                                "Alice",
+                                MessageChain.plain("hello"),
+                            )
+                        ]
+                    ),
+                    sender_id=0,
+                    time=1700000000,
+                    sender_name="fixture",
+                    message_id=0,
+                    message=MessageChain.plain("fixture forward"),
+                )
+            ]
+        )
+
+        self.assertEqual(
+            msg_queue.toogle2nb(chain),
+            [
+                {
+                    "type": "node",
+                    "data": {
+                        "user_id": 123,
+                        "nickname": "Alice",
+                        "content": [{"type": "text", "data": {"text": "hello"}}],
+                    },
+                }
+            ],
+        )
+
+    def test_nested_forward_message_keeps_node_structure(self):
+        inner = ForwardMessage(
+            ForwardMessage.get_node_list(
+                [(456, 1700000000, "Bob", MessageChain.plain("nested"))]
+            ),
+            sender_id=0,
+            time=1700000000,
+            sender_name="inner",
+            message_id=0,
+            message=MessageChain.plain("inner"),
+        )
+        outer = ForwardMessage(
+            ForwardMessage.get_node_list(
+                [(123, 1700000000, "Alice", MessageChain([inner]))]
+            ),
+            sender_id=0,
+            time=1700000000,
+            sender_name="outer",
+            message_id=0,
+            message=MessageChain.plain("outer"),
+        )
+
+        payload = msg_queue.toogle2nb(MessageChain([outer]))
+        self.assertEqual(payload[0]["data"]["content"][0]["type"], "node")
+        self.assertEqual(
+            payload[0]["data"]["content"][0]["data"]["content"],
+            [{"type": "text", "data": {"text": "nested"}}],
+        )
+        self.assertEqual(
+            payload[0]["data"]["content"][0]["data"]["content"][0]["type"],
+            "text",
+        )
 
 class QueueAndActionTest(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
@@ -222,6 +292,11 @@ class QueueAndActionTest(unittest.IsolatedAsyncioTestCase):
         msg_queue.unbind_transport_loop(asyncio.get_running_loop())
         action_router.fail_pending(RuntimeError("test cleanup"))
 
+    async def _take_action(self):
+        action = await asyncio.wait_for(msg_queue.send_queue.get(), timeout=1)
+        msg_queue.send_queue.task_done()
+        return action
+
     async def test_private_action_has_echo_and_correct_target(self):
         pack = make_pack(message_type="private", member_id=321)
         self.assertTrue(msg_queue.send_message(pack))
@@ -230,6 +305,75 @@ class QueueAndActionTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(action["action"], "send_private_msg")
         self.assertEqual(action["params"]["user_id"], 321)
         self.assertTrue(action["echo"])
+
+    async def test_group_forward_uses_forward_action_and_messages_nodes(self):
+        chain = MessageChain(
+            [
+                ForwardMessage(
+                    ForwardMessage.get_node_list(
+                        [(123, 1700000000, "Alice", MessageChain.plain("hello"))]
+                    ),
+                    sender_id=0,
+                    time=1700000000,
+                    sender_name="fixture",
+                    message_id=0,
+                    message=MessageChain.plain("fixture"),
+                )
+            ]
+        )
+        pack = make_pack(message_type="group")
+        pack.message = chain
+
+        self.assertTrue(msg_queue.send_message(pack))
+        action = await self._take_action()
+        self.assertEqual(action["action"], "send_group_forward_msg")
+        self.assertEqual(action["params"]["group_id"], 100)
+        self.assertEqual(action["params"]["messages"][0]["type"], "node")
+
+    async def test_private_forward_uses_private_forward_action(self):
+        chain = MessageChain(
+            [
+                ForwardMessage(
+                    ForwardMessage.get_node_list(
+                        [(123, 1700000000, "Alice", MessageChain.plain("hello"))]
+                    ),
+                    sender_id=0,
+                    time=1700000000,
+                    sender_name="fixture",
+                    message_id=0,
+                    message=MessageChain.plain("fixture"),
+                )
+            ]
+        )
+        pack = make_pack(message_type="private", member_id=321)
+        pack.message = chain
+
+        self.assertTrue(msg_queue.send_message(pack))
+        action = await self._take_action()
+        self.assertEqual(action["action"], "send_private_forward_msg")
+        self.assertEqual(action["params"]["user_id"], 321)
+        self.assertIn("messages", action["params"])
+
+    async def test_forward_message_cannot_mix_with_plain_segments(self):
+        pack = make_pack(message_type="group")
+        pack.message = MessageChain(
+            [
+                Plain("prefix"),
+                ForwardMessage(
+                    ForwardMessage.get_node_list(
+                        [(123, 1700000000, "Alice", MessageChain.plain("hello"))]
+                    ),
+                    sender_id=0,
+                    time=1700000000,
+                    sender_name="fixture",
+                    message_id=0,
+                    message=MessageChain.plain("fixture"),
+                ),
+            ]
+        )
+
+        self.assertFalse(msg_queue.send_message(pack))
+        self.assertTrue(msg_queue.send_queue.empty())
 
     async def test_action_response_is_correlated_by_echo(self):
         task = asyncio.create_task(action_router.call_action("get_status", timeout=1))

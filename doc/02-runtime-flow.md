@@ -49,7 +49,7 @@ loader 现在具备：
 - 首次 load 不重复执行模块；显式 reload 才调用 `importlib.reload()`。
 - 帮助插件运行时读取 registry provider，不再保存会被 reload 清空的全局列表。
 
-本地 venv 实测连续 load/reload 均为 79 个普通、2 个主动、3 个定时插件，加载失败为 0；
+2026-08-17 本地 venv 实测公开 registry reload 为 90 个普通、2 个主动、3 个定时插件，加载失败为 0；
 帮助页 smoke 可生成 `ForwardMessage`。缺少 `libtorrent`、`mysql-connector`、
 `python-a2s`、百度 Cookie 或 DND 数据时，对应功能返回可诊断提示，不再拖垮整个聚合模块。
 
@@ -100,6 +100,7 @@ reply 只用 `data.id` 查询本地 `MESSAGE_HISTORY`，收帧路径不再同步
 ```text
 recv_queue
   -> process_loop()
+     -> ONLY_READ group? drop before all functionality
      -> history / active plugin / economy post-process
      -> WORK_QUEUE
   -> worker_loop()
@@ -118,8 +119,13 @@ recv_queue
 因此多插件命中不会重复追加 quote，也不会污染 history/active plugin 看到的消息。
 当前明确保留“一条消息允许多个插件命中”的语义，匹配统一使用 `re.search()`。
 
-后处理按 history -> active -> economy/audit 顺序完成后才投递普通 worker。三个阶段有错误
-隔离，私聊不会执行群主动插件；单个后处理错误不会终止 dispatch loop。
+群聊消息会先检查 `.env` 的 `ONLY_READ` 列表；命中时不写 history、不运行 active plugin、
+economy/audit 或普通插件，也不进入 `WORK_QUEUE`。`process_message()` 同样保留该检查，避免
+scheduler programmable 等直接投递的虚拟群消息绕过策略；私聊不受影响。该策略只限制
+消息触发，不拦截管理员、scheduler 或 API 的主动发送。
+
+未命中时，后处理按 history -> active -> economy/audit 顺序完成后才投递普通 worker。
+三个阶段有错误隔离，私聊不会执行群主动插件；单个后处理错误不会终止 dispatch loop。
 
 `ActivePathProbe` 默认关闭，只在 `NAPCAT_ACTIVE_PROBE_ENABLED` 开启，且消息发送者、群、
 文本同时匹配验证配置时返回配置响应。2026-07-17 已用双账号真实验证
@@ -129,7 +135,8 @@ event -> history -> active registry -> `ret_wrapper()` -> outbound queue -> NapC
 主要剩余风险是大量插件的 `async ret()` 内仍直接调用同步 requests、SQLite、模型推理和
 图片渲染。默认单 worker 保证正确性，但这些调用仍可能阻塞 WebSocket event loop；需要按
 插件标注执行类型并逐步改为 async client 或受控 `asyncio.to_thread()`。豆包图片/视频的
-生成轮询、下载、GIF 转换和群文件上传已在 2026-07-17 offload；这不代表其他插件已完成。
+生成轮询、下载、GIF 转换和群文件上传已在 2026-07-17 offload；禁言/撤回的自动后处理和
+投票插件调用已在 2026-08-10 offload；这不代表其他插件已完成。
 
 ## 发消息链路
 
@@ -147,8 +154,10 @@ plugin result / bot_send_message()
 `bot_send_message()` 不再为每次发送创建未跟踪线程；跨线程调用通过 transport loop 的
 `call_soon_threadsafe()` 入队。私聊回复使用原消息 `member.id`，不会再向 group 0 发送。
 text/image/reply/at/at-all/markdown/json 已生成标准段；其中 JSON/Ark 卡片已完成独立账号
-真实投递，Markdown 需嵌在双层合并转发，不能直接发送。合并转发当前仍降级为摘要文本，
-需实现 NapCat node action。
+真实投递，Markdown 需嵌在双层合并转发，不能直接发送。`ForwardMessage` 现在改用
+`send_group_forward_msg`/`send_private_forward_msg`，将每个节点编码为 `type=node`，并递归
+转换节点正文；顶层转发不能与普通消息段混发。当前已有脱敏 fixture 单测，真实账号投递
+和嵌套 Markdown 仍待独立观察账号验收。
 
 群文件不是普通消息段。豆包视频当前走另一条 action 链路：
 

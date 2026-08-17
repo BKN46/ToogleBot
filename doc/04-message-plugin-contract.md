@@ -76,8 +76,8 @@ NapCat 4.18.9 还公开表情、语音、视频、文件、音乐、联系人、
   依赖 packet schema。
 
 官方兼容表说明 Markdown 不能直接发送，只能嵌在双层合并转发中。当前 `Markdown`
-类型仍保留为内容模型，但真实出站要等待 `ForwardMessage -> node` 转换完成，不能由插件
-自行拼 OneBot 双层 payload 绕过适配层。
+类型由适配层递归转换为节点正文中的标准段；插件仍只构造 `ForwardMessage`，不能自行拼
+OneBot 双层 payload 绕过适配层。顶层 `ForwardMessage` 不能与普通消息段混发。
 
 ## 消息历史
 
@@ -140,15 +140,16 @@ import I/O、建立预期插件 manifest，并把指定 reload 优化成真正�
 
 `adapter/worker.py` 和 `toogle/adapter.py` 共同完成：
 
-1. 正则粗匹配。
-2. 余额检查：仅 `ECO_GROUP` 中对非管理员生效。
-3. 用户冷却检查；管理员和管理员群可绕过。
-4. `admin_only`、黑名单、临时禁用、分时流量控制。
-5. 默认把 `message.quote.message` 追加到正文。
-6. 执行 `plugin.ret()`。
-7. 根据结果记录冷却、扣费、发送和日志。
+1. 群聊命中 `ONLY_READ` 时在后处理及插件分发前静默丢弃。
+2. 正则粗匹配。
+3. 余额检查：仅 `ECO_GROUP` 中对非管理员生效。
+4. 用户冷却检查；管理员和管理员群可绕过。
+5. `admin_only`、黑名单、临时禁用、分时流量控制。
+6. 默认把 `message.quote.message` 追加到正文。
+7. 执行 `plugin.ret()`。
+8. 根据结果记录冷却、扣费、发送和日志。
 
-第 5 步描述的是旧业务语义，不代表允许修改原对象。实现必须为当前插件构造派生
+第 6 步描述的是旧业务语义，不代表允许修改原对象。实现必须为当前插件构造派生
 `MessagePack`/`MessageChain`；同一条引用消息命中多个插件时，每个插件最多看到一份
 引用原文，历史和后处理始终保留规范化后的原始消息。
 
@@ -205,6 +206,7 @@ class Lookup(MessageHandler):
   插件补业务回归。
 - 当前明确保留一条消息扫描全部插件、允许多命中的语义；registry 顺序稳定但插件不应
   依赖另一个插件先执行。
-- 私聊回复和 quote 派生视图已有单测；合并转发出站及完整 notice/request 仍未完成。
+- 私聊回复和 quote 派生视图已有单测；合并转发出站已覆盖 node/action fixture，真实账号
+  投递及完整 notice/request 仍未完成。
 - plugin registry 连续 load/reload 和帮助页 smoke 已通过；顶层网络请求或重型文件读取
   仍必须逐步迁出 import 阶段。

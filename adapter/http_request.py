@@ -91,9 +91,9 @@ def get_forward_msg(message_id: str):
 
 
 @bot_http(method="POST", path="/get_group_msg_history")
-def get_group_msg_history(group_id: str, message_seq: int, count=20):
+def get_group_msg_history(group_id: str, message_seq: str | int = "0", count=20):
     return {
-        "group_id": group_id,
-        "message_seq": message_seq,
+        "group_id": str(group_id),
+        "message_seq": str(message_seq),
         "count": count
     }

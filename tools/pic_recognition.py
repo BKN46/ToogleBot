@@ -1,6 +1,8 @@
 import hashlib
 import io
+import json
 import tempfile
+import threading
 import time
 from pathlib import Path
 
@@ -14,6 +16,36 @@ from toogle.logger import logger
 PIC_BLOOM = bloom_filter.BloomFilter(max_elements=10**6, error_rate=0.01, filename='data/pic_bloom')
 SFW_BLOOM = bloom_filter.BloomFilter(max_elements=10**6, error_rate=0.01, filename='data/sfw_bloom')
 SHIT_BLOOM = bloom_filter.BloomFilter(max_elements=10**6, error_rate=0.001, filename='data/shit_bloom')
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+SHIT_PIC_EXEMPTIONS_PATH = PROJECT_ROOT / "data" / "not_shit_pics.json"
+_SHIT_PIC_EXEMPTIONS: set[str] | None = None
+_SHIT_PIC_EXEMPTIONS_LOCK = threading.RLock()
+
+
+def _load_shit_pic_exemptions() -> set[str]:
+    global _SHIT_PIC_EXEMPTIONS
+    if _SHIT_PIC_EXEMPTIONS is not None:
+        return _SHIT_PIC_EXEMPTIONS
+    try:
+        raw = json.loads(SHIT_PIC_EXEMPTIONS_PATH.read_text(encoding="utf-8"))
+    except (FileNotFoundError, OSError, json.JSONDecodeError):
+        raw = []
+    if isinstance(raw, list):
+        _SHIT_PIC_EXEMPTIONS = {str(item) for item in raw if str(item)}
+    else:
+        _SHIT_PIC_EXEMPTIONS = set()
+    return _SHIT_PIC_EXEMPTIONS
+
+
+def _save_shit_pic_exemptions(exemptions: set[str]) -> None:
+    SHIT_PIC_EXEMPTIONS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path = SHIT_PIC_EXEMPTIONS_PATH.with_suffix(".json.tmp")
+    temporary_path.write_text(
+        json.dumps(sorted(exemptions), ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    temporary_path.replace(SHIT_PIC_EXEMPTIONS_PATH)
+
 
 def detect_pic_nsfw(pic: bytes, output_repeat=False):
     pic_md5 = hashlib.md5(pic).hexdigest()
@@ -71,7 +103,25 @@ def register_shit_pic(pic_bytes: bytes):
     pic_md5 = get_pic_average_hash(pic_bytes)
     if not pic_md5:
         return
-    SHIT_BLOOM.add(pic_md5)
+    with _SHIT_PIC_EXEMPTIONS_LOCK:
+        exemptions = _load_shit_pic_exemptions()
+        if pic_md5 in exemptions:
+            exemptions.remove(pic_md5)
+            _save_shit_pic_exemptions(exemptions)
+        SHIT_BLOOM.add(pic_md5)
+
+
+def unregister_shit_pic(pic_bytes: bytes):
+    if len(pic_bytes) > 5 * 1024 * 1024:
+        return
+    pic_md5 = get_pic_average_hash(pic_bytes)
+    if not pic_md5:
+        return
+    with _SHIT_PIC_EXEMPTIONS_LOCK:
+        exemptions = _load_shit_pic_exemptions()
+        if pic_md5 not in exemptions:
+            exemptions.add(pic_md5)
+            _save_shit_pic_exemptions(exemptions)
 
 
 def is_shit_pic(pic_bytes: bytes):
@@ -80,4 +130,7 @@ def is_shit_pic(pic_bytes: bytes):
     pic_md5 = get_pic_average_hash(pic_bytes)
     if not pic_md5:
         return False
+    with _SHIT_PIC_EXEMPTIONS_LOCK:
+        if pic_md5 in _load_shit_pic_exemptions():
+            return False
     return pic_md5 in SHIT_BLOOM

@@ -28,6 +28,46 @@ class WorkerFlowTest(unittest.IsolatedAsyncioTestCase):
         await worker.worker_shutdown(timeout=1)
         self.assertFalse(worker.WORKER_TASKS)
 
+    async def test_only_read_group_skips_post_process_and_work_queue(self):
+        source = MessagePack(
+            id=1,
+            message=MessageChain.plain("command"),
+            group=Group(100, "group"),
+            member=Member(200, "member"),
+            quote=None,
+            message_type="group",
+        )
+        dispatcher = asyncio.create_task(worker.process_loop())
+        try:
+            with patch.dict(config, {"ONLY_READ": ["100"]}, clear=False), patch(
+                "adapter.worker.message_post_process",
+                new=AsyncMock(),
+            ) as post_process:
+                await msg_queue.recv_queue.put(source)
+                await asyncio.wait_for(msg_queue.recv_queue.join(), timeout=1)
+
+            post_process.assert_not_awaited()
+            self.assertTrue(worker.WORK_QUEUE.empty())
+        finally:
+            dispatcher.cancel()
+            await asyncio.gather(dispatcher, return_exceptions=True)
+
+    async def test_only_read_group_skips_direct_plugin_dispatch(self):
+        source = MessagePack(
+            id=1,
+            message=MessageChain.plain("command"),
+            group=Group(100, "group"),
+            member=Member(200, "member"),
+            quote=None,
+            message_type="group",
+        )
+        with patch.dict(config, {"ONLY_READ": [100]}, clear=False), patch(
+            "adapter.worker.get_export_plugins"
+        ) as get_plugins:
+            await worker.process_message(source, worker_index=0)
+
+        get_plugins.assert_not_called()
+
     async def test_process_message_uses_derived_quote_view(self):
         seen = []
         sent = []

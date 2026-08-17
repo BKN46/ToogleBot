@@ -9,6 +9,12 @@
 尚未完成的是全量 typed schema 和普通运行配置的环境变量覆盖；新增 key 必须在使用处
 显式转换/校验，不能重新引入 `eval()`。
 
+## 本机私有扩展
+
+环境专用实现、说明和测试统一放在根 `private/`，该目录及其位于公开模块目录中的兼容
+入口都由 `.gitignore` 排除。公开源码、配置默认值、文档索引和测试基线不得依赖这些文件；
+私有配置只保存在本机 `.env`，不能写入公开默认值或测试 fixture。
+
 ## 连接和进程配置
 
 | Key | 使用方 | 含义/现状 |
@@ -49,6 +55,7 @@ API 的 nginx location 片段安装到 `/etc/nginx/conf.d/tooglebot-api-location
 
 | Key | 用途 |
 | --- | --- |
+| `ONLY_READ` | 只读群列表；入站群消息不触发 history、后处理、主动插件或普通插件，主动发送不受影响。 |
 | `BLACK_LIST` | 完全阻止指定用户触发插件。 |
 | `ADMIN_GROUP_LIST` | 管理员群，绕过部分冷却/权限。 |
 | `DISABLED_MODULE` | 按插件类名禁用动态加载。 |
@@ -57,6 +64,7 @@ API 的 nginx location 片段安装到 `/etc/nginx/conf.d/tooglebot-api-location
 | `GROUP_LIST` | 主群列表和部分群发逻辑。 |
 | `NSFW_LIST`、`ANTI_NSFW_LIST`、`ANTI_SHIT_LIST` | 图片后处理和排行策略。 |
 | `CENSOR_LIST` | 内容审查群。 |
+| `TOOGLEPICGEN_GROUP_LIST` | 允许普通成员使用 TooglePicGen 的群；管理员不受此列表限制。 |
 | `HISTORY_SAVE_PATH` | `MESSAGE_HISTORY` pickle 文件。 |
 
 这些 key 当前有的使用 `config[...]`，缺失会直接异常；有的使用 `get()`。配置 schema
@@ -74,6 +82,14 @@ API 的 nginx location 片段安装到 `/etc/nginx/conf.d/tooglebot-api-location
 - Minecraft：`MCRCON_HOST`、`MCRCON_PORT`、`MCRCON_PASSWORD`。
 - CS：`CSGO_SERVER_HOST`、`CSGO_SERVER_PORT`、`CSGO_MYSQL_HOST`、
   `CSGO_MYSQL_USER`、`CSGO_MYSQL_PASSWD`。
+- debug 插件：`DARKSTAR_SERVER_HOST` / `DARKSTAR_SERVER_PORT` 配置 A2S 查询目标；
+  `TOOGLEPICGEN_BASE_URL` / `TOOGLEPICGEN_ACCESS_TOKEN` 配置生图服务。主机、端口、URL、
+  token 和下述日志路径都只能保存在本机 `.env`，公开配置没有实际值或地址兜底；缺失时
+  对应功能明确返回未配置，不会尝试连接预设目标。
+
+debug 插件还有两个本机行为配置：`WNW_ANSWER_DELAY_SECONDS` 控制竞猜题目与答案的等待
+秒数，`TOOGLEWORLD_LOG_PATH` 指向管理员可读取的 ToogleWorld 日志。使用处会转换并校验
+数值或路径；文件不存在时返回功能不可用，不在 import 阶段打开文件。
 
 密钥不得出现在日志、fixture、异常通知或文档中。管理员通知里的原始 webhook/body
 也应先脱敏。
@@ -100,6 +116,10 @@ API 的 nginx location 片段安装到 `/etc/nginx/conf.d/tooglebot-api-location
 | `data/user_info.json` | 群内用户昵称/资料。 |
 | `data/schedule.json` | 用户创建的手动定时任务。 |
 | `data/afdian.json` | 会员订单状态。 |
+| `data/debug_cnt.json` | debug 撤回统计人工校正计数。 |
+| `data/gbLuckyPocket.json` | 各群当前 GB 红包、领取成员和份额。 |
+| `data/wnw.data` | “猜来猜趣”题目/答案交替行题库；当前仍是本机运行数据，不进入 git。 |
+| `data/not_shit_pics.json` | 管理员人工确认不是屎图的图片哈希豁免列表；优先于 `data/shit_bloom` 判定。 |
 | `data/*_bloom` | 图片重复、SFW、黑名单 BloomFilter。 |
 | `data/setu_record*.json` | 图片贡献排行。 |
 | `data/send_api.json` | 主动发送 API 的密钥、群和 qpm。敏感。 |
@@ -117,6 +137,7 @@ bootstrap/迁移创建必需 JSON、BloomFilter 和可选插件数据；SQLite �
 
 - `toogle/logger.py` 写 `logs/bot.log`，按天轮转。
 - 旧工具和插件仍写 `log/call.log`、`err.log`、`slow.tsv`、API 日志等。
+- `plugins/debug.py` 可选读取旧 `log/recall.log` 做撤回统计；文件不存在时降级为无统计数据。
 
 Mirai 日志读取器和对应统计脚本已经删除；聊天总结改读当前 `MESSAGE_HISTORY`。迁移目标
 仍是统一 `log/`/`logs/` 和结构化事件字段。
@@ -130,8 +151,8 @@ Mirai 日志读取器和对应统计脚本已经删除；聊天总结改读当�
 当前 wrapper 通过字符串拼接生成 SQL，`data_str_proc()` 只移除单引号和 emoji，
 不构成参数化防注入。新增用户输入查询必须使用 `?` 参数；不要复制现有拼接风格。
 
-结构变更要提供版本化 migration，并在真实数据副本上验证。不要提交本地
-`guild1.db*` 或 `data/toogle.db`。
+结构变更要提供版本化 migration，并在真实数据副本上验证。不要提交本地 `guild1.db*`
+或 `data/toogle.db`。
 
 ## Docker 数据安全
 

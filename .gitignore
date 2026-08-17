@@ -141,12 +141,20 @@ dmypy.json
 # Big Yellow Dog
 data/
 test.py
-debug.py
+/debug.py
 test/
 .vscode/
 log/
 logs/
 
 guild1.*
+
+# Local environment-specific extensions and their test suite.
+/private/
+/plugins/game_ops.py
+/toogle/dsh_client.py
+/toogle/game_ops
+/tests/test_dsh_client.py
+/tests/test_game_ops_*.py
 
 # End of https://www.toptal.com/developers/gitignore/api/python

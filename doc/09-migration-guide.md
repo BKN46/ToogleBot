@@ -47,8 +47,9 @@ NoneBot matcher、Mirai event class、sessionKey 和 Mirai HTTP API 都不应进
 - 先准备 `.dockerignore` 和显式 build context 规则，确保未来 Docker build 不包含密钥
   和运行数据；当前阶段不实际构建或启动容器。
 
-状态（2026-07-17）：项目已用 `[tool.uv] package = false` 明确为非打包应用，消除
-Hatchling 根包发现失败；直接依赖审计、可选依赖分层和 `.env.example` 仍未完成。
+状态（2026-08-06）：项目已用 `[tool.uv] package = false` 明确为非打包应用，消除
+Hatchling 根包发现失败；当前源码直接 import 的依赖已审计并写入锁文件，TensorFlow
+与 `h5py` 兼容约束也已固定。可选依赖分层和 `.env.example` 仍未完成。
 
 ### 阶段 1：transport 闭环
 
@@ -68,7 +69,7 @@ Hatchling 根包发现失败；直接依赖审计、可选依赖分层和 `.env.
 - 未支持事件有明确日志和降级，不静默伪装完成。
 
 状态：群/私聊目标、文本、@、@全体、本地引用和 recall notice 已有单测；图片媒体、
-合并转发出站及其他 notice/request 仍未完成。2026-07-17 已由独立发送账号通过真实群
+合并转发真实账号投递及其他 notice/request 仍未完成。2026-07-17 已由独立发送账号通过真实群
 消息触发主账号帮助插件并确认回复，基础群文本完成一次 L3 往返。
 
 ### 阶段 3：核心服务恢复

@@ -3,12 +3,50 @@ from unittest.mock import Mock, patch
 
 from adapter.http_request import (
     NapCatHttpActionError,
+    get_group_msg_history,
+    mute_member,
     quit_group,
     upload_group_file,
 )
 
 
 class HttpRequestTest(unittest.TestCase):
+    def test_group_history_uses_string_identifiers(self):
+        response = Mock()
+        response.json.return_value = {
+            "status": "ok",
+            "retcode": 0,
+            "data": {"messages": []},
+        }
+
+        with patch(
+            "adapter.http_request.requests.request",
+            return_value=response,
+        ) as request, patch(
+            "adapter.http_request.HOST",
+            "127.0.0.1",
+        ), patch(
+            "adapter.http_request.PORT",
+            "3457",
+        ), patch(
+            "adapter.http_request.TOKEN",
+            "fixture-token",
+        ):
+            result = get_group_msg_history("948808153", 123, 100)
+
+        request.assert_called_once_with(
+            "POST",
+            "http://127.0.0.1:3457/get_group_msg_history",
+            headers={"Authorization": "Bearer fixture-token"},
+            json={
+                "group_id": "948808153",
+                "message_seq": "123",
+                "count": 100,
+            },
+            timeout=(3, 10),
+        )
+        self.assertEqual(result["data"]["messages"], [])
+
     def test_quit_group_uses_onebot_field_and_bounded_request(self):
         response = Mock()
         response.json.return_value = {"status": "ok", "retcode": 0}
@@ -67,6 +105,34 @@ class HttpRequestTest(unittest.TestCase):
                 "name": "video.mp4",
             },
             timeout=(3, 120),
+        )
+        self.assertEqual(result["retcode"], 0)
+
+    def test_mute_member_uses_onebot_group_ban_payload(self):
+        response = Mock()
+        response.json.return_value = {"status": "ok", "retcode": 0}
+
+        with patch(
+            "adapter.http_request.requests.request",
+            return_value=response,
+        ) as request, patch(
+            "adapter.http_request.HOST",
+            "127.0.0.1",
+        ), patch(
+            "adapter.http_request.PORT",
+            "3457",
+        ), patch(
+            "adapter.http_request.TOKEN",
+            "fixture-token",
+        ):
+            result = mute_member(123, 456, 600)
+
+        request.assert_called_once_with(
+            "POST",
+            "http://127.0.0.1:3457/set_group_ban",
+            headers={"Authorization": "Bearer fixture-token"},
+            json={"group_id": "123", "user_id": "456", "duration": 600},
+            timeout=(3, 10),
         )
         self.assertEqual(result["retcode"], 0)
 

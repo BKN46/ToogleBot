@@ -95,8 +95,11 @@ scheduler 已由 `bot.py` 显式 start/stop；programmable 分支使用 `Group` 
 
 当前顺序固定为后处理完成后再投递普通 worker，每一步有错误隔离。quote 通过派生消息
 视图传给插件，不再修改 history 中的原始对象。主动链路探针已完成真实双账号往返。
+`ONLY_READ` 群消息在进入本段流程之前即被 worker 丢弃，因此不会写历史、执行主动插件、
+经济/审查后处理或普通插件；主动发送不受该入站策略影响。
 SQLite 基础 schema 会自动 bootstrap；其他图片下载、模型推理和同步 HTTP 仍可能阻塞
-WebSocket 主 event loop，是下一轮性能与稳定性重点。
+WebSocket 主 event loop。禁言/撤回的自动后处理已通过 `asyncio.to_thread()` offload，
+其余同步 I/O 仍是下一轮性能与稳定性重点。
 
 `toogle/msg_proc.py` 还保留图片检测、撤回、禁言和延迟合并转发。部分检测调用当前被
 注释，不应从代码存在推断功能已启用。group/friend recall notice 已写入撤回历史，其余

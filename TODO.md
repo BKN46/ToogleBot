@@ -1,6 +1,6 @@
 # Mirai -> NapCat 迁移 TODO
 
-更新时间：2026-07-17
+更新时间：2026-08-17
 
 基线：当前工作树为 NapCat 迁移主线；旧行为参考
 `origin/archived-mirai2-version`。本清单按阻断程度排序，`[x]` 只表示有源码或本地验证
@@ -12,9 +12,10 @@
 
 - [x] 明确项目为直接运行源码的非打包应用，设置 `[tool.uv] package = false`，锁文件
   根项目为 `virtual`；`uv sync` / `uv run` 不再尝试构建不存在的 `ToogleBot/tooglebot` 包。
-- [ ] 审计并声明所有直接依赖。当前源码直接 import 但 `pyproject.toml` 未完整声明的
-  至少包括 `poyo`、`python-a2s`、`libtorrent`、`lupa`、MySQL client、`thulac`、
-  `wordcloud`、`tqdm`；`networkx`/`numpy` 目前只是被其他包间接带入。
+- [x] 审计并声明当前源码直接 import 的第三方依赖：`python-a2s`、`libtorrent`、`lupa`、
+  MySQL client、`wordcloud`、`tqdm` 和 OpenNSFW2 所需的 `tensorflow` 已加入
+  `pyproject.toml` 并锁定；`poyo` 的旧 import 已删除，当前源码没有 `thulac` import，
+  `networkx`/`numpy` 仍由其他包间接带入。
 - [ ] 区分核心依赖和可选插件依赖；缺少可选依赖时只禁用对应插件并在启动报告说明。
 - [ ] 提供不含密钥的 `.env.example` 和配置校验，clean 环境可启动到等待 NapCat。
 
@@ -62,6 +63,11 @@ loop 5 秒卡顿。
   由 `bot.py` 在 registry 健康后显式启动并在失败时完整回收。
 - [x] 启动时输出 loaded/disabled/failed 汇总；`meta` / `basic` 核心失败会保留旧快照并
   阻止启动。
+- [x] 2026-08-07 恢复旧工程 `plugins/debug.py` 的 11 个未注释插件类：移除 NoneBot/Mirai
+  和旧目录 import，改用当前 adapter facade；registry smoke 为 90/2/3、4 个按配置禁用、
+  failed=0，11 个 debug 类全部注册。
+- [x] 2026-08-17 将当前机器专用的扩展实现、说明和对应测试收容到 Git 忽略的
+  `private/`；公开配置、文档和测试基线不依赖这些本机文件。
 
 验收：在最小数据 fixture 下导入插件 registry，无未预期失败；帮助页列出的类与
 `export_plugins` 一致；错误通知能正确读取 `ADMIN_LIST`。从任意 cwd 连续 build/reload
@@ -78,6 +84,8 @@ failed=0；帮助页 smoke 通过。缺可选依赖/数据的聚合模块改为�
   移除上移后多退一层的 `../../../data` 路径和 `sys.path` 注入。
 - [ ] 核对 DND 路径（如 `toogle/data/dnd/...`）和所有 import 时打开的文件。
 - [ ] 所有仓库静态资源用 `Path(__file__)` 定位；运行数据用统一 data root。
+- [x] `plugins/debug.py` 的题库、撤回日志和 ToogleWorld 日志改为运行时按稳定路径读取；
+  缺文件可降级，模块 import 不再读取 `data/wnw.data` 或执行 shell 命令。
 
 验收：从任意当前工作目录运行资源单测；remake、战雷路线和至少一个字体渲染冒烟
 成功；缺可选 data 时给出明确禁用原因而非只在动态 loader 中消失。
@@ -157,8 +165,10 @@ failed=0；帮助页 smoke 通过。缺可选依赖/数据的聚合模块改为�
   action、没有公开 OB11 keyboard segment，取得脱敏 fixture 前不新增内部类型。
 - [x] reply 使用 `data.id` 查询本地历史；查询为空不再访问 `msg[0]`；正确填充
   `MessagePack.quote` 和 sender 的 `user_id`。
-- [ ] 合并转发使用 NapCat 支持的 `node`/action，支持 Markdown 所需双层节点并移除固定
-  伪造 forward id；`node` 不能与普通 segment 混发。
+- [x] 合并转发使用 NapCat 支持的 `node`/action：群聊/私聊分别调用
+  `send_group_forward_msg`/`send_private_forward_msg`，节点正文递归支持 Markdown 所需的
+  双层 `node`，并拒绝 `node` 与普通 segment 混发。2026-08-07 已通过
+  `tests.test_event_flow` 的脱敏 action/嵌套节点 fixture；独立账号真实投递仍待验收。
 - [ ] 明确 XML 和其余未知段的支持/降级策略。NapCat 4.18.9 虽保留 `xml` schema，但
   出站 converter 返回 `undefined`；现有 `Xml` 只能兼容旧数据，不能声称可发送。
 - [x] `MessageChain.plain(..., quote=..., no_charge=True)` 及消息链相加正确保留结果 flags。
@@ -191,7 +201,8 @@ failed=0；帮助页 smoke 通过。缺可选依赖/数据的聚合模块改为�
 - [x] 移除“10 个线程各自一个 event loop、共享同一插件实例”的模型，改为单 event loop
   + 有界 asyncio queue，默认一个 worker。
 - [ ] 将同步 HTTP、SQLite、模型和 CPU 渲染按调用显式 async 化或 offload。豆包图片/视频
-  生成轮询、下载、GIF 转换和群文件上传已用 `asyncio.to_thread()` 完成，其他插件待审计。
+  生成轮询、下载、GIF 转换和群文件上传已用 `asyncio.to_thread()` 完成；2026-08-10
+  投票禁言、图片自动禁言和对应撤回也已 offload，其他插件待审计。
 - [x] 修复真实群消息暴露的 clean data 阻断：首次 SQLite 连接在锁保护下幂等执行
   `sqlite.sql`；空库会创建 3 张基础表并有临时库单测、本机空库实测。版本升级 migration
   仍作为 P2 独立任务保留。
@@ -263,6 +274,9 @@ failed=0；帮助页 smoke 通过。缺可选依赖/数据的聚合模块改为�
   `--confirm-send` 才发送 command/active 场景配置文本并等待配置主账号新回复。
 - [x] Markdown smoke 默认只读；显式发送强制由不同的配置账号观察群历史，发送账号的
   本地回显不能作为送达证据。
+- [x] `plugins/debug.py` 增加 14 条离线测试，覆盖 11 个类的导入/注册相关契约、转发结构、
+  本地状态、A2S、竞猜、GPT/等待、日志、全部红包份额和 TooglePicGen HTTP/poll；不连接
+  真实 QQ、微博、GPT 或生图服务。
 - [ ] 为重要爬虫保存脱敏 fixture，把实时冒烟与确定性解析测试分开。
 - [ ] CI 至少运行 compile、测试、`git diff --check` 和旧依赖/路径扫描。
 - [ ] 自托管串行 job 按 `doc/10-napcat-login-test.md` 定期执行主账号阶段 B 和双账号

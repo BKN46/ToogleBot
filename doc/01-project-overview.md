@@ -104,5 +104,6 @@ OneBot payload。迁移是否成功，应以这个隔离边界和端到端行为
 - `toogle.adapter` 已增加平台无关的群文件上传门面，`bot.py` 在本地 NapCat 生命周期中
   注册 HTTP uploader；豆包视频以临时文件调用该门面并保证清理。
 
-尚不能宣称完成的部分见 `TODO.md`。当前仍缺 clean 构建、版本化 SQLite migration、媒体和
-合并转发、完整 notice/request、同步插件 I/O 治理、API 与更多插件域业务冒烟。
+尚不能宣称完成的部分见 `TODO.md`。当前仍缺 clean 构建、版本化 SQLite migration、媒体、
+合并转发真实账号投递、完整 notice/request、同步插件 I/O 治理、API 与更多插件域业务冒烟；
+合并转发的 `node`/action 序列化已在适配层和脱敏 fixture 中完成。

@@ -140,6 +140,38 @@ def handle_notice(event: dict[str, Any]) -> None:
 
 
 def send_message(message_pack: MessagePack) -> bool:
+    forward_messages = [
+        item for item in message_pack.message.root if isinstance(item, ForwardMessage)
+    ]
+    if forward_messages:
+        if len(message_pack.message.root) != 1 or len(forward_messages) != 1:
+            logger.error("ForwardMessage cannot be mixed with other outbound segments")
+            return False
+        nodes = _forward_to_nb(forward_messages[0])
+        if not nodes:
+            logger.error("Cannot send an empty ForwardMessage")
+            return False
+        if message_pack.message_type == "group":
+            action = make_action(
+                "send_group_forward_msg",
+                {
+                    "group_id": message_pack.group.id,
+                    "messages": nodes,
+                },
+            )
+        elif message_pack.message_type == "private":
+            action = make_action(
+                "send_private_forward_msg",
+                {
+                    "user_id": message_pack.member.id,
+                    "messages": nodes,
+                },
+            )
+        else:
+            logger.error("Unsupported outbound message_type=%r", message_pack.message_type)
+            return False
+        return enqueue_outbound(action)
+
     if message_pack.message_type == "group":
         action = make_action(
             "send_group_msg",
@@ -357,11 +389,27 @@ def toogle2nb(chain: MessageChain) -> list[dict[str, Any]]:
         elif isinstance(item, AtAll):
             message_list.append({"type": "at", "data": {"qq": "all"}})
         elif isinstance(item, ForwardMessage):
-            message_list.append(
-                {"type": "text", "data": {"text": item.message.asDisplay()}}
-            )
+            message_list.extend(_forward_to_nb(item))
         else:
             message_list.append(
                 {"type": "text", "data": {"text": item.asDisplay()}}
             )
     return message_list
+
+
+def _forward_to_nb(forward: ForwardMessage) -> list[dict[str, Any]]:
+    """Convert internal forward nodes to NapCat's outbound node segments."""
+    nodes: list[dict[str, Any]] = []
+    for node in forward.node_list:
+        if not isinstance(node, dict):
+            continue
+        content = node.get("message")
+        if not isinstance(content, MessageChain):
+            content = MessageChain.plain(str(content or ""))
+        node_data: dict[str, Any] = {
+            "user_id": _as_int(node.get("sender"), 0),
+            "nickname": str(node.get("senderName") or "QQ用户"),
+            "content": toogle2nb(content),
+        }
+        nodes.append({"type": "node", "data": node_data})
+    return nodes

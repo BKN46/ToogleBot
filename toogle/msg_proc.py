@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import json
 import threading
@@ -48,7 +49,7 @@ async def chat_earn(message_pack: MessagePack):
                 pics = pics[:5]
             setu_detect(message_pack, pics)
         if str(message_pack.group.id) in config.get('ANTI_SHIT_LIST', []):
-            shit_pic_detect(message_pack, pics)
+            await shit_pic_detect(message_pack, pics)
 
 
 def setu_detect(message_pack: MessagePack, pics):
@@ -71,16 +72,24 @@ def setu_detect(message_pack: MessagePack, pics):
             DelayedRecall.add_recall(message_pack.group.id, message_pack)
 
 
-def shit_pic_detect(message_pack: MessagePack, pics):
+async def shit_pic_detect(message_pack: MessagePack, pics):
     for pic in pics:
-        if is_shit_pic(pic.getBytes()):
+        pic_bytes = await asyncio.to_thread(pic.getBytes)
+        if await asyncio.to_thread(is_shit_pic, pic_bytes):
             vote_mute_dict_key = f"{message_pack.group.id}_{message_pack.member.id}"
             VOTE_MUTE_DICT[vote_mute_dict_key] = {
                 'time': time.time(),
                 'vote_member': [0, 0, 0]
             }
-            mute_member(message_pack.group.id, message_pack.member.id, 600)
-            recall_msg(message_pack.id)
+            await asyncio.gather(
+                asyncio.to_thread(
+                    mute_member,
+                    message_pack.group.id,
+                    message_pack.member.id,
+                    600,
+                ),
+                asyncio.to_thread(recall_msg, message_pack.id),
+            )
             bot_send_message(
                 int(message_pack.group.id),
                 MessageChain.create([

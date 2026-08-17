@@ -255,8 +255,8 @@ ToogleBot 在 WS 端口短暂不可用时按 `run.sh` 预检策略重试，随�
   `2099370023`、`798967633`、`83519291`，但独立观察账号未收到。最新一次发送目标已由
   双端只读探针确认是群 `1070265969`，且 PacketBackend 状态正常；三个 message id 都只
   是本地回显。官方兼容表已确认 Markdown 不能直接发送，只支持放在双层合并转发内；
-  后续先实现双层 `node` 出站，再由第二账号观察嵌套 Markdown。不能继续直发，也不能把
-  主端 action/local history 当作投递成功。
+  适配层现已实现双层 `node` 出站；下一步由第二账号观察嵌套 Markdown。不能继续直发，
+  也不能把主端 action/local history 当作投递成功。
 - 实测暴露的空 SQLite schema 和 scheduler `is_trigger()` 已修复。基础 schema 会幂等
   bootstrap；scheduler 的 3 个代码任务及手动 direct/program/single/error/delete、时区和
   生命周期已通过自动测试与 registry smoke。监测任务只访问实际订阅的数据源，空订阅

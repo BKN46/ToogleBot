@@ -24,6 +24,13 @@ def _config_int(key: str, default: int) -> int:
         return default
 
 
+def _is_only_read_group(message_pack: MessagePack) -> bool:
+    group_ids = config.get("ONLY_READ", [])
+    if message_pack.message_type != "group" or not isinstance(group_ids, list):
+        return False
+    return str(message_pack.group.id) in {str(group_id) for group_id in group_ids}
+
+
 WORK_QUEUE: asyncio.Queue[MessagePack | None] = asyncio.Queue(
     maxsize=_config_int("WORK_QUEUE_SIZE", 500)
 )
@@ -35,6 +42,12 @@ async def process_loop() -> None:
     while True:
         message_pack = await msg_queue.recv_queue.get()
         try:
+            if _is_only_read_group(message_pack):
+                logger.debug(
+                    "Ignored functionality trigger from ONLY_READ group=%s",
+                    message_pack.group.id,
+                )
+                continue
             try:
                 await message_post_process(message_pack)
             except asyncio.CancelledError:
@@ -104,6 +117,8 @@ def _notify_plugin_error(plugin, message_pack: MessagePack, error: Exception) ->
 
 
 async def process_message(message_pack: MessagePack, worker_index: int) -> None:
+    if _is_only_read_group(message_pack):
+        return
     display_text = message_pack.message.asDisplay()
     for plugin_wrapper in get_export_plugins():
         plugin = plugin_wrapper.plugin

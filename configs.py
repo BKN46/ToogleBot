@@ -10,6 +10,9 @@ DEFAULT_CONFIG_PATH = PROJECT_ROOT / ".env"
 CONFIG_DEFAULTS: dict[str, Any] = {
     "DOUBAO_IMAGE_MODEL": "doubao-seedream-5-0-260128",
     "DOUBAO_VIDEO_MODEL": "doubao-seedance-1-5-pro-251215",
+    "ONLY_READ": [],
+    "TOOGLEPICGEN_GROUP_LIST": [],
+    "WNW_ANSWER_DELAY_SECONDS": "90",
 }
 config: dict[str, Any] = {}
 
