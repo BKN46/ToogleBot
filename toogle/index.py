@@ -1,6 +1,7 @@
 import importlib
 import inspect
 import sys
+import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -66,6 +67,7 @@ class _RegistryBuild:
 
 
 last_load_report = PluginLoadReport()
+_REGISTRY_REPLACE_LOCK = threading.RLock()
 
 
 def discover_plugin_modules(plugin_dir: Path = PLUGIN_DIR) -> list[str]:
@@ -213,14 +215,15 @@ def _replace_registry(
     strict_core: bool,
 ) -> PluginLoadReport:
     global last_load_report
-    registry, report = _build_registry(reload_modules)
-    last_load_report = report
-    if strict_core and report.core_failures:
+    with _REGISTRY_REPLACE_LOCK:
+        registry, report = _build_registry(reload_modules)
+        last_load_report = report
+        if strict_core and report.core_failures:
+            _log_report(report, registry)
+            raise PluginLoadError(report)
+        _publish_registry(registry)
         _log_report(report, registry)
-        raise PluginLoadError(report)
-    _publish_registry(registry)
-    _log_report(report, registry)
-    return report
+        return report
 
 
 def get_export_plugins() -> tuple[PluginWrapper, ...]:

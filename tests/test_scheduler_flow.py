@@ -11,6 +11,7 @@ from zoneinfo import ZoneInfo
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 import plugins.schedule as schedule_plugins
+import adapter.schedule as schedule_adapter
 import toogle.scheduler as scheduler
 from plugins.schedule import (
     CreateSchedule,
@@ -64,6 +65,36 @@ class SchedulerFlowTest(unittest.IsolatedAsyncioTestCase):
             triggers["定时监测"],
             "cron[minute='*/5', second='0']",
         )
+
+    async def test_registry_refresh_reconciles_code_jobs_and_keeps_manual_jobs(self):
+        stale = scheduler.ScheduleModule()
+        stale._job_id = "code:plugins.removed.StaleSchedule"
+        stale.name = "stale"
+        stale.register()
+
+        replacement = DailySetuRanking()
+        manual = scheduler.load_manual_schedule(
+            {
+                "id": "fixture-manual",
+                "text": "fixture",
+                "program": False,
+                "single_time": False,
+                "group_id": 100,
+                "creator_id": 200,
+                "time": {"minute": "1", "second": "0"},
+            }
+        )
+
+        with patch.object(
+            schedule_adapter,
+            "get_schedule_plugins",
+            return_value=(replacement,),
+        ), patch.object(schedule_adapter, "reload_manual_scheduler"):
+            schedule_adapter.register_schedules()
+
+        self.assertIsNone(scheduler.native_scheduler.get_job(stale.job_id))
+        self.assertIsNotNone(scheduler.native_scheduler.get_job(replacement.job_id))
+        self.assertIsNotNone(scheduler.native_scheduler.get_job(manual.job_id))
 
     async def test_scheduler_lifecycle_is_idempotent(self):
         fresh_scheduler = AsyncIOScheduler(event_loop=asyncio.get_running_loop())

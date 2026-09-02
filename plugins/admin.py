@@ -2,13 +2,92 @@ import asyncio
 import datetime
 import time
 from typing import Optional
+
 from toogle.message import At, Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack
 from adapter.http_request import mute_member, quit_group
 from toogle.adapter import add_mute
+from toogle.logger import logger
 from tools.pic_recognition import register_shit_pic, unregister_shit_pic
 from toogle.utils import is_admin
 from configs import config
+
+
+class ReloadPlugins(MessageHandler):
+    name = "刷新插件"
+    trigger = r"^\.reload$"
+    readme = "管理员：重新读取配置并刷新全部插件和定时任务"
+    admin_only = True
+    ignore_quote = True
+    thread_limit = True
+
+    async def ret(self, message: MessagePack) -> Optional[MessageChain]:
+        if not is_admin(message.member.id):
+            return None
+
+        def reload_registry():
+            from configs import reload_config
+            from toogle.index import (
+                get_active_plugins,
+                get_export_plugins,
+                get_schedule_plugins,
+                reload_plugins,
+            )
+
+            reload_config()
+            report = reload_plugins(strict_core=True)
+            return (
+                report,
+                len(get_export_plugins()),
+                len(get_active_plugins()),
+                len(get_schedule_plugins()),
+            )
+
+        started = time.monotonic()
+        try:
+            report, normal_count, active_count, schedule_count = (
+                await asyncio.to_thread(reload_registry)
+            )
+        except Exception as exc:
+            logger.error("Plugin refresh failed: error_type=%s", type(exc).__name__)
+            return MessageChain.plain(
+                "插件刷新失败，已保留上一版健康 registry，请查看日志",
+                quote=message.as_quote(),
+                no_charge=True,
+                no_interval=True,
+            )
+
+        try:
+            # APScheduler reconciliation belongs to its owning event loop.
+            from adapter.schedule import register_schedules
+
+            register_schedules()
+        except Exception as exc:
+            logger.error(
+                "Plugin scheduler reconciliation failed: error_type=%s",
+                type(exc).__name__,
+            )
+            return MessageChain.plain(
+                "插件 registry 已刷新，但定时任务同步失败，请查看日志",
+                quote=message.as_quote(),
+                no_charge=True,
+                no_interval=True,
+            )
+
+        failed_modules = sorted({issue.module for issue in report.failed})
+        outcome = "插件刷新完成" if not failed_modules else "插件刷新完成，但部分模块失败"
+        detail = (
+            f"{outcome}\n"
+            f"普通插件：{normal_count}\n"
+            f"主动插件：{active_count}\n"
+            f"定时插件：{schedule_count}\n"
+            f"禁用插件：{len(report.disabled)}\n"
+            f"失败模块：{len(failed_modules)}\n"
+            f"耗时：{(time.monotonic() - started) * 1000:.2f}ms"
+        )
+        if failed_modules:
+            detail += "\n" + "\n".join(failed_modules)
+        return MessageChain.plain(detail, quote=message.as_quote())
 
 
 class Mute(MessageHandler):
