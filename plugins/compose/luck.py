@@ -31,9 +31,15 @@ def circle_corner(img, radii, trans):
 
 def max_resize(img, max_width=500, max_height=500):
     if img.size[0] >= img.size[1]:
-        return img.resize((max_width, int(img.size[1] * max_width/img.size[0])), Image.ANTIALIAS) # type: ignore
+        return img.resize(
+            (max_width, int(img.size[1] * max_width / img.size[0])),
+            Image.Resampling.LANCZOS,
+        )
     else:
-        return img.resize((int(img.size[0] * max_height / img.size[1]), max_height), Image.ANTIALIAS) # type: ignore
+        return img.resize(
+            (int(img.size[0] * max_height / img.size[1]), max_height),
+            Image.Resampling.LANCZOS,
+        )
 
 
 def get_setu():

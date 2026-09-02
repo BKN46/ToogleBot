@@ -425,18 +425,18 @@ def pic_max_resize(
         resize_ratio = min(max_width / img.size[0], max_height / img.size[1])
         return img.resize(
             (int(img.size[0] * resize_ratio), int(img.size[1] * resize_ratio)),
-            PIL.Image.ANTIALIAS, # type: ignore
+            PIL.Image.Resampling.LANCZOS,
         )
     else:
         if img.size[0] >= img.size[1]:
             return img.resize(
                 (max_width, int(img.size[1] * max_width / img.size[0])),
-                PIL.Image.ANTIALIAS, # type: ignore
+                PIL.Image.Resampling.LANCZOS,
             )
         else:
             return img.resize(
                 (int(img.size[0] * max_height / img.size[1]), max_height),
-                PIL.Image.ANTIALIAS, # type: ignore
+                PIL.Image.Resampling.LANCZOS,
             )
 
 

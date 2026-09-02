@@ -90,7 +90,10 @@ class GetQutu(MessageHandler):
                         break
                     from_image = PIL.Image.open(
                         IMAGES_PATH + image_names[IMAGE_COLUMN * (y - 1) + x - 1]
-                    ).resize((IMAGE_SIZE[0], IMAGE_SIZE[1]), PIL.Image.ANTIALIAS) # type: ignore
+                    ).resize(
+                        (IMAGE_SIZE[0], IMAGE_SIZE[1]),
+                        PIL.Image.Resampling.LANCZOS,
+                    )
                     to_image.paste(
                         from_image, ((x - 1) * IMAGE_SIZE[0], (y - 1) * IMAGE_SIZE[1])
                     )
