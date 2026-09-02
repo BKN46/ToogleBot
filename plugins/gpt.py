@@ -1,8 +1,9 @@
+import asyncio
 import datetime
 import json
 import random
 import re
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Union
 import requests
 import time
 from requests.exceptions import ReadTimeout
@@ -12,6 +13,17 @@ from toogle.message import Image, MessageChain, Plain
 from toogle.message_handler import MESSAGE_HISTORY, MessageHandler, MessagePack, ActiveHandler
 from toogle.adapter import bot_send_message
 from toogle.logger import logger
+from tools import web_search
+from toogle.llm_adapter import LLMError, llm
+
+
+# DeepSeek's current official model catalog exposes the vision preview as ``-exp``.
+DEEPSEEK_WEB_MODEL = "deepseek-v4-flash-vision-exp"
+DEEPSEEK_WEB_URL = "https://api.deepseek.com"
+
+
+class SearchExecutionError(RuntimeError):
+    """Raised when the web-search tool cannot obtain usable results."""
 
 api_key = config.get("GPTSecret")
 header = {"Authorization": f"Bearer {api_key}"}
@@ -171,24 +183,7 @@ class GetOpenAIConversation(MessageHandler):
         model="gpt-4",
         url = "https://api.openai.com/v1",
     ) -> str:
-        path = "/completions"
-        text = f"You: {text}\nAssistant: "
-        body = {
-            "model": model,
-            "prompt": text,
-            "max_tokens": 512,
-            "temperature": 0.5,
-            "top_p": 1,
-            "n": 1,
-            "stream": False,
-            "logprobs": None,
-            "stop": "You: ",
-        }
-        res = requests.post(url + path, headers=header, json=body, timeout=15, proxies=proxies, verify=False)
-        try:
-            return res.json()["choices"][0]["text"].strip()
-        except Exception as e:
-            return res.text
+        return llm.completion(text, provider=config.get("LLM_DEFAULT_PROVIDER", "moonshot"), model=model, url=url)
 
     @staticmethod
     def get_chat(
@@ -202,29 +197,9 @@ class GetOpenAIConversation(MessageHandler):
         tools = [],
         other_params = {},
     ) -> str:
-        path = "/chat/completions"
-        body = {
-            "model": model,
-            "messages": [{"role": "user", "content": text}],
-            **other_params
-        }
-        if tools:
-            body['tools'] = tools
-
-        if other_history:
-            body['messages'] = [({"role": "user", "content": x} if isinstance(x, str) else x) for x in other_history] + (body['messages'] if text else [])
-        if settings:
-            body['messages'] = [{"role": "system", "content": settings}] + body['messages']
-        if json_output:
-            body['response_format'] = {"type": "json_object"}
-        res = requests.post(url + path, headers=header, json=body, timeout=60, proxies=proxies, verify=False)
-        try:
-            if raw_output:
-                return res.json()
-            else:
-                return res.json()["choices"][0]["message"]["content"].strip()
-        except Exception as e:
-            return res.text
+        return llm.chat(text, provider=config.get("LLM_DEFAULT_PROVIDER", "moonshot"), model=model, url=url, settings=settings,
+                        other_history=other_history, tools=tools, json_output=json_output,
+                        raw_output=raw_output, other_params=other_params)
 
     @staticmethod
     def get_chat_stream(
@@ -237,38 +212,9 @@ class GetOpenAIConversation(MessageHandler):
         url = "https://api.openai.com/v1",
         tools = [],
     ) -> str:
-        path = "/chat/completions"
-        body = {
-            "model": model,
-            "messages": [{"role": "user", "content": text}],
-            "stream": True,
-            "max_tokens": max_tokens,
-        }
-        if tools:
-            body['tools'] = tools
-
-        if other_history:
-            body['messages'] = [({"role": "user", "content": x} if isinstance(x, str) else x) for x in other_history] + body['messages']
-        if settings:
-            body['messages'] = [{"role": "system", "content": settings}] + body['messages']
-
-        res = requests.post(url + path, headers=header, json=body, proxies=proxies, stream=True, timeout=15, verify=False)
-        res_text = ''
-        start_time = time.time()
-        for line in res.iter_lines():
-            # filter out keep-alive new lines
-            if line:
-                decoded_line = line.decode('utf-8')
-                if decoded_line.startswith("data:") and not decoded_line.endswith("[DONE]"):
-                    data = json.loads(decoded_line[5:].strip())
-                    if 'content' in data['choices'][0]['delta']:
-                        res_text += data['choices'][0]['delta']['content']
-                elif decoded_line.endswith("[DONE]"):
-                    break
-            if time.time() - start_time > max_time:
-                res_text += "\n[由于时长限制后续生成直接截断]"
-                break
-        return res_text.strip()
+        return llm.chat_stream(text, provider=config.get("LLM_DEFAULT_PROVIDER", "moonshot"), model=model, url=url,
+                               settings=settings, other_history=other_history,
+                               max_tokens=max_tokens, max_time=max_time, tools=tools)
 
     @staticmethod
     def get_chat_stream_logic_chain(
@@ -282,141 +228,88 @@ class GetOpenAIConversation(MessageHandler):
         tools = [],
         api_key = config.get("GPTSecret"),
     ):
-        path = "/chat/completions"
-        body = {
-            "model": model,
-            "messages": [{"role": "user", "content": text}],
-            "stream": True,
-            "max_tokens": max_tokens,
-        }
-        if tools:
-            body['tools'] = tools
-
-        if other_history:
-            body['messages'] = [({"role": "user", "content": x} if isinstance(x, str) else x) for x in other_history] + body['messages']
-        if settings:
-            body['messages'] = [{"role": "system", "content": settings}] + body['messages']
-
-        reason_text = ''
-        res_text = ''
-        total_text = ''
-        error = ''
-        usage = 0
-        start_time = time.time()
-
-        header = {"Authorization": f"Bearer {api_key}"}
-        res = requests.post(url + path, headers=header, json=body, proxies=proxies, stream=True, timeout=15, verify=False)
-        for line in res.iter_lines():
-            # filter out keep-alive new lines
-            if line:
-                decoded_line = line.decode('utf-8')
-                if decoded_line.startswith("data:") and not decoded_line.endswith("[DONE]"):
-                    data = json.loads(decoded_line[5:].strip())
-                    if 'reasoning_content' in data['choices'][0]['delta']:
-                        reason_text += data['choices'][0]['delta']['reasoning_content']
-                        total_text += data['choices'][0]['delta']['reasoning_content']
-                    if 'content' in data['choices'][0]['delta']:
-                        res_text += data['choices'][0]['delta']['content']
-                        total_text += data['choices'][0]['delta']['content']
-                    if 'usage' in data:
-                        usage = data['usage']['total_tokens']
-                elif 'error' in decoded_line:
-                    error = json.loads(decoded_line)['error']['message']
-            if time.time() - start_time > max_time:
-                res_text += "\n[由于时长限制后续生成直接截断]"
-                break
-
-            if '\n\n' in total_text:
-                yield_content = total_text.split('\n\n')[:-1]
-                total_text = total_text.split('\n\n')[-1]
-                for content in yield_content:
-                    yield {
-                        'yield': content,
-                        'usage': usage,
-                        'error': error,
-                        'is_res': len(res_text) > 0,
-                    }
-
-        yield {
-            'yield': total_text,
-            'reason': reason_text.strip(),
-            'res': res_text.strip(),
-            'usage': usage,
-            'error': error,
-            'use_time': (time.time() - start_time) * 1000,
-        }
+        yield from llm.stream_logic_chain(
+            text,
+            provider="deepseek",
+            model=model,
+            url=url,
+            api_key=api_key,
+            settings=settings,
+            other_history=other_history,
+            max_tokens=max_tokens,
+            max_time=max_time,
+            tools=tools,
+        )
 
 
     @staticmethod
     def get_web_search(
         text: Union[str, list],
-        model="gpt-4",
-        settings = "你是一条乐于助人的大黄狗",
-        url = "https://api.openai.com/v1",
+        model=DEEPSEEK_WEB_MODEL,
+        settings="请解答以下内容，结果精简在500字以内，不要使用markdown格式",
+        url=DEEPSEEK_WEB_URL,
+        api_key=None,
+        include_source=False,
     ):
-        if isinstance(text, list):
-            messages = [
-                {"role": "system", "content": settings},
-                {
-                    "role": "user",
-                    "content": [*text]
-                }
-            ]
-        else:
-            messages = [
-                {"role": "system", "content": settings},
-            ]
-            messages.append({
-                "role": "user",
-                "content": text
-            })
-        finish_reason = None
-        while finish_reason is None or finish_reason == "tool_calls":
-            choice = GetOpenAIConversation.get_chat( # type: ignore
-                '',
-                other_history=messages,
-                model=model,
-                raw_output=True,
-                url=url,
-                tools=[
-                    {
-                        "type": "builtin_function",
-                        "function": {
-                            "name": "$web_search",
-                        },
-                    }
-                ],
-                other_params={
-                    "thinking": {"type": "disabled"},
-                }
-            )
-            if 'choices' not in choice:
-                if 'Your request exceeded model token limit' in choice.get('error', {}).get('message', ''):
-                    raise Exception(f"Error: model token limit exceeded: {choice['error']}")
-                raise Exception(f"Error: unable to find choices in response: {json.dumps(choice, ensure_ascii=False)}")
-            choice: dict = choice['choices'][0]
-            finish_reason = choice['finish_reason']
-            if finish_reason == "tool_calls":  # <-- 判断当前返回内容是否包含 tool_calls
-                messages.append(choice['message'])  # <-- 我们将 Kimi 大模型返回给我们的 assistant 消息也添加到上下文中，以便于下次请求时 Kimi 大模型能理解我们的诉求
-                for tool_call in choice['message']['tool_calls']:  # <-- tool_calls 可能是多个，因此我们使用循环逐个执行
-                    tool_call_name = tool_call['function']['name']
-                    tool_call_arguments = json.loads(tool_call['function']['arguments'])  # <-- arguments 是序列化后的 JSON Object，我们需要使用 json.loads 反序列化一下
-                    if tool_call_name == "$web_search":
-                        tool_result = tool_call_arguments
-                    else:
-                        tool_result = f"Error: unable to find tool by name '{tool_call_name}'"
-    
-                    # 使用函数执行结果构造一个 role=tool 的 message，以此来向模型展示工具调用的结果；
-                    # 注意，我们需要在 message 中提供 tool_call_id 和 name 字段，以便 Kimi 大模型
-                    # 能正确匹配到对应的 tool_call。
-                    messages.append({
-                        "role": "tool",
-                        "tool_call_id": tool_call['id'],
-                        "name": tool_call_name,
-                        "content": json.dumps(tool_result),  # <-- 我们约定使用字符串格式向 Kimi 大模型提交工具调用结果，因此在这里使用 json.dumps 将执行结果序列化成字符串
-                    })
-    
-        return choice['message']['content'] # type: ignore
+        tools = [{
+            "type": "function",
+            "function": {
+                "name": "web_search",
+                "description": "Search the web and return current, sourced results.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {"query": {"type": "string", "description": "Search query"}},
+                    "required": ["query"],
+                    "additionalProperties": False,
+                },
+            },
+        }, {
+            "type": "function",
+            "function": {
+                "name": "open_url",
+                "description": "Open a public HTTP(S) search result and extract readable text for verification.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {"url": {"type": "string", "description": "Public result URL"}},
+                    "required": ["url"],
+                    "additionalProperties": False,
+                },
+            },
+        }]
+        api_key = api_key or config.get("GPTSecretDeepseek") or config.get("GPTSecret")
+        messages = llm._messages(text, settings)
+        def execute(name: str, arguments: dict[str, Any]):
+            value = arguments.get("query" if name == "web_search" else "url") if isinstance(arguments, dict) else None
+            if name not in {"web_search", "open_url"} or not isinstance(value, str) or not value.strip():
+                return {"error": "invalid tool arguments"}, ""
+            try:
+                if name == "web_search":
+                    result = web_search.search(value)
+                    return result.as_dict(), web_search.provider_label(result.provider)
+            except (web_search.WebSearchError, requests.exceptions.RequestException) as exc:
+                logger.warning("web search tool failed: error_type=%s", type(exc).__name__)
+                raise SearchExecutionError("web search failed") from exc
+            try:
+                return web_search.open_url(value), ""
+            except (web_search.WebSearchError, requests.exceptions.RequestException) as exc:
+                # Page verification is optional; preserve search evidence and
+                # let the model finish instead of turning a page timeout into
+                # a failed paid command.
+                logger.warning("web page fetch failed: error_type=%s", type(exc).__name__)
+                return {"error": "page fetch unavailable"}, ""
+        content, providers = llm.tool_loop(
+            messages,
+            tools,
+            execute,
+            provider="deepseek",
+            model=model,
+            url=url,
+            api_key=api_key,
+            max_rounds=3,
+        )
+        if include_source and providers and content:
+            content = f"{content.rstrip()}\n\n[通过{'、'.join(dict.fromkeys(providers))}搜索]"
+        return content
 
 
     @staticmethod
@@ -514,13 +407,22 @@ class WhatIs(MessageHandler):
             )
 
         try:
-            res = GetOpenAIConversation.get_web_search(
+            res = await asyncio.to_thread(GetOpenAIConversation.get_web_search,
                 GPTContext.parse_msg_chain(message.message),
-                model=config.get("GPTModel", ""),
+                model=config.get("DEEPSEEK_WEB_MODEL", DEEPSEEK_WEB_MODEL),
                 settings="请解答以下内容，结果精简在500字以内，不要使用markdown格式",
-                url=config.get("GPTUrl", ""),
+                url=config.get("DEEPSEEK_WEB_URL", DEEPSEEK_WEB_URL),
+                api_key=config.get("GPTSecretDeepseek") or config.get("GPTSecret"),
+                include_source=True,
             )
             return MessageChain.plain(res, quote=message.as_quote())
+        except SearchExecutionError:
+            return MessageChain.plain(
+                "搜索服务出错，请稍后再试",
+                quote=message.as_quote(),
+                no_interval=True,
+                no_charge=True,
+            )
         except ReadTimeout:
             return MessageChain.plain(
                 "请求GPT模型超时，请稍后尝试",
@@ -528,23 +430,34 @@ class WhatIs(MessageHandler):
                 no_charge=True,
             )
         except Exception as e:
+            logger.warning("查一下 failed: error_type=%s", type(e).__name__)
             if "model token limit exceeded" in repr(e):
                 bot_send_message(message, MessageChain.plain("请求GPT模型token数量超限，正在切换更大模型尝试回答...", quote=message.as_quote()))
                 try:
-                    res = GetOpenAIConversation.get_web_search(
+                    res = await asyncio.to_thread(GetOpenAIConversation.get_web_search,
                         content,
-                        model=config.get("GPTModelLarge", ""),
+                        model=config.get("DEEPSEEK_WEB_MODEL", DEEPSEEK_WEB_MODEL),
                         settings="请解答以下内容，结果精简在500字以内",
-                        url=config.get("GPTUrl", ""),
+                        url=config.get("DEEPSEEK_WEB_URL", DEEPSEEK_WEB_URL),
+                        api_key=config.get("GPTSecretDeepseek") or config.get("GPTSecret"),
+                        include_source=True,
                     )
                     return MessageChain.plain(res, quote=message.as_quote())
+                except SearchExecutionError:
+                    return MessageChain.plain(
+                        "搜索服务出错，请稍后再试",
+                        quote=message.as_quote(),
+                        no_interval=True,
+                        no_charge=True,
+                    )
                 except ReadTimeout:
                     return MessageChain.plain(
                         "请求GPT模型超时，请稍后尝试",
                         no_interval=True,
                         no_charge=True,
                     )
-                except Exception:
+                except Exception as fallback_error:
+                    logger.warning("查一下 fallback failed: error_type=%s", type(fallback_error).__name__)
                     return MessageChain.plain(
                         "GPT模型服务可能出错，请稍后尝试",
                         no_interval=True,
