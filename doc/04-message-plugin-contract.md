@@ -136,6 +136,10 @@ OneBot 双层 payload 绕过适配层。顶层 `ForwardMessage` 不能与普通�
 副作用这些条件。帮助插件通过只读 provider 获取当前快照。剩余工作是减少业务模块
 import I/O、建立预期插件 manifest，并把指定 reload 优化成真正的单模块事务。
 
+管理员 `.reload` 是当前运行时刷新入口：先重新读取根 `.env`，再重建普通、主动和定时
+插件 registry，最后 reconcile APScheduler 中的代码型任务。它不会绕过插件加载错误边界，
+也不会把配置值或异常正文发回聊天。非管理员在 `PluginWrapper` 权限层即被静默拒绝。
+
 ## 普通插件执行契约
 
 `adapter/worker.py` 和 `toogle/adapter.py` 共同完成：

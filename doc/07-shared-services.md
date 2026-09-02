@@ -32,6 +32,11 @@
 帮助插件通过只读 provider 获取快照，旧 `copied_plugin_list` 已删除。完整实现和剩余
 import I/O 风险见 02、05。
 
+管理员 `.reload` 会先原位刷新配置，再在线程中执行全量 `reload_plugins()`，随后回到
+event loop 调用 `adapter.schedule.register_schedules()`。刷新结果会报告普通、主动、定时、
+禁用和失败数量；敏感配置及异常正文不会进入聊天回复。当前仍是全量模块刷新，不是单模块
+热替换。registry build/publish 使用进程内锁串行化并发刷新。
+
 ## 前置策略和发送门面
 
 `toogle/adapter.py` 应保持平台无关：
@@ -75,6 +80,10 @@ scheduler 已由 `bot.py` 显式 start/stop；programmable 分支使用 `Group` 
 写进 ID/日志。cron 在持久化前校验，JSON 原子替换；单次任务仅在成功后删除，失败保留。
 删除索引先按创建者过滤。时区、coalesce、misfire grace 和 max instances 已统一配置，
 代码任务、直接发送、可触发、单次、异常和生命周期均有测试。
+
+启动和 `.reload` 共用 scheduler reconcile：当前 registry 中的代码任务按稳定 job id
+替换，已删除或通过 `DISABLED_MODULE` 禁用的旧代码 job 会移除；`manual:` job 不参与清理，
+并从持久化文件补回缺失项。因此刷新插件不会重复注册任务，也不会误删用户手动任务。
 
 `ScheduledMonitor` 每五分钟检查一次，但会先读取 `data/monitor_send.json`，仅并发拉取
 实际被订阅的 `earth_quake` / `save_old_otaku` 数据源；没有订阅时不会访问外部网络。
@@ -132,8 +141,25 @@ API 安全要求：
 
 ## 图片、视频和识别
 
+`toogle/llm_adapter.py` 是统一 LLM 适配层。DeepSeek、Moonshot、OrcaRouter 均通过同一组
+`chat()`、`chat_stream()`、`completion()`、`stream_logic_chain()` 和 `tool_loop()` 方法访问；
+业务插件不应直接调用模型 HTTP endpoint，切换 provider 只需修改 profile 参数或根配置。
+适配层会将标准 `tool_calls` 与 DSML 文本形式统一为 assistant/tool 消息，支持查一下的
+`web_search`/`open_url` 调用；达到搜索轮次上限后追加明确的最终回答指令，页面核验失败
+也不会丢弃已有搜索证据，避免协议标记或过程性半截文本泄露到聊天正文。
+
+`tools/web_search.py` 是平台无关的在线搜索契约。它提供同步 `search()` 和不阻塞 event
+loop 的 `asearch()`，将 DuckDuckGo 或 SearXNG-like JSON 响应归一为 `SearchResponse` /
+`SearchResult`；默认使用 SerpApi Google 结构化 provider，失败自动切 DuckDuckGo，再失败
+切 360，其他 provider 仍可配置。SerpApi 返回 `organic_results`，不依赖网页验证码或
+HTML 页面结构。
+“查一下”通过 DeepSeek 标准 `function` tool 调用此契约，并将工具结果
+回传模型完成多轮链路；配置和密钥规则见 06，解析及两轮 tool-chain 均有 mock 测试，
+2026-09-01 已完成本机 SerpApi 查询、DeepSeek tool-chain 和 provider fallback 验收。
+
 `toogle/utils.py` 提供 `text2img()`、`list2img()`、`draw_rich_text()`、
-`draw_pic_text()`、缩放和 MP4/GIF 转换。字体统一从 `tools/fonts/` 读取。
+`draw_pic_text()`、缩放和 MP4/GIF 转换。图片缩放使用 Pillow 当前的
+`Image.Resampling.LANCZOS` API，兼容 Pillow 10+；字体统一从 `tools/fonts/` 读取。
 
 `tools/pic_recognition.py` 使用 BloomFilter、imagehash 和 `opennsfw2`。平均哈希为空时
 注册和查询都会直接返回，避免污染 BloomFilter 或把损坏图片误判为命中。首次模型 import

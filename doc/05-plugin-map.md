@@ -7,13 +7,14 @@
 | 文件 | 插件/功能 | 主要依赖或状态 |
 | --- | --- | --- |
 | `plugins/meta.py` | ping、帮助列表 | 通过只读 provider 使用当前 registry；旧 `MIRAI_QQ` 依赖已移除。 |
-| `plugins/admin.py` | 临时禁用、自动禁言、退群、取消屎图标记 | NapCat 禁言/退群 HTTP action，图片哈希。高副作用；管理员可回复图片发送 `这个不屎` 撤销屎图注册。 |
+| `plugins/admin.py` | 插件刷新、临时禁用、自动禁言、退群、取消屎图标记 | `.reload` 仅管理员可用，刷新配置、全部插件 registry 和代码型 scheduler job；其余功能涉及 NapCat 禁言/退群 HTTP action、图片哈希等高副作用。 |
+| `plugins/autodl.py` | AutoDL 容器实例 Pro API 管理 | `.autodl` 管理命令覆盖实例创建、列表、详情、状态、开关机、释放和私有镜像；仅 `ADMIN_LIST` 管理员可用，网络请求在 worker 线程中执行。 |
 | `plugins/basic.py` | 随机选择、世界时间、骂人、抽奖、反撤回、投票、吃什么、昵称 | `data/lottery/`、`user_info.json`、撤回事件。 |
 | `plugins/currencyExchange.py` | 货币转换 | 外部汇率 API。 |
 | `plugins/debug.py` | 微博/撤回统计/服务器查询/竞猜/异步等待/日志/GB 红包/生图 | 当前 11 个插件类；高权限调试命令使用 `admin_only`，外部 I/O 已移出 event loop，专属配置和本地数据见 06。 |
 | `plugins/dice.py` | 通用骰子、战锤骰制转换 | NumPy、SciPy、Matplotlib。 |
 | `plugins/economy.py` | 赞助入口、余额管理 | SQLite 余额、会员。 |
-| `plugins/gpt.py` | GPT 对话、主动聊天、“查一下”、总结 | OpenAI 兼容 API、当前消息历史、价格和冷却；失败结果免扣费/冷却。 |
+| `plugins/gpt.py` | GPT 对话、主动聊天、“查一下”、总结 | `.gpt` 使用现有 OpenAI 兼容配置；“查一下”使用 DeepSeek 视觉模型的标准函数工具调用，默认接入 SerpApi Google，失败自动切 DuckDuckGo/360；成功结果附搜索引擎标注，失败结果免扣费/冷却。 |
 | `plugins/math.py` | 数学绘图、计算器、Wolfram、勾股、坠落、单位转换 | Matplotlib、Wolfram 辅助模块。 |
 | `plugins/online_ai.py` | NovelAI、Midjourney、豆包图片/视频 | 豆包模型由根配置选择；重型步骤 offload，视频原文件经群文件 action 上传并附 GIF 预览。 |
 | `plugins/other.py` | 游戏、站点、服务器、法律、NSFW、磁链等垂直功能 | 最大业务文件；依赖 `plugins/others/` 和大量本地数据。 |
@@ -52,7 +53,9 @@ registry 审计结果。
 
 2026-07-17 已核对并恢复两个付费功能的产品边界：
 
-- “查一下”只匹配显式 `^查一下`，价格 12 gb、冷却 600 秒；只有获得模型回答才结算，
+- “查一下”只匹配显式 `^查一下`，价格 12 gb、冷却 600 秒；使用 `DEEPSEEK_WEB_MODEL`
+  （默认官方可用的 `deepseek-v4-flash-vision-exp`）和标准 `web_search` function tool，先执行
+  `tools/web_search.search()` 再生成最终回答；只有获得模型回答才结算，
   输入超限、超时、主/备用模型失败均免扣费且不写冷却。
 - `.gpt` 价格仍为 5 gb、冷却 600 秒；输入/能力校验失败和模型服务错误同样不结算。
 - 豆包图片/视频价格仍为 50 gb、冷却 300 秒。图片成功即正常结算；视频要求群文件上传

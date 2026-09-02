@@ -45,7 +45,7 @@ OneBot payload。迁移是否成功，应以这个隔离边界和端到端行为
 | `api/` | Flask webhook 和受密钥保护的主动发送接口；由独立 `tooglebot-api.service` 启动。 |
 | `toogle/` | 框架无关的消息模型、插件策略、加载器、调度、经济、会员、SQL、日志和工具。 |
 | `plugins/` | 动态发现的顶层业务插件，以及 `compose/`、`others/`、`dnd/`、`remake/`、`thunderskill/`、`waifu_utils/` 辅助模块。 |
-| `tools/` | 图片识别和字体文件。 |
+| `tools/` | 框架无关的图片识别、在线搜索和 NapCat 验收工具，以及字体资源。 |
 | `statistics/` | 离线调用统计和词云脚本；旧 Mirai 聊天日志分析器已删除。 |
 | `documents/` | 旧的简短插件说明，仅作历史参考。 |
 | `doc/` | 当前渐进式 AI 开发文档。 |

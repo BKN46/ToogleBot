@@ -33,6 +33,17 @@
 | `SUPERUSERS` | `plugins/runPython.py` | 解释器高权限用户。 |
 | `CONCURRENCY` | 暂无有效使用 | 已明确保留多插件命中，应删除该旧配置。 |
 | `ENVIRONMENT` | 暂无有效使用 | 历史环境标识。 |
+| `AUTODL_API_BASE_URL` | `plugins/autodl.py` | AutoDL API 地址，默认 `https://api.autodl.com`；仅在测试或官方地址变更时覆盖。 |
+| `AUTODL_API_TOKEN` | `plugins/autodl.py` | AutoDL 开发者 Token；只保存在本机 `.env`，缺失时插件仍可加载但命令返回未配置，日志和聊天不回显。 |
+| `WEB_SEARCH_PROVIDER` | `tools/web_search.py` | 在线搜索后端；默认 `serpapi`（Google Search API），也可设为 `qihoo360`、`duckduckgo` 或 `json`/`searxng`。 |
+| `WEB_SEARCH_API_URL` | `tools/web_search.py` | 搜索 endpoint；360 默认 `https://m.so.com/index.php`、DuckDuckGo 默认 `https://api.duckduckgo.com/`，JSON provider 必填。 |
+| `WEB_SEARCH_FALLBACK_URL` | `tools/web_search.py` | SerpApi/DuckDuckGo 失败后的 360 搜索 fallback endpoint，默认 `https://m.so.com/index.php`。 |
+| `WEB_SEARCH_API_KEY` | `tools/web_search.py` | 可选 JSON provider Bearer token；只保存在本机 `.env`，不得写入 fixture、日志或文档示例。 |
+| `WEB_SEARCH_TIMEOUT_SECONDS`、`WEB_SEARCH_MAX_RESULTS`、`WEB_SEARCH_LANGUAGE` | `tools/web_search.py` | 请求超时（默认 10 秒）、单次结果上限（默认 5，硬上限 20）及 JSON provider language 参数。 |
+| `SERPAPI_API_KEY`、`SERPAPI_API_URL`、`SERPAPI_COUNTRY` | `tools/web_search.py` | SerpApi Google Search API key、endpoint 和国家参数；key 仅保存在本机 `.env`。 |
+| `DEEPSEEK_WEB_MODEL`、`DEEPSEEK_WEB_URL` | `plugins/gpt.py` | “查一下”模型和 OpenAI 兼容 endpoint；默认官方可用的 `deepseek-v4-flash-vision-exp`、`https://api.deepseek.com`。 |
+| `ORCAROUTER_API_KEY`、`ORCAROUTER_API_URL`、`ORCAROUTER_MODEL` | `toogle/llm_adapter.py` | OrcaRouter OpenAI-compatible key、endpoint（默认 `https://api.orcarouter.ai/v1`）和模型；默认 `z-ai/glm-5.3-flash`。key 仅保存在本机 `.env`。 |
+| `LLM_DEFAULT_PROVIDER` | `plugins/gpt.py` / `toogle/llm_adapter.py` | 通用 `.gpt`、图片解牌、remake、审查调用的默认 profile；可选 `moonshot`、`orcarouter`，默认 `moonshot`。 |
 
 `MIRAI_QQ` 已不属于新配置且运行时读取已移除。帮助命令固定前缀不需要 self id；如需
 `@机器人` 前缀，可暂用明确的 `BOT_QQ` / `QQ_ACCOUNT`，长期应来自 NapCat lifecycle。
@@ -72,7 +83,17 @@ API 的 nginx location 片段安装到 `/etc/nginx/conf.d/tooglebot-api-location
 
 ## 外部服务配置
 
-- GPT：`GPTSecret`、`GPTModel`、`GPTModelLarge`、`GPTUrl`。
+- GPT：`GPTSecret`、`GPTModel`、`GPTModelLarge`、`GPTUrl`；“查一下”使用
+  `GPTSecretDeepseek`（回退到 `GPTSecret`）以及 `DEEPSEEK_WEB_MODEL`/
+  `DEEPSEEK_WEB_URL`。
+- 所有模型 HTTP 请求统一由 `toogle/llm_adapter.py` 处理。下游通过 `provider=deepseek`、
+  `provider=moonshot` 或 `provider=orcarouter` 选择 profile，统一使用 chat、stream、
+  completion 和 tool-loop 接口；tool-loop 同时兼容标准 `tool_calls` 和部分模型返回的 DSML
+  文本调用，并在回传前规范化；查一下还允许受限的 `open_url` 页面核验，页面读取失败
+  会降级为工具错误并继续基于搜索结果作答。OrcaRouter 默认 endpoint 为 `https://api.orcarouter.ai/v1`，
+  模型为 `z-ai/glm-5.3-flash`；2026-09-01 `/v1/models` 探针确认该模型可用，尚未执行真实生成验收。
+  通用 `.gpt`/图片/remake/审查 facade 使用 `LLM_DEFAULT_PROVIDER`（默认 `moonshot`），
+  修改该 key 即可在 Moonshot 与 OrcaRouter 间切换；“查一下”固定使用 DeepSeek profile。
 - NovelAI：`NovelAISecret`。
 - 豆包：`DOUBAO_API_KEY`、`DOUBAO_IMAGE_MODEL`、`DOUBAO_VIDEO_MODEL`。两个模型 key 在
   `configs.CONFIG_DEFAULTS` 中有当前默认值，可由 `.env` 覆盖；插件内不再写死模型名。
@@ -90,6 +111,22 @@ API 的 nginx location 片段安装到 `/etc/nginx/conf.d/tooglebot-api-location
 debug 插件还有两个本机行为配置：`WNW_ANSWER_DELAY_SECONDS` 控制竞猜题目与答案的等待
 秒数，`TOOGLEWORLD_LOG_PATH` 指向管理员可读取的 ToogleWorld 日志。使用处会转换并校验
 数值或路径；文件不存在时返回功能不可用，不在 import 阶段打开文件。
+
+AutoDL 使用 `AUTODL_API_TOKEN` 和可选的 `AUTODL_API_BASE_URL`。`.autodl` 命令通过
+AutoDL 容器实例 Pro API 管理实例和私有镜像；所有命令同时受 `MessageHandler.admin_only`
+和 `ADMIN_LIST` 检查。详情响应中的 root 密码、Jupyter token 等敏感字段会脱敏，释放实例
+还需要显式 `CONFIRM` 参数。接口依据官方文档（最后核对：2026-08-20）；GET 状态/详情
+使用 `instance_uuid` 查询参数以兼容当前 API 行为。
+
+在线搜索由 `tools/web_search.py` 提供，不依赖 NapCat 或消息模型。`search(query)` 是同步
+入口，`asearch(query)` 使用线程 offload；“查一下”在 worker 线程中通过 DeepSeek 标准
+function tool 调用该搜索，再把 `SearchResponse.as_dict()` 作为 `role=tool` 结果回传模型。
+二者都返回含 title、url、snippet、source 的 `SearchResponse`，而不是暴露外部服务的原始 schema。
+默认 SerpApi Google Search API 返回结构化 `organic_results`，避免网页验证码和 HTML
+解析；SerpApi 失败自动切换免费 DuckDuckGo Instant Answer API，后者失败再切 360，也可
+配置自建 JSON/SearXNG endpoint。“查一下”已接入该工具并由 DeepSeek function tool 决定
+搜索 query，成功结果底部标注实际 provider，搜索失败单独提示“搜索服务出错”。SerpApi
+协议于 2026-09-01 按官方接口核对并以 mock 与本机真实请求验证。
 
 密钥不得出现在日志、fixture、异常通知或文档中。管理员通知里的原始 webhook/body
 也应先脱敏。

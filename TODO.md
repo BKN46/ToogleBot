@@ -277,6 +277,39 @@ failed=0；帮助页 smoke 通过。缺可选依赖/数据的聚合模块改为�
 - [x] `plugins/debug.py` 增加 14 条离线测试，覆盖 11 个类的导入/注册相关契约、转发结构、
   本地状态、A2S、竞猜、GPT/等待、日志、全部红包份额和 TooglePicGen HTTP/poll；不连接
   真实 QQ、微博、GPT 或生图服务。
+- [x] 2026-08-20 新增 `plugins/autodl.py`：按 AutoDL 官方容器实例 Pro API 覆盖实例和私有
+  镜像管理；管理员权限、请求超时、API `code` 校验、详情敏感字段脱敏、释放确认和 mock
+  fixture 测试已完成，未调用真实 AutoDL 账户。
+- [x] 2026-08-20 恢复管理员 `.reload` 入口：依次刷新根配置、全量插件 registry 和代码型
+  scheduler job；删除/禁用代码任务会清理旧 job，手动任务保留。权限、顺序、失败脱敏和
+  scheduler reconcile 均有离线测试。
+- [x] 2026-08-21 新增 `tools/web_search.py`：以同步 `search()` 和线程 offload 的
+  `asearch()` 提供可配置在线搜索；DuckDuckGo 和 SearXNG-like JSON 后端统一输出脱离
+  provider schema 的结果对象，空查询、无效 URL、配置和异步调用均有 mock 单测；当时尚未
+  接入 AI 触发策略，也未使用真实密钥或搜索服务验收。
+- [x] 2026-08-31 “查一下”迁移至 DeepSeek `deepseek-v4-flash-vision-exp`（官方 `/models`
+  探针确认 `...-preview` 当前不可用）：采用标准
+  `web_search` function tool，实际调用自建搜索并完成 assistant/tool/assistant 多轮回传；
+  专用 key、模型和 endpoint 可配置，完整 tool chain 以脱敏 fixture 验证，未调用真实付费服务。
+- [x] 2026-08-31 修复“查一下”搜索故障：默认切换至本机可用的 360 移动 provider，DuckDuckGo
+  显式配置失败时回退 360，代理不可用时尝试直连；PC/mobile HTML 归一化和 fallback fixture
+  已验证，本机真实搜索与 DeepSeek 两轮 tool chain 均通过。
+- [x] 2026-09-01 “查一下”搜索切换至 SerpApi Google Search API：使用结构化
+  `organic_results`，修正 SerpApi `hl=zh-CN` 参数，避免 360 验证码/HTML 结构波动；本机
+  真实 SerpApi 查询和 DeepSeek tool chain 均通过。搜索异常单独返回“搜索服务出错”。
+- [x] 2026-09-01 增加免费 DuckDuckGo Instant Answer API 备用链路：SerpApi 失败自动切换，
+  DuckDuckGo 失败再使用 360 fallback；成功回复底部附 `[通过{搜索引擎}搜索]`，搜索错误
+  与模型错误分开提示并有 fallback/标注 fixture。
+- [x] 2026-09-01 新增 `toogle/llm_adapter.py`：统一 DeepSeek、Moonshot、OrcaRouter
+  OpenAI-compatible profile 及 chat/completion/stream/tool-loop 接口；现有 GPT、图片、
+  remake、审查调用均经兼容 facade 转发，profile 和 OrcaRouter 默认模型已用组件 fixture
+  验证；OrcaRouter `/v1/models` 实测确认 `z-ai/glm-5.3-flash` 可用。
+- [x] 2026-09-01 修复 LLM tool-loop 对 DSML 文本调用的兼容：解析多调用参数、合成唯一
+  `tool_call_id` 并转为标准 assistant/tool 消息，最终回答不再泄露 `<｜｜DSML｜｜...>` 协议标记；
+  样例 fixture 已验证。
+- [x] 2026-09-02 修复查一下收尾半截：支持模型在最终轮继续发 DSML `open_url` 调用，增加
+  受限公开页面读取与失败降级，搜索轮次耗尽后追加最终回答指令；GLM 显存查询真实链路和
+  DSML/open_url fixture 均验证，最终不再返回“我找到关键数据点”这类过程性文本。
 - [ ] 为重要爬虫保存脱敏 fixture，把实时冒烟与确定性解析测试分开。
 - [ ] CI 至少运行 compile、测试、`git diff --check` 和旧依赖/路径扫描。
 - [ ] 自托管串行 job 按 `doc/10-napcat-login-test.md` 定期执行主账号阶段 B 和双账号

@@ -49,13 +49,22 @@ loader 现在具备：
 - 首次 load 不重复执行模块；显式 reload 才调用 `importlib.reload()`。
 - 帮助插件运行时读取 registry provider，不再保存会被 reload 清空的全局列表。
 
+当前重新提供管理员命令 `.reload`。命令精确匹配且同时受 `admin_only` 和 `ADMIN_LIST`
+校验；执行顺序为原位刷新 `.env` 配置、在线程中重新导入全部顶层插件并原子发布 registry、
+回到 event loop 对代码型 scheduler job 做 reconcile。worker 通过 provider 读取新快照，
+主动插件列表则原位更新，因此不需要重启进程。代码型定时任务以新 registry 为准替换或
+删除，手动任务保留；
+回复只给出各类数量、失败模块名和耗时，不回显配置值或异常正文。核心插件刷新失败时旧
+registry 不发布；非核心模块失败仍按当前 loader 契约发布其余健康插件并在回复中标明。
+并发 load/reload 由 registry 内部锁串行化，避免多个 build/publish 交错。
+
 2026-08-17 本地 venv 实测公开 registry reload 为 90 个普通、2 个主动、3 个定时插件，加载失败为 0；
 帮助页 smoke 可生成 `ForwardMessage`。缺少 `libtorrent`、`mysql-connector`、
 `python-a2s`、百度 Cookie 或 DND 数据时，对应功能返回可诊断提示，不再拖垮整个聚合模块。
 
 剩余 loader 工作：建立版本化预期插件 manifest/健康策略；继续移除业务模块 import 时的
-重型 I/O；`reload_designated_export_module()` 当前为了正确性重建全部 registry，尚未优化成
-真正的单模块事务 reload。
+重型 I/O；`.reload` 和 `reload_designated_export_module()` 当前都为了正确性重建全部
+registry，尚未优化成真正的单模块事务 reload。
 
 ## 收帧和分类
 
