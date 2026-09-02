@@ -8,5 +8,33 @@
             "database": "${workspaceFolder:ToogleBot}/data/toogle.db",
             "name": "toogle"
         }
-    ]
+    ],
+    "workbench.colorCustomizations": {
+        "activityBar.activeBackground": "#2ebcfc",
+        "activityBar.background": "#2ebcfc",
+        "activityBar.foreground": "#15202b",
+        "activityBar.inactiveForeground": "#15202b99",
+        "activityBarBadge.background": "#dc0399",
+        "activityBarBadge.foreground": "#e7e7e7",
+        "activityBarTop.activeBackground": "#2ebcfc",
+        "activityBarTop.background": "#2ebcfc",
+        "activityBarTop.foreground": "#15202b",
+        "activityBarTop.inactiveForeground": "#15202b99",
+        "commandCenter.border": "#e7e7e799",
+        "commandCenter.foreground": "#e7e7e7",
+        "sash.hoverBorder": "#2ebcfc",
+        "statusBar.background": "#03a9f4",
+        "statusBar.debuggingBackground": "#03a9f4",
+        "statusBar.debuggingForeground": "#e7e7e7",
+        "statusBar.foreground": "#e7e7e7",
+        "statusBarItem.hoverBackground": "#2ebcfc",
+        "statusBarItem.remoteBackground": "#ffe0f5",
+        "statusBarItem.remoteForeground": "#e7e7e7",
+        "tab.activeBorder": "#2ebcfc",
+        "titleBar.activeBackground": "#03a9f4",
+        "titleBar.activeForeground": "#e7e7e7",
+        "titleBar.inactiveBackground": "#03a9f499",
+        "titleBar.inactiveForeground": "#e7e7e799"
+    },
+    "peacock.remoteColor": "#03a9f4"
 }

@@ -152,6 +152,7 @@ guild1.*
 # Local environment-specific extensions and their test suite.
 /private/
 /plugins/game_ops.py
+/plugins/private_gpt.py
 /toogle/dsh_client.py
 /toogle/game_ops
 /tests/test_dsh_client.py
