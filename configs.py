@@ -10,9 +10,23 @@ DEFAULT_CONFIG_PATH = PROJECT_ROOT / ".env"
 CONFIG_DEFAULTS: dict[str, Any] = {
     "DOUBAO_IMAGE_MODEL": "doubao-seedream-5-0-260128",
     "DOUBAO_VIDEO_MODEL": "doubao-seedance-1-5-pro-251215",
+    "AUTODL_API_BASE_URL": "https://api.autodl.com",
     "ONLY_READ": [],
     "TOOGLEPICGEN_GROUP_LIST": [],
     "WNW_ANSWER_DELAY_SECONDS": "90",
+    "WEB_SEARCH_PROVIDER": "serpapi",
+    "WEB_SEARCH_API_URL": "",
+    "WEB_SEARCH_FALLBACK_URL": "https://m.so.com/index.php",
+    "WEB_SEARCH_TIMEOUT_SECONDS": "10",
+    "WEB_SEARCH_MAX_RESULTS": "5",
+    "WEB_SEARCH_LANGUAGE": "zh-CN",
+    "SERPAPI_API_URL": "https://serpapi.com/search.json",
+    "SERPAPI_COUNTRY": "cn",
+    "DEEPSEEK_WEB_MODEL": "deepseek-v4-flash-vision-exp",
+    "DEEPSEEK_WEB_URL": "https://api.deepseek.com",
+    "ORCAROUTER_API_URL": "https://api.orcarouter.ai/v1",
+    "ORCAROUTER_MODEL": "z-ai/glm-5.3-flash",
+    "LLM_DEFAULT_PROVIDER": "moonshot",
 }
 config: dict[str, Any] = {}
 
@@ -70,6 +84,9 @@ proxies = {
 key_check = {
     "NovelAISecret": "NovelAI作图相关功能",
     "GPTSecret": "GPT相关功能",
+    "GPTSecretDeepseek": "DeepSeek 查一下功能",
+    "SERPAPI_API_KEY": "SerpApi Google 搜索功能",
+    "ORCAROUTER_API_KEY": "OrcaRouter LLM 功能",
     "GPTModel": "GPT相关功能",
     "GPTUrl": "GPT相关功能",
     "BLACK_LIST": "黑名单",
@@ -80,6 +97,7 @@ key_check = {
     "REQUEST_PROXY_HTTP": "部分需翻墙功能",
     "REQUEST_PROXY_HTTPS": "部分需翻墙功能",
     "DOUBAO_API_KEY": "豆包图片/视频生成功能",
+    "AUTODL_API_TOKEN": "AutoDL 容器实例 Pro API（管理员命令）",
     "HEALTHCARE_GROUP_LIST": "提肛喝水小助手",
     "HISTORY_SAVE_PATH": "消息记录持久化路径",
 }
