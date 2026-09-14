@@ -1,5 +1,8 @@
 import asyncio
+import json
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import configs
@@ -10,10 +13,17 @@ from tools import web_search
 class WebSearchTest(unittest.TestCase):
     def setUp(self):
         self.original = dict(configs.config)
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.original_quota_path = web_search._SERPAPI_QUOTA_STATE_PATH
+        web_search._SERPAPI_QUOTA_STATE_PATH = Path(self.tempdir.name) / "serpapi_quota.json"
+        web_search._serpapi_quota_disabled_until = 0
 
     def tearDown(self):
         configs.config.clear()
         configs.config.update(self.original)
+        web_search._SERPAPI_QUOTA_STATE_PATH = self.original_quota_path
+        web_search._serpapi_quota_disabled_until = 0
+        self.tempdir.cleanup()
 
     def test_duckduckgo_results_are_normalized_and_limited(self):
         response = Mock()
@@ -108,6 +118,56 @@ class WebSearchTest(unittest.TestCase):
         self.assertEqual(result.provider, "duckduckgo")
         self.assertEqual(result.results[0].url, "https://fallback.example")
         self.assertEqual(get.call_count, 2)
+
+    def test_serpapi_monthly_quota_exhaustion_persists_fallback_circuit(self):
+        configs.config.update({
+            "WEB_SEARCH_PROVIDER": "serpapi",
+            "SERPAPI_API_KEY": "fixture-key",
+            "SERPAPI_QUOTA_COOLDOWN_SECONDS": "86400",
+        })
+        serp_response = Mock()
+        serp_response.status_code = 429
+        serp_response.raise_for_status.side_effect = requests.HTTPError("serpapi quota exceeded")
+        serp_response.json.return_value = {"error": "Your account has run out of searches."}
+        ddg_response = Mock()
+        ddg_response.raise_for_status.return_value = None
+        ddg_response.json.return_value = {
+            "Heading": "Free fallback",
+            "AbstractText": "Fallback snippet",
+            "AbstractURL": "https://fallback.example",
+            "RelatedTopics": [],
+        }
+        with patch("tools.web_search.requests.get", side_effect=[serp_response, ddg_response, ddg_response]) as get:
+            first = web_search.search("fixture")
+            second = web_search.search("another fixture")
+
+        self.assertEqual(first.provider, "duckduckgo")
+        self.assertEqual(second.provider, "duckduckgo")
+        self.assertEqual(get.call_count, 3)
+        self.assertEqual(get.call_args_list[0].kwargs["params"]["engine"], "google")
+        self.assertNotIn("engine", get.call_args_list[2].kwargs["params"])
+        state = json.loads(web_search._SERPAPI_QUOTA_STATE_PATH.read_text(encoding="utf-8"))
+        self.assertEqual(state["reason"], "monthly_quota")
+
+    def test_persisted_monthly_quota_skips_serpapi_after_process_reset(self):
+        configs.config.update({"WEB_SEARCH_PROVIDER": "serpapi", "SERPAPI_API_KEY": "fixture-key"})
+        web_search._SERPAPI_QUOTA_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        web_search._SERPAPI_QUOTA_STATE_PATH.write_text(
+            json.dumps({"disabled_until": "2099-01-01T00:00:00+08:00", "reason": "monthly_quota"}),
+            encoding="utf-8",
+        )
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {
+            "Heading": "Free fallback",
+            "AbstractText": "Fallback snippet",
+            "AbstractURL": "https://fallback.example",
+            "RelatedTopics": [],
+        }
+        with patch("tools.web_search.requests.get", return_value=response) as get:
+            result = web_search.search("fixture")
+        self.assertEqual(result.provider, "duckduckgo")
+        self.assertNotIn("engine", get.call_args.kwargs["params"])
 
     def test_missing_serpapi_key_uses_free_duckduckgo_fallback(self):
         configs.config.update({"WEB_SEARCH_PROVIDER": "serpapi", "SERPAPI_API_KEY": ""})

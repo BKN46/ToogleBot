@@ -9,10 +9,15 @@ from __future__ import annotations
 
 import asyncio
 import ipaddress
+import json
+import threading
 import time
 from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
 from typing import Any, Mapping, Protocol
 from urllib.parse import urlparse
+from zoneinfo import ZoneInfo
 
 import requests
 from bs4 import BeautifulSoup
@@ -30,6 +35,95 @@ class SearchConfigurationError(WebSearchError):
 
 class SearchResponseError(WebSearchError):
     """Raised when a provider returns a response that cannot be normalized."""
+
+
+class SearchQuotaExceeded(SearchResponseError):
+    """Raised when a provider has exhausted its request quota."""
+
+    def __init__(self, message: str, *, monthly: bool = False):
+        super().__init__(message)
+        self.monthly = monthly
+
+
+_serpapi_quota_disabled_until = 0.0
+_serpapi_quota_lock = threading.Lock()
+_SERPAPI_QUOTA_STATE_PATH = Path(__file__).resolve().parents[1] / "data" / "serpapi_quota.json"
+
+
+def _serpapi_quota_cooldown() -> float:
+    return _positive_int(
+        configs.config.get("SERPAPI_QUOTA_COOLDOWN_SECONDS", 86400),
+        86400,
+        maximum=30 * 24 * 60 * 60,
+    )
+
+
+def _serpapi_is_temporarily_disabled() -> bool:
+    with _serpapi_quota_lock:
+        if time.monotonic() < _serpapi_quota_disabled_until:
+            return True
+        try:
+            state = json.loads(_SERPAPI_QUOTA_STATE_PATH.read_text(encoding="utf-8"))
+            disabled_until = datetime.fromisoformat(str(state["disabled_until"]))
+            return disabled_until > datetime.now(disabled_until.tzinfo)
+        except (FileNotFoundError, OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+            return False
+
+
+def _serpapi_timezone() -> ZoneInfo:
+    try:
+        return ZoneInfo(str(configs.config.get("BOT_TIMEZONE", "Asia/Shanghai")))
+    except Exception:
+        return ZoneInfo("Asia/Shanghai")
+
+
+def _next_month_start() -> datetime:
+    now = datetime.now(_serpapi_timezone())
+    return datetime(now.year + (now.month == 12), 1 if now.month == 12 else now.month + 1, 1, tzinfo=now.tzinfo)
+
+
+def _disable_serpapi_for_quota(*, monthly: bool = False) -> None:
+    global _serpapi_quota_disabled_until
+    with _serpapi_quota_lock:
+        if monthly:
+            disabled_until = _next_month_start()
+            _SERPAPI_QUOTA_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+            temporary_path = _SERPAPI_QUOTA_STATE_PATH.with_suffix(".json.tmp")
+            temporary_path.write_text(
+                json.dumps({"disabled_until": disabled_until.isoformat(), "reason": "monthly_quota"}),
+                encoding="utf-8",
+            )
+            temporary_path.replace(_SERPAPI_QUOTA_STATE_PATH)
+            return
+        _serpapi_quota_disabled_until = time.monotonic() + _serpapi_quota_cooldown()
+
+
+def _looks_like_monthly_quota_error(value: Any) -> bool:
+    text = str(value).strip().lower()
+    return any(marker in text for marker in (
+        "monthly limit", "monthly searches", "searches limit",
+        "no searches left", "run out of searches", "out of searches",
+    ))
+
+
+def _looks_like_quota_error(value: Any) -> bool:
+    text = str(value).strip().lower()
+    return any(
+        marker in text
+        for marker in (
+            "quota",
+            "rate limit",
+            "rate-limit",
+            "monthly limit",
+            "monthly searches",
+            "searches limit",
+            "too many requests",
+            "exhausted",
+            "no searches left",
+            "run out of searches",
+            "out of searches",
+        )
+    )
 
 
 def open_url(url: str, *, max_chars: int = 8000) -> dict[str, str]:
@@ -296,7 +390,21 @@ class SerpApiProvider:
             timeout=self.timeout,
             proxies=self.proxies,
         )
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as exc:
+            if getattr(response, "status_code", None) == 429:
+                try:
+                    error_payload = response.json()
+                except ValueError:
+                    error_payload = None
+                if isinstance(error_payload, Mapping) and _looks_like_quota_error(error_payload.get("error")):
+                    error = error_payload.get("error")
+                    raise SearchQuotaExceeded(
+                        "SerpApi quota exhausted",
+                        monthly=_looks_like_monthly_quota_error(error),
+                    ) from exc
+            raise
         try:
             payload = response.json()
         except ValueError as exc:
@@ -304,7 +412,18 @@ class SerpApiProvider:
         if not isinstance(payload, Mapping):
             raise SearchResponseError("SerpApi returned a non-object response")
         if payload.get("error"):
+            if _looks_like_quota_error(payload.get("error")):
+                raise SearchQuotaExceeded(
+                    "SerpApi quota exhausted",
+                    monthly=_looks_like_monthly_quota_error(payload.get("error")),
+                )
             raise SearchResponseError("SerpApi returned an API error")
+        metadata = payload.get("search_metadata")
+        if isinstance(metadata, Mapping) and _looks_like_quota_error(metadata.get("status")):
+            raise SearchQuotaExceeded(
+                "SerpApi quota exhausted",
+                monthly=_looks_like_monthly_quota_error(metadata.get("status")),
+            )
         items = payload.get("organic_results", [])
         if not isinstance(items, list):
             raise SearchResponseError("SerpApi organic_results must be an array")
@@ -445,7 +564,12 @@ def search(query: str, max_results: int | None = None) -> SearchResponse:
     limit = configured_limit if max_results is None else _positive_int(max_results, configured_limit, maximum=20)
     configured_provider = str(configs.config.get("WEB_SEARCH_PROVIDER", "serpapi")).strip().lower()
     try:
-        provider = get_provider()
+        if configured_provider in {"serpapi", "serpapi-google", "google"} and _serpapi_is_temporarily_disabled():
+            provider = DuckDuckGoProvider(
+                "https://api.duckduckgo.com/", _timeout(), getattr(configs, "proxies", None)
+            )
+        else:
+            provider = get_provider()
     except SearchConfigurationError:
         # A missing/invalid primary SerpApi configuration should not disable
         # the free fallback provider.
@@ -471,6 +595,9 @@ def search(query: str, max_results: int | None = None) -> SearchResponse:
             results = candidate.search(query, limit)
             provider = candidate
             break
+        except SearchQuotaExceeded as exc:
+            _disable_serpapi_for_quota(monthly=exc.monthly)
+            last_error = exc
         except (requests.exceptions.RequestException, SearchResponseError) as exc:
             last_error = exc
     else:
