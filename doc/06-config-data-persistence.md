@@ -27,7 +27,9 @@
 | `NAPCAT_MAIN_QQ_DATA_DIR` | `tools/start_napcat_main.sh` | 主账号 QQ 登录数据目录；默认 `~/.config/QQ-ToogleBot-Main-<account>`，首次授权后不得清空。 |
 | `API_HOST`、`API_PORT`、`API_PUBLIC_PORT` | `api/api.py` / `tooglebot-api.service` / nginx | Flask 内部监听 `127.0.0.1:36002`，nginx 对外代理到 `:36001`。 |
 | `RECV_QUEUE_SIZE`、`SEND_QUEUE_SIZE`、`WORK_QUEUE_SIZE` | adapter queue/worker | 有界队列容量，非法值回退到内置默认值。 |
-| `WORKER_NUM` | `adapter/worker.py` | 同一 event loop 的 worker task 数，当前默认 1；并发审计完成前不要提高。 |
+| `WORKER_NUM` | `adapter/worker.py` | 同一 event loop 的 worker task 数，当前配置默认 4；余额和冷却的并发一致性仍待审计。 |
+| `MESSAGE_DISPATCHER_NUM` | `bot.py` | 消息分发协程数，默认 4，最小 1。 |
+| `PLUGIN_TIMEOUT_SECONDS`、`EVENT_LOOP_TIMEOUT_SECONDS` | worker / watchdog | 插件及后处理超时默认 120 秒；事件循环阻塞退出阈值默认 180 秒，最小 10 秒。 |
 | `BOT_TIMEZONE` | `toogle/scheduler.py` | APScheduler 时区，默认 `Asia/Shanghai`。 |
 | `ADMIN_LIST` | 多处 | 管理员 QQ 列表，通常应为字符串列表。 |
 | `SUPERUSERS` | `plugins/runPython.py` | 解释器高权限用户。 |
@@ -40,7 +42,7 @@
 | `WEB_SEARCH_FALLBACK_URL` | `tools/web_search.py` | SerpApi/DuckDuckGo 失败后的 360 搜索 fallback endpoint，默认 `https://m.so.com/index.php`。 |
 | `WEB_SEARCH_API_KEY` | `tools/web_search.py` | 可选 JSON provider Bearer token；只保存在本机 `.env`，不得写入 fixture、日志或文档示例。 |
 | `WEB_SEARCH_TIMEOUT_SECONDS`、`WEB_SEARCH_MAX_RESULTS`、`WEB_SEARCH_LANGUAGE` | `tools/web_search.py` | 请求超时（默认 10 秒）、单次结果上限（默认 5，硬上限 20）及 JSON provider language 参数。 |
-| `SERPAPI_API_KEY`、`SERPAPI_API_URL`、`SERPAPI_COUNTRY` | `tools/web_search.py` | SerpApi Google Search API key、endpoint 和国家参数；key 仅保存在本机 `.env`。 |
+| `SERPAPI_API_KEY`、`SERPAPI_API_URL`、`SERPAPI_COUNTRY`、`SERPAPI_QUOTA_COOLDOWN_SECONDS` | `tools/web_search.py` | SerpApi Google 搜索 API key、endpoint、国家参数及临时限流熔断秒数（默认 86400）；明确的月度额度耗尽会持久化到 `data/serpapi_quota.json` 并跳过本月后续请求；key 仅保存在本机 `.env`。 |
 | `DEEPSEEK_WEB_MODEL`、`DEEPSEEK_WEB_URL` | `plugins/gpt.py` | “查一下”模型和 OpenAI 兼容 endpoint；默认官方可用的 `deepseek-v4-flash-vision-exp`、`https://api.deepseek.com`。 |
 | `ORCAROUTER_API_KEY`、`ORCAROUTER_API_URL`、`ORCAROUTER_MODEL` | `toogle/llm_adapter.py` | OrcaRouter OpenAI-compatible key、endpoint（默认 `https://api.orcarouter.ai/v1`）和模型；默认 `z-ai/glm-5.3-flash`。key 仅保存在本机 `.env`。 |
 | `LLM_DEFAULT_PROVIDER` | `plugins/gpt.py` / `toogle/llm_adapter.py` | 通用 `.gpt`、图片解牌、remake、审查调用的默认 profile；可选 `moonshot`、`orcarouter`，默认 `moonshot`。 |
@@ -124,9 +126,13 @@ function tool 调用该搜索，再把 `SearchResponse.as_dict()` 作为 `role=t
 二者都返回含 title、url、snippet、source 的 `SearchResponse`，而不是暴露外部服务的原始 schema。
 默认 SerpApi Google Search API 返回结构化 `organic_results`，避免网页验证码和 HTML
 解析；SerpApi 失败自动切换免费 DuckDuckGo Instant Answer API，后者失败再切 360，也可
-配置自建 JSON/SearXNG endpoint。“查一下”已接入该工具并由 DeepSeek function tool 决定
-搜索 query，成功结果底部标注实际 provider，搜索失败单独提示“搜索服务出错”。SerpApi
-协议于 2026-09-01 按官方接口核对并以 mock 与本机真实请求验证。
+配置自建 JSON/SearXNG endpoint。SerpApi 返回 HTTP 429 且错误正文表明账号搜索额度已耗尽
+时，临时限流会在进程内熔断该 provider（默认 86400 秒）；明确的月度额度耗尽会写入
+`data/serpapi_quota.json`，直到下月 1 日前跨重启跳过 SerpApi，后续请求直接从 DuckDuckGo/360
+开始，避免每条“查一下”重复触发已知额度错误。“查一下”已接入该工具并由 DeepSeek function
+tool 决定搜索 query，成功结果底部标注实际 provider，搜索失败单独提示“搜索服务出错”。
+SerpApi 协议于 2026-09-03 按官方错误码文档复核；额度耗尽降级使用脱敏 HTTP 429 fixture
+验证，未调用真实密钥或付费服务。
 
 密钥不得出现在日志、fixture、异常通知或文档中。管理员通知里的原始 webhook/body
 也应先脱敏。
@@ -160,6 +166,7 @@ function tool 调用该搜索，再把 `SearchResponse.as_dict()` 作为 `role=t
 | `data/*_bloom` | 图片重复、SFW、黑名单 BloomFilter。 |
 | `data/setu_record*.json` | 图片贡献排行。 |
 | `data/send_api.json` | 主动发送 API 的密钥、群和 qpm。敏感。 |
+| `data/serpapi_quota.json` | SerpApi 月度额度耗尽的临时状态；记录禁用截止时间，不含 API key。 |
 | `data/lottery/`、图片目录 | 抽奖和群图片功能。 |
 | `data/dnd5e/`、`wt/`、`pcbench/`、`milkywayidle/` 等 | 插件离线数据和缓存。 |
 
@@ -196,3 +203,22 @@ Mirai 日志读取器和对应统计脚本已经删除；聊天总结改读当�
 当前没有 `.dockerignore`，`COPY . .` 会把 `.env`、数据库、日志、venv 和本地缓存
 送入 Docker build context，并可能烘进镜像，即使运行时再用 volume 覆盖也无法消除
 镜像层泄露。修复部署前必须增加 `.dockerignore`，并以显式 COPY 清单为优先方案。
+<!-- Runtime recovery update 2026-09-11 -->
+2026-09-11 当前恢复机制：正常运行 `run.sh` 不再因 NapCat 端口未就绪退出，
+由适配层退避重连；`RUN_DRY_RUN=1` 仍执行端口预检查。
+普通插件和消息后处理受 `PLUGIN_TIMEOUT_SECONDS`（默认 120 秒）限制；
+worker 关闭超时覆盖满队列投递退出标记的等待。
+事件循环连续阻塞超过 `EVENT_LOOP_TIMEOUT_SECONDS`（默认 180 秒，最小 10 秒）
+时，独立线程令进程异常退出，由 systemd 重启。此兜底会丢失内存队列及未保存状态，
+不能替代同步插件 I/O 迁移，也不能保证外部操作恰好执行一次。
+验证覆盖：`test_worker_flow.py` 的超时恢复与满队列关闭、`test_watchdog.py` 的子进程阻塞退出。
+2026-09-11 二维码访问权限修复：`tools/start_napcat_main.sh` 仅在首次创建 cache
+时设置 700，重启保留已有权限及 ACL，避免单图片 Nginx 映射因 ACL mask 被清零而 403。
+config 和 QQ 专用目录仍设置 700；新部署的二维码映射及最小权限 ACL 由管理员配置。
+回归测试：`test_napcat_cache_permissions.py` 使用临时目录和假 QQ 程序，验证首次权限、
+两次启动后的 ACL 保留，不连接真实 QQ。
+2026-09-11 本机运维配置：主实例开启 fileLog/consoleLog，文件等级 debug、控制台 info；
+WebUI 从禁用改为监听 127.0.0.1:6099，经 Nginx 36198 代理，入口 /webui/。
+随机登录密钥只保存在实例 workdir/config/webui.json，不写入仓库。
+启动脚本保留已有实例配置，重启不会覆盖这些设置。日志不能补回此前关闭期间的事件。
+配置字段最后核对：2026-09-11，https://napneko.github.io/config/basic 。

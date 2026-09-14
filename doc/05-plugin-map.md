@@ -14,7 +14,7 @@
 | `plugins/debug.py` | 微博/撤回统计/服务器查询/竞猜/异步等待/日志/GB 红包/生图 | 当前 11 个插件类；高权限调试命令使用 `admin_only`，外部 I/O 已移出 event loop，专属配置和本地数据见 06。 |
 | `plugins/dice.py` | 通用骰子、战锤骰制转换 | NumPy、SciPy、Matplotlib。 |
 | `plugins/economy.py` | 赞助入口、余额管理 | SQLite 余额、会员。 |
-| `plugins/gpt.py` | GPT 对话、主动聊天、“查一下”、总结 | `.gpt` 使用现有 OpenAI 兼容配置；“查一下”使用 DeepSeek 视觉模型的标准函数工具调用，默认接入 SerpApi Google，失败自动切 DuckDuckGo/360；成功结果附搜索引擎标注，失败结果免扣费/冷却。 |
+| `plugins/gpt.py` | GPT 对话、主动聊天、“查一下”、总结 | `.gpt` 使用现有 OpenAI 兼容配置；“查一下”使用 DeepSeek 视觉模型的标准函数工具调用，默认接入 SerpApi Google，失败自动切 DuckDuckGo/360；已识别的 SerpApi 额度耗尽会短期熔断该源；成功结果附搜索引擎标注，失败结果免扣费/冷却。 |
 | `plugins/math.py` | 数学绘图、计算器、Wolfram、勾股、坠落、单位转换 | Matplotlib、Wolfram 辅助模块。 |
 | `plugins/online_ai.py` | NovelAI、Midjourney、豆包图片/视频 | 豆包模型由根配置选择；重型步骤 offload，视频原文件经群文件 action 上传并附 GIF 预览。 |
 | `plugins/other.py` | 游戏、站点、服务器、法律、NSFW、磁链等垂直功能 | 最大业务文件；依赖 `plugins/others/` 和大量本地数据。 |

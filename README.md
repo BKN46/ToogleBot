@@ -39,6 +39,9 @@ NapCat (OneBot 11 WebSocket) ←→ adapter/server.py (原生 WS 客户端)
 
 ## 环境要求
 
+本机 2026-09-10 已验证 NapCat Shell 4.18.19 与 QQ 3.2.28-48517 的登录及只读接口；
+升级与回滚记录见 [NapCat 验收文档](./doc/10-napcat-login-test.md)。
+
 - Python >= 3.12
 - [uv](https://docs.astral.sh/uv/) (包管理)
 - NapCat（可 Docker 部署或独立安装）
@@ -128,6 +131,8 @@ sudo systemctl start tooglebot-api.service
 
 状态、日志和重启：
 
+`sudo bash restart.sh` 同时重启 NapCat 和 worker（不包含 API）；QQ 登录状态仍需单独检查。
+
 ```bash
 systemctl status tooglebot-napcat.service tooglebot.service
 systemctl status tooglebot-api.service nginx.service
@@ -205,3 +210,17 @@ DND5E DPR计算器 / DND5E查询 / 自定义骰表
 计算器 / 勾股计算 / 单位转换 / Wolfram Alpha / 数学绘图
 吃什么 / 随机选择 / 抽奖 / 世界时间 / 反撤回 / 投票
 ```
+<!-- Runtime recovery update 2026-09-11 -->
+2026-09-11 当前恢复机制：正常运行 `run.sh` 不再因 NapCat 端口未就绪退出，
+由适配层退避重连；`RUN_DRY_RUN=1` 仍执行端口预检查。
+普通插件和消息后处理受 `PLUGIN_TIMEOUT_SECONDS`（默认 120 秒）限制；
+worker 关闭超时覆盖满队列投递退出标记的等待。
+事件循环连续阻塞超过 `EVENT_LOOP_TIMEOUT_SECONDS`（默认 180 秒，最小 10 秒）
+时，独立线程令进程异常退出，由 systemd 重启。此兜底会丢失内存队列及未保存状态，
+不能替代同步插件 I/O 迁移，也不能保证外部操作恰好执行一次。
+验证覆盖：`test_worker_flow.py` 的超时恢复与满队列关闭、`test_watchdog.py` 的子进程阻塞退出。
+2026-09-11 二维码访问权限修复：`tools/start_napcat_main.sh` 仅在首次创建 cache
+时设置 700，重启保留已有权限及 ACL，避免单图片 Nginx 映射因 ACL mask 被清零而 403。
+config 和 QQ 专用目录仍设置 700；新部署的二维码映射及最小权限 ACL 由管理员配置。
+回归测试：`test_napcat_cache_permissions.py` 使用临时目录和假 QQ 程序，验证首次权限、
+两次启动后的 ACL 保留，不连接真实 QQ。

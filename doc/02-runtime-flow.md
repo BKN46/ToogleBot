@@ -108,10 +108,10 @@ reply 只用 `data.id` 查询本地 `MESSAGE_HISTORY`，收帧路径不再同步
 
 ```text
 recv_queue
-  -> process_loop()
+  -> MESSAGE_DISPATCHER_NUM 个 process_loop()
      -> ONLY_READ group? drop before all functionality
      -> history / active plugin / economy post-process
-     -> WORK_QUEUE
+     -> WORK_QUEUE -> WORKER_NUM 个插件 worker
   -> worker_loop()
      -> registry snapshot
      -> plugin.is_trigger() using re.search
@@ -221,3 +221,12 @@ shutdown signal、发送队列溢出和长时间断网仍需进程级测试。
 日报/会员/监测边界、手动普通/可触发/单次/异常/删除均有自动测试；监测和会员同步 I/O
 已 offload，不阻塞 WebSocket event loop。监测任务先读取订阅，只调用至少被一个群订阅
 的数据源；空订阅不访问网络。外部站点失败会隔离并等待下一轮，不等于站点本身永久可用。
+<!-- Runtime recovery update 2026-09-11 -->
+2026-09-11 当前恢复机制：正常运行 `run.sh` 不再因 NapCat 端口未就绪退出，
+由适配层退避重连；`RUN_DRY_RUN=1` 仍执行端口预检查。
+普通插件和消息后处理受 `PLUGIN_TIMEOUT_SECONDS`（默认 120 秒）限制；
+worker 关闭超时覆盖满队列投递退出标记的等待。
+事件循环连续阻塞超过 `EVENT_LOOP_TIMEOUT_SECONDS`（默认 180 秒，最小 10 秒）
+时，独立线程令进程异常退出，由 systemd 重启。此兜底会丢失内存队列及未保存状态，
+不能替代同步插件 I/O 迁移，也不能保证外部操作恰好执行一次。
+验证覆盖：`test_worker_flow.py` 的超时恢复与满队列关闭、`test_watchdog.py` 的子进程阻塞退出。

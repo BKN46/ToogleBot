@@ -142,13 +142,21 @@ Markdown smoke 的成功条件必须是：发送前从独立观察账号建立 m
 
 1. 在 message segments 找到 reply 段，读取其 `data.id`。
 2. 从群或独立私聊 history namespace 按 message id 查找。
-3. 构造 `Quote` 并赋给 `MessagePack.quote`，reply 段不重复进入正文。
-4. 查询失败时保留 `[引用消息]` 占位；需要远端原文的业务在收帧之后异步补全。
+3. 构造 `Quote` 并赋给 `MessagePack.quote`，reply 段不重复进入正文；本地 history 未命中时
+   优先使用 reply 段携带的发送者字段（`user_id`/`qq`/`sender.user_id`）。
+4. 若仍无法解析发送者，业务插件可在收帧之后异步调用 `get_group_msg_history` 按消息 id
+   补查；返回消息 ID 必须匹配引用，不能用列表首项推定发送者；查询失败时保留
+   `[引用消息]` 占位并记录原因。
 
 旧 Mirai adapter 会把 quote 单独放进 `MessagePack.quote`，`PluginWrapper` 再根据
 `ignore_quote` 决定是否把引用原文拼入命令。迁移要保留这个业务语义。
 
 ## 管理操作
+
+2026-09-10 只读 `get_version_info/get_status` 实测当前为 NapCat 4.18.9、online/good=true；
+官方 [最新发布 4.18.19](https://github.com/NapNeko/NapCatQQ/releases/tag/v4.18.19)
+发布于 2026-08-14，本次仅核对更新信息，未升级。群投票漏计由本地 VoteMute 对带 `At`
+回复的严格正则造成，不是已证实的 NapCat 禁言协议变更；真实禁言仍未作为本次验收。
 
 `adapter/http_request.py` 当前暴露：
 
@@ -191,3 +199,12 @@ client 的重试、脱敏日志和异步 API 仍待补。
 [10 NapCat 登录自动化验收](./10-napcat-login-test.md)。两端账号、群和探针文本必须由
 本机 `.env`/runner secret 注入，源码和模板不得写死；发送前工具会分别核对 endpoint
 登录账号和群。当前迁移阶段只执行本地进程阶段，Docker 验收已明确延后。
+<!-- Runtime recovery update 2026-09-11 -->
+2026-09-11 当前恢复机制：正常运行 `run.sh` 不再因 NapCat 端口未就绪退出，
+由适配层退避重连；`RUN_DRY_RUN=1` 仍执行端口预检查。
+普通插件和消息后处理受 `PLUGIN_TIMEOUT_SECONDS`（默认 120 秒）限制；
+worker 关闭超时覆盖满队列投递退出标记的等待。
+事件循环连续阻塞超过 `EVENT_LOOP_TIMEOUT_SECONDS`（默认 180 秒，最小 10 秒）
+时，独立线程令进程异常退出，由 systemd 重启。此兜底会丢失内存队列及未保存状态，
+不能替代同步插件 I/O 迁移，也不能保证外部操作恰好执行一次。
+验证覆盖：`test_worker_flow.py` 的超时恢复与满队列关闭、`test_watchdog.py` 的子进程阻塞退出。

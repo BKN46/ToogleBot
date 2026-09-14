@@ -142,6 +142,11 @@ import I/O、建立预期插件 manifest，并把指定 reload 优化成真正�
 
 ## 普通插件执行契约
 
+VoteMute 的匹配允许前置 `@<QQ>` 和空白，以兼容回复附带的 `At`；业务正文仍须是完整的
+“屎”、对应 emoji 或“这个不屎”。禁言目标取自 `Quote.sender_id`，不取 `At.target`。
+2026-09-10 回归测试覆盖 `reply + at + text` 经 worker 和 PluginWrapper 两层匹配后计票，
+以及 @ 与引用发送者不一致时仍只对引用发送者计票。
+
 `adapter/worker.py` 和 `toogle/adapter.py` 共同完成：
 
 1. 群聊命中 `ONLY_READ` 时在后处理及插件分发前静默丢弃。
@@ -214,3 +219,12 @@ class Lookup(MessageHandler):
   投递及完整 notice/request 仍未完成。
 - plugin registry 连续 load/reload 和帮助页 smoke 已通过；顶层网络请求或重型文件读取
   仍必须逐步迁出 import 阶段。
+<!-- Runtime recovery update 2026-09-11 -->
+2026-09-11 当前恢复机制：正常运行 `run.sh` 不再因 NapCat 端口未就绪退出，
+由适配层退避重连；`RUN_DRY_RUN=1` 仍执行端口预检查。
+普通插件和消息后处理受 `PLUGIN_TIMEOUT_SECONDS`（默认 120 秒）限制；
+worker 关闭超时覆盖满队列投递退出标记的等待。
+事件循环连续阻塞超过 `EVENT_LOOP_TIMEOUT_SECONDS`（默认 180 秒，最小 10 秒）
+时，独立线程令进程异常退出，由 systemd 重启。此兜底会丢失内存队列及未保存状态，
+不能替代同步插件 I/O 迁移，也不能保证外部操作恰好执行一次。
+验证覆盖：`test_worker_flow.py` 的超时恢复与满队列关闭、`test_watchdog.py` 的子进程阻塞退出。

@@ -8,6 +8,25 @@ QQ 扫码/风控步骤不应绕过，但授权后的重启、账号校验和健�
 
 ## 官方接口依据
 
+### 本机升级记录（2026-09-10）
+
+本机 Shell 从 4.18.9 升级到官方正式版 4.18.19，QQ 仍为 3.2.28-48517。
+下载 `NapCat.Shell.zip` 后核对官方 SHA-256：
+`c5b7423d1d5b8c555d62cd9e4059b1908cc0986e7b5c85a0f450f4a8ed170acf`。
+仅替换 `/root/Napcat/opt/QQ/resources/app/app_launcher/napcat` 程序目录，
+沿用主实例 workdir 配置和 QQ 数据目录。旧版程序保留为同级
+`napcat-4.18.9-backup-20260910`，另有受限备份目录 `/root/napcat-upgrade-20260910`。
+
+已验证：启动日志版本 4.18.19，主账号自动登录，`online/good=true`、账号匹配、
+群列表读取成功。真实消息发送未执行，不能据此声称媒体及消息投递端到端已验收。
+本机仍有既有 FFmpeg native addon 的 GLIBC 兼容提示，升级不代表该问题已解决。
+
+回滚时先停止 ToogleBot API、worker、NapCat，将当前程序目录另存，再把上述旧版目录
+恢复为 `napcat`；保留外部 workdir 和 QQ 登录数据。启动 NapCat 并通过只读登录探针
+后，执行 `systemctl reset-failed tooglebot.service tooglebot-api.service`，再启动两者。
+
+### 协议参考
+
 最后核对：2026-07-17。
 
 NapCat 的 [Apifox 接口文档](https://napcat.apifox.cn/) 由项目更新时自动生成。实现或
@@ -263,3 +282,24 @@ ToogleBot 在 WS 端口短暂不可用时按 `run.sh` 预检策略重试，随�
   不再产生外部请求；地震源已迁到中国地震台网当前官方 JSON 并完成只读 smoke，外部
   监测站点的持续可用性仍按单次运行结果判断。
 - Docker 构建和阶段 C 按当前要求延后。
+<!-- Runtime recovery update 2026-09-11 -->
+2026-09-11 当前恢复机制：正常运行 `run.sh` 不再因 NapCat 端口未就绪退出，
+由适配层退避重连；`RUN_DRY_RUN=1` 仍执行端口预检查。
+普通插件和消息后处理受 `PLUGIN_TIMEOUT_SECONDS`（默认 120 秒）限制；
+worker 关闭超时覆盖满队列投递退出标记的等待。
+事件循环连续阻塞超过 `EVENT_LOOP_TIMEOUT_SECONDS`（默认 180 秒，最小 10 秒）
+时，独立线程令进程异常退出，由 systemd 重启。此兜底会丢失内存队列及未保存状态，
+不能替代同步插件 I/O 迁移，也不能保证外部操作恰好执行一次。
+验证覆盖：`test_worker_flow.py` 的超时恢复与满队列关闭、`test_watchdog.py` 的子进程阻塞退出。
+2026-09-11 二维码访问权限修复：`tools/start_napcat_main.sh` 仅在首次创建 cache
+时设置 700，重启保留已有权限及 ACL，避免单图片 Nginx 映射因 ACL mask 被清零而 403。
+config 和 QQ 专用目录仍设置 700；新部署的二维码映射及最小权限 ACL 由管理员配置。
+回归测试：`test_napcat_cache_permissions.py` 使用临时目录和假 QQ 程序，验证首次权限、
+两次启动后的 ACL 保留，不连接真实 QQ。
+2026-09-11 本机运维配置：主实例开启 fileLog/consoleLog，文件等级 debug、控制台 info；
+WebUI 从禁用改为监听 127.0.0.1:6099，经 Nginx 36198 代理，入口 /webui/。
+随机登录密钥只保存在实例 workdir/config/webui.json，不写入仓库。
+启动脚本保留已有实例配置，重启不会覆盖这些设置。日志不能补回此前关闭期间的事件。
+配置字段最后核对：2026-09-11，https://napneko.github.io/config/basic 。
+本机另启用 `tooglebot-napcat-probe.timer`，每 2 分钟连续确认 `get_status`；连续两次
+`online=false` 或接口不可达时自动重启 NapCat。该自愈不能绕过风控或自动完成扫码。

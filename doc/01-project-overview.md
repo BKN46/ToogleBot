@@ -107,3 +107,12 @@ OneBot payload。迁移是否成功，应以这个隔离边界和端到端行为
 尚不能宣称完成的部分见 `TODO.md`。当前仍缺 clean 构建、版本化 SQLite migration、媒体、
 合并转发真实账号投递、完整 notice/request、同步插件 I/O 治理、API 与更多插件域业务冒烟；
 合并转发的 `node`/action 序列化已在适配层和脱敏 fixture 中完成。
+<!-- Runtime recovery update 2026-09-11 -->
+2026-09-11 当前恢复机制：正常运行 `run.sh` 不再因 NapCat 端口未就绪退出，
+由适配层退避重连；`RUN_DRY_RUN=1` 仍执行端口预检查。
+普通插件和消息后处理受 `PLUGIN_TIMEOUT_SECONDS`（默认 120 秒）限制；
+worker 关闭超时覆盖满队列投递退出标记的等待。
+事件循环连续阻塞超过 `EVENT_LOOP_TIMEOUT_SECONDS`（默认 180 秒，最小 10 秒）
+时，独立线程令进程异常退出，由 systemd 重启。此兜底会丢失内存队列及未保存状态，
+不能替代同步插件 I/O 迁移，也不能保证外部操作恰好执行一次。
+验证覆盖：`test_worker_flow.py` 的超时恢复与满队列关闭、`test_watchdog.py` 的子进程阻塞退出。

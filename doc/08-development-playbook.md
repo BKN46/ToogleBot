@@ -31,6 +31,9 @@ RUN_DRY_RUN=1 ./run.sh
 
 ### 本地 systemd 守护
 
+2026-09-10 本机 NapCat 已升级到 4.18.19；安装包校验、验证范围和回滚方式见
+[10 的本机升级记录](./10-napcat-login-test.md#本机升级记录2026-09-10)。
+
 生产或长期运行的本地 QQ/NapCat 使用仓库内的两个 unit，不直接依赖交互式 shell：
 
 ```bash
@@ -44,6 +47,8 @@ sudo systemctl start tooglebot.service
 NapCat HTTP/WS token，在独立 workdir 生成配置并使用 `xvfb-run` 启动 QQ。首次登录必须
 扫描 `NAPCAT_MAIN_WORKDIR/cache/qrcode.png`；先用 `tools/napcat_login_check.py` 确认 online/good 和账号一致，
 再启动 ToogleBot。停止或重启使用 `systemctl stop|restart`，unit 会回收整个 QQ 子进程组。
+`sudo bash restart.sh` 同时重启 NapCat 和 ToogleBot worker，由 systemd 的依赖关系
+安排停止和启动顺序；不重启 API。命令成功仅代表重启任务完成，不代表 QQ 已登录。
 机器人 unit 依赖 NapCat，但 NapCat 首次扫码未完成时会按 systemd 重试，不应据此判断登录
 成功。
 
@@ -178,3 +183,20 @@ TensorFlow 2.21 与 `h5py` 3.14 系列绑定；修改任一版本约束后必须
 - `data/` 在本机存在不代表 Docker/新环境存在。
 - Mirai 序列化、旧日志读取器、旧 SQL scheduler 和 scheduler 注释代码已经删除；新代码
   出现这些命名应视为迁移回归，而不是兼容层。
+<!-- Runtime recovery update 2026-09-11 -->
+2026-09-11 当前恢复机制：正常运行 `run.sh` 不再因 NapCat 端口未就绪退出，
+由适配层退避重连；`RUN_DRY_RUN=1` 仍执行端口预检查。
+普通插件和消息后处理受 `PLUGIN_TIMEOUT_SECONDS`（默认 120 秒）限制；
+worker 关闭超时覆盖满队列投递退出标记的等待。
+事件循环连续阻塞超过 `EVENT_LOOP_TIMEOUT_SECONDS`（默认 180 秒，最小 10 秒）
+时，独立线程令进程异常退出，由 systemd 重启。此兜底会丢失内存队列及未保存状态，
+不能替代同步插件 I/O 迁移，也不能保证外部操作恰好执行一次。
+NapCat 另有 `tooglebot-napcat-probe.timer` 每 2 分钟调用只读 `get_status`；连续两次
+确认离线或探针不可达才重启 `tooglebot-napcat.service`。探针只重启进程并保留登录数据，
+不会自动扫码或清理 profile；探针状态位于 `/run/tooglebot-napcat-probe`。
+验证覆盖：`test_worker_flow.py` 的超时恢复与满队列关闭、`test_watchdog.py` 的子进程阻塞退出。
+2026-09-11 二维码访问权限修复：`tools/start_napcat_main.sh` 仅在首次创建 cache
+时设置 700，重启保留已有权限及 ACL，避免单图片 Nginx 映射因 ACL mask 被清零而 403。
+config 和 QQ 专用目录仍设置 700；新部署的二维码映射及最小权限 ACL 由管理员配置。
+回归测试：`test_napcat_cache_permissions.py` 使用临时目录和假 QQ 程序，验证首次权限、
+两次启动后的 ACL 保留，不连接真实 QQ。

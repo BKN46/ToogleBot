@@ -87,7 +87,11 @@ scheduler 已由 `bot.py` 显式 start/stop；programmable 分支使用 `Group` 
 
 `ScheduledMonitor` 每五分钟检查一次，但会先读取 `data/monitor_send.json`，仅并发拉取
 实际被订阅的 `earth_quake` / `save_old_otaku` 数据源；没有订阅时不会访问外部网络。
-单个数据源异常只记录该源并等待下一轮，不影响 scheduler 或其他源。
+单个数据源异常只记录该源并等待下一轮，不影响 scheduler 或其他源。微博接口明确返回
+登录页、401/403 非 JSON 响应或本机 Cookie 缺失时，会被识别为 Cookie 失效：连续失效期
+只向所有 `ADMIN_LIST` 私聊一次简短提示，不写重复 traceback；下一次微博请求成功后才允许
+再次提示。其他定时任务异常的完整 traceback 仅保存在本机 `log/schedule_err.log` 和服务
+日志，所有管理员只收到异常类型和任务名的摘要，避免泄露 Cookie 或响应正文。
 
 地震源在 2026-07-17 按中国地震台网当前页面核对为
 `https://www.ceic.ac.cn/data/data.json`，使用 `magnitude/time/location` 字段并保持 TLS
@@ -113,6 +117,16 @@ WebSocket 主 event loop。禁言/撤回的自动后处理已通过 `asyncio.to_
 `toogle/msg_proc.py` 还保留图片检测、撤回、禁言和延迟合并转发。部分检测调用当前被
 注释，不应从代码存在推断功能已启用。group/friend recall notice 已写入撤回历史，其余
 notice/request 尚未迁移。
+
+“屎”三人投票禁言在 `ANTI_SHIT_LIST` 群启用，匹配允许 QQ 回复附带的前置 @ 和首尾空白；
+被投票者仍由引用确定，不能由 @ 指定。引用消息若未命中本地 history，会通过
+`get_group_msg_history` 尝试补取发送者，返回消息 ID 必须与引用一致；每次投票记录群、目标和票数，达到三票
+后调用 `set_group_ban`。NapCat 返回“cannot ban owner/admin”等拒绝时会保留异常上下文，
+这表示目标身份限制而非机器人自身未获群管理权限。
+
+2026-09-10 只读群历史与服务日志对照确认，旧纯文本正则遗漏 `reply + at + text` 投票。
+`tests.test_mute` 已覆盖 OneBot 入站、worker 和 PluginWrapper 两次过滤到第三票禁言的
+mock 路径；未执行真实禁言。此前仅直接调用 `VoteMute.ret()` 的测试未覆盖触发过滤。
 
 ## 外部 Flask API
 
@@ -181,3 +195,17 @@ HTML 页面结构。
 
 插件 import 失败应汇总成启动报告。只打印 error 后继续启动会形成“进程在线但大量功能
 消失”的假健康状态。
+<!-- Runtime recovery update 2026-09-11 -->
+2026-09-11 当前恢复机制：正常运行 `run.sh` 不再因 NapCat 端口未就绪退出，
+由适配层退避重连；`RUN_DRY_RUN=1` 仍执行端口预检查。
+普通插件和消息后处理受 `PLUGIN_TIMEOUT_SECONDS`（默认 120 秒）限制；
+worker 关闭超时覆盖满队列投递退出标记的等待。
+事件循环连续阻塞超过 `EVENT_LOOP_TIMEOUT_SECONDS`（默认 180 秒，最小 10 秒）
+时，独立线程令进程异常退出，由 systemd 重启。此兜底会丢失内存队列及未保存状态，
+不能替代同步插件 I/O 迁移，也不能保证外部操作恰好执行一次。
+验证覆盖：`test_worker_flow.py` 的超时恢复与满队列关闭、`test_watchdog.py` 的子进程阻塞退出。
+2026-09-11 本机运维配置：主实例开启 fileLog/consoleLog，文件等级 debug、控制台 info；
+WebUI 从禁用改为监听 127.0.0.1:6099，经 Nginx 36198 代理，入口 /webui/。
+随机登录密钥只保存在实例 workdir/config/webui.json，不写入仓库。
+启动脚本保留已有实例配置，重启不会覆盖这些设置。日志不能补回此前关闭期间的事件。
+配置字段最后核对：2026-09-11，https://napneko.github.io/config/basic 。

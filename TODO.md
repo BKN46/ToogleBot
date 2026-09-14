@@ -212,6 +212,15 @@ failed=0；帮助页 smoke 通过。缺可选依赖/数据的聚合模块改为�
   `chat_earn`/主动插件异常不能终止整个 `process_loop()`。
 - [x] quote 原文通过派生消息交给插件，不得原地修改共享 `MessagePack`；覆盖
   history 不污染和 post-process 并发测试。
+- [x] “屎”三人投票在本地 history 缺失引用时使用 reply 发送者字段并异步补查群历史；新增
+  票数进度和禁言失败日志。931583245 已确认在 `ANTI_SHIT_LIST`，后续可据日志区分未满三票、
+  引用无法解析或 NapCat 拒绝群主/管理员目标。
+- [x] 2026-09-10 定位投票漏计：该群 13:48:07、13:48:15、13:49:38 的回复包含
+  `reply + at + text`，旧正则拒绝 `@用户 屎`；仅 13:49:03、13:52:06 的无 at 回复入账。
+  VoteMute 现允许前置 @ 和首尾空白，目标仍来自引用；补查结果必须匹配引用消息 ID。
+  `tests.test_mute` 覆盖 OneBot fixture 经 worker/PluginWrapper 累积三票、无关文本拒绝、
+  历史返回相邻消息不计票；HTTP 全部 mock，不做真实禁言。上次引用缺失的推测不能作为
+  本群故障根因；当前修复尚待加载后业务观察。
 - [x] 避免每次主动发送创建未跟踪线程；worker 启停纳入显式生命周期。
 - [ ] 同一用户余额扣除和冷却更新具备并发一致性。
 
@@ -231,6 +240,9 @@ failed=0；帮助页 smoke 通过。缺可选依赖/数据的聚合模块改为�
 - [x] 地震监测从已返回 405 的 `news.ceic.ac.cn/speedsearch.html` 迁到当前官方
   `www.ceic.ac.cn/data/data.json`，恢复 TLS 校验并覆盖新字段 schema；2026-07-17
   只读实时请求和解析通过。
+- [x] 微博监测将登录跳转、401/403 非 JSON 和缺失 Cookie 识别为认证失效；连续失效期
+  只脱敏通知所有管理员一次，成功抓取后重置。其他 scheduler 异常仍保留本机 traceback，
+  管理员收到任务名和异常类型摘要；mock 单测覆盖认证去重、恢复重置和多管理员通知。
 
 ### 10. 恢复 API 和后处理生命周期
 
@@ -300,6 +312,10 @@ failed=0；帮助页 smoke 通过。缺可选依赖/数据的聚合模块改为�
 - [x] 2026-09-01 增加免费 DuckDuckGo Instant Answer API 备用链路：SerpApi 失败自动切换，
   DuckDuckGo 失败再使用 360 fallback；成功回复底部附 `[通过{搜索引擎}搜索]`，搜索错误
   与模型错误分开提示并有 fallback/标注 fixture。
+- [x] 2026-09-03 修复 SerpApi 月度额度耗尽导致“查一下”失效：识别官方 HTTP 429 的
+  `run out of searches` 错误，月度额度状态持久化至下月 1 日并直接降级至 DuckDuckGo/360；
+  脱敏 429 fixture 验证首个请求、进程重置后的后续请求都跳过 SerpApi 并取得免费备用结果，
+  未调用真实密钥或付费服务。
 - [x] 2026-09-01 新增 `toogle/llm_adapter.py`：统一 DeepSeek、Moonshot、OrcaRouter
   OpenAI-compatible profile 及 chat/completion/stream/tool-loop 接口；现有 GPT、图片、
   remake、审查调用均经兼容 facade 转发，profile 和 OrcaRouter 默认模型已用组件 fixture
@@ -370,3 +386,22 @@ failed=0；帮助页 smoke 通过。缺可选依赖/数据的聚合模块改为�
 - **M3 可部署**：P1 全部完成，Docker、持久化、API 和健康检查通过。
 - **M4 迁移完成**：P0/P1 清零，P2 中测试、配置和数据 bootstrap 完成，README 可移除
   “迁移中”提示。
+<!-- Runtime recovery update 2026-09-11 -->
+2026-09-11 当前恢复机制：正常运行 `run.sh` 不再因 NapCat 端口未就绪退出，
+由适配层退避重连；`RUN_DRY_RUN=1` 仍执行端口预检查。
+普通插件和消息后处理受 `PLUGIN_TIMEOUT_SECONDS`（默认 120 秒）限制；
+worker 关闭超时覆盖满队列投递退出标记的等待。
+事件循环连续阻塞超过 `EVENT_LOOP_TIMEOUT_SECONDS`（默认 180 秒，最小 10 秒）
+时，独立线程令进程异常退出，由 systemd 重启。此兜底会丢失内存队列及未保存状态，
+不能替代同步插件 I/O 迁移，也不能保证外部操作恰好执行一次。
+验证覆盖：`test_worker_flow.py` 的超时恢复与满队列关闭、`test_watchdog.py` 的子进程阻塞退出。
+2026-09-11 二维码访问权限修复：`tools/start_napcat_main.sh` 仅在首次创建 cache
+时设置 700，重启保留已有权限及 ACL，避免单图片 Nginx 映射因 ACL mask 被清零而 403。
+config 和 QQ 专用目录仍设置 700；新部署的二维码映射及最小权限 ACL 由管理员配置。
+回归测试：`test_napcat_cache_permissions.py` 使用临时目录和假 QQ 程序，验证首次权限、
+两次启动后的 ACL 保留，不连接真实 QQ。
+2026-09-12：已增加 NapCat 外部健康探针与 systemd timer，连续离线才自动重启；扫码和风控仍需人工处理。
+
+2026-09-14 提交前隔离验证发现：缺失 `key_check` 中的配置项时，`configs.py` 调用
+`toogle.logger.warning`，但该模块只导出 `logger` 实例，触发 `AttributeError`；
+此既有 clean 配置启动阻断待修复，临时测试配置需包含这些 key（可为空），不使用真实密钥。
