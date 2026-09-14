@@ -49,7 +49,8 @@ async def process_loop() -> None:
                 )
                 continue
             try:
-                await message_post_process(message_pack)
+                async with asyncio.timeout(_config_int("PLUGIN_TIMEOUT_SECONDS", 120)):
+                    await message_post_process(message_pack)
             except asyncio.CancelledError:
                 raise
             except Exception:
@@ -125,9 +126,13 @@ async def process_message(message_pack: MessagePack, worker_index: int) -> None:
         try:
             if not plugin.is_trigger(display_text):
                 continue
-            await _run_plugin(plugin_wrapper, message_pack, worker_index)
+            async with asyncio.timeout(_config_int("PLUGIN_TIMEOUT_SECONDS", 120)):
+                await _run_plugin(plugin_wrapper, message_pack, worker_index)
         except asyncio.CancelledError:
             raise
+        except TimeoutError:
+            logger.error("Plugin timed out: %s", plugin.name)
+            adapter.bot_send_message(message_pack, "插件执行超时，请稍后重试")
         except (
             UrllibError,
             RequestsError,
@@ -182,11 +187,14 @@ def worker_start(worker_num: int | None = None) -> tuple[asyncio.Task[None], ...
 async def worker_shutdown(timeout: float = 10.0) -> None:
     if not WORKER_TASKS:
         return
-    for _ in WORKER_TASKS:
-        await WORK_QUEUE.put(None)
+    async def drain():
+        for _ in WORKER_TASKS:
+            await WORK_QUEUE.put(None)
+        await asyncio.gather(*WORKER_TASKS, return_exceptions=True)
+
     try:
         await asyncio.wait_for(
-            asyncio.gather(*WORKER_TASKS, return_exceptions=True),
+            drain(),
             timeout=timeout,
         )
     except TimeoutError:

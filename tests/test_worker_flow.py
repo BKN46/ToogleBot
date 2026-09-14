@@ -28,6 +28,63 @@ class WorkerFlowTest(unittest.IsolatedAsyncioTestCase):
         await worker.worker_shutdown(timeout=1)
         self.assertFalse(worker.WORKER_TASKS)
 
+    async def test_shutdown_timeout_includes_full_queue(self):
+        entered = asyncio.Event()
+
+        async def blocked(*args):
+            entered.set()
+            await asyncio.Event().wait()
+
+        with patch.dict(config, {"WORK_QUEUE_SIZE": 1}), patch(
+            "adapter.worker.process_message", side_effect=blocked
+        ):
+            worker.worker_start(worker_num=1)
+            await worker.WORK_QUEUE.put(object())
+            await entered.wait()
+            await worker.WORK_QUEUE.put(object())
+            await asyncio.wait_for(worker.worker_shutdown(timeout=0.02), 1)
+            self.assertFalse(worker.WORKER_TASKS)
+
+    async def test_plugin_timeout_allows_next_message(self):
+        from types import SimpleNamespace
+        source = MessagePack(id=1, message=MessageChain.plain("test"),
+                             group=Group(100, "group"), member=Member(200, "member"),
+                             quote=None, message_type="group")
+        wrapper = SimpleNamespace(plugin=SimpleNamespace(name="timeout", is_trigger=lambda _: True))
+
+        async def blocked(*args):
+            await asyncio.Event().wait()
+
+        with patch("adapter.worker.get_export_plugins", return_value=(wrapper,)), patch(
+            "adapter.worker._config_int", return_value=0.01
+        ), patch("adapter.worker._run_plugin", side_effect=blocked), patch(
+            "adapter.worker.adapter.bot_send_message"
+        ) as send:
+            await asyncio.wait_for(worker.process_message(source, 0), 1)
+            await asyncio.wait_for(worker.process_message(source, 0), 1)
+            self.assertEqual(send.call_count, 2)
+
+    async def test_multiple_dispatchers_consume_concurrently(self):
+        first = asyncio.Event()
+        second = asyncio.Event()
+        release = asyncio.Event()
+        async def post(message):
+            if not first.is_set():
+                first.set()
+            else:
+                second.set()
+            await release.wait()
+        messages = [MessagePack(id=i, message=MessageChain.plain("x"),
+                    group=Group(1, "g"), member=Member(i, "m"), quote=None,
+                    message_type="group") for i in (1, 2)]
+        with patch("adapter.worker.message_post_process", side_effect=post):
+            tasks = [asyncio.create_task(worker.process_loop()) for _ in range(2)]
+            await msg_queue.recv_queue.put(messages[0]); await msg_queue.recv_queue.put(messages[1])
+            await asyncio.wait_for(asyncio.gather(first.wait(), second.wait()), 1)
+            release.set()
+            for task in tasks: task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+
     async def test_only_read_group_skips_post_process_and_work_queue(self):
         source = MessagePack(
             id=1,

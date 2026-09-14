@@ -8,6 +8,10 @@ import toogle.logger as logger
 PROJECT_ROOT = Path(__file__).resolve().parent
 DEFAULT_CONFIG_PATH = PROJECT_ROOT / ".env"
 CONFIG_DEFAULTS: dict[str, Any] = {
+    "WORKER_NUM": "4",
+    "MESSAGE_DISPATCHER_NUM": "4",
+    "PLUGIN_TIMEOUT_SECONDS": "120",
+    "EVENT_LOOP_TIMEOUT_SECONDS": "180",
     "DOUBAO_IMAGE_MODEL": "doubao-seedream-5-0-260128",
     "DOUBAO_VIDEO_MODEL": "doubao-seedance-1-5-pro-251215",
     "AUTODL_API_BASE_URL": "https://api.autodl.com",

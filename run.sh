@@ -36,7 +36,7 @@ if command -v flock >/dev/null 2>&1; then
     fi
 fi
 
-if [[ "${RUN_SKIP_NAPCAT_CHECK:-0}" != "1" ]]; then
+if [[ "${RUN_DRY_RUN:-0}" == "1" && "${RUN_SKIP_NAPCAT_CHECK:-0}" != "1" ]]; then
     "$PYTHON" - <<'PY'
 import socket
 from pathlib import Path

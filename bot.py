@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
+from configs import config
+from adapter.watchdog import watch_event_loop
 
 from adapter import msg_queue
 from adapter.http_request import upload_group_file
@@ -25,7 +27,14 @@ async def main():
         scheduler_start()
         runtime_tasks = [
             asyncio.create_task(server_main(), name="napcat-server"),
-            asyncio.create_task(process_loop(), name="message-dispatch"),
+            *[
+                asyncio.create_task(process_loop(), name=f"message-dispatch-{index}")
+                for index in range(max(1, int(config.get("MESSAGE_DISPATCHER_NUM", 4))))
+            ],
+            asyncio.create_task(
+                watch_event_loop(max(10, int(config["EVENT_LOOP_TIMEOUT_SECONDS"]))),
+                name="event-loop-watchdog",
+            ),
         ]
         await asyncio.gather(*runtime_tasks)
     finally:
