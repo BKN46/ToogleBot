@@ -74,7 +74,11 @@ if ! command -v xvfb-run >/dev/null 2>&1; then
     exit 1
 fi
 
-install -d -m 700 "$WORK_DIR/config" "$WORK_DIR/cache" "$QQ_DATA_DIR"
+install -d -m 700 "$WORK_DIR/config" "$QQ_DATA_DIR"
+# Preserve administrator-managed traversal ACLs for the QR-only HTTP endpoint.
+if [[ ! -d "$WORK_DIR/cache" ]]; then
+    install -d -m 700 "$WORK_DIR/cache"
+fi
 if command -v flock >/dev/null 2>&1; then
     exec 9>"$WORK_DIR/main.lock"
     if ! flock -n 9; then
