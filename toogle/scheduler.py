@@ -148,6 +148,18 @@ def remove_manual_schedule(schedule_id: str) -> bool:
     return True
 
 
+def notify_schedule_admins(message: str) -> None:
+    """Send a concise scheduler notification without exposing exception details."""
+    for admin in config.get("ADMIN_LIST", []):
+        try:
+            if not bot_send_message(int(admin), message, friend=True):
+                logger.warning("Failed to queue schedule notification for an admin")
+        except (TypeError, ValueError):
+            logger.warning("Ignoring invalid schedule admin recipient")
+        except Exception:
+            logger.exception("Failed to notify schedule admin")
+
+
 class ScheduleModule:
     name = "BKN的机器人定时组件"
     trigger = r""
@@ -210,12 +222,9 @@ class ScheduleModule:
             with SCHEDULE_ERROR_LOG.open("a", encoding="utf-8") as error_log:
                 print(err_info, file=error_log)
             logger.exception("[Schedule][%s] failed", self.name)
-            admins = config.get("ADMIN_LIST", [])
-            if admins:
-                try:
-                    bot_send_message(int(admins[0]), err_info, friend=True)
-                except Exception:
-                    logger.exception("Failed to notify schedule error: %s", self.name)
+            notify_schedule_admins(
+                f"定时任务失败：{self.name}（{type(exc).__name__}），详情见服务日志。"
+            )
             return False
 
     def register(self):

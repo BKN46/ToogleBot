@@ -5,6 +5,10 @@ from pathlib import Path
 
 import requests
 
+
+class WeiboAuthenticationError(RuntimeError):
+    """Raised when Weibo rejects the cached login session."""
+
 headers = {
     'Referer': 'https://weibo.com/',
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -111,10 +115,24 @@ def get_web_page(uid, page=1, feature=0):
     url = f"https://weibo.com/ajax/statuses/mymblog?uid={uid}&page={page}&feature={feature}"
     cookie = get_cookie()
     if not cookie:
-        return None
+        raise WeiboAuthenticationError("Weibo login cookie is unavailable")
     res = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
+    response_host = res.url.split("/", 3)[2].lower() if "://" in res.url else ""
+    content_type = res.headers.get("content-type", "").lower()
+    if response_host == "login.sina.com.cn" or (
+        res.status_code in {401, 403} and "json" not in content_type
+    ):
+        raise WeiboAuthenticationError("Weibo login cookie was rejected")
     res.raise_for_status()
-    return res.json()
+    try:
+        payload = res.json()
+    except requests.exceptions.JSONDecodeError as exc:
+        if "html" in content_type:
+            raise WeiboAuthenticationError("Weibo returned a login page") from exc
+        raise
+    if not isinstance(payload, dict):
+        raise ValueError("Weibo timeline response must be an object")
+    return payload
 
 
 def get_save_old_otaku(json_dict=None, time_limit=0.0, bearable_time=60.0):

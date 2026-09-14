@@ -6,7 +6,7 @@ from typing import Union
 import requests
 
 from configs import config
-from plugins.others.weibo import get_save_old_otaku
+from plugins.others.weibo import WeiboAuthenticationError, get_save_old_otaku
 from toogle.adapter import bot_send_message
 from toogle.economy import get_balance, give_balance
 from toogle.logger import logger
@@ -17,6 +17,7 @@ from toogle.scheduler import (
     ScheduleModule,
     create_manual_schedule,
     list_schedule_jobs,
+    notify_schedule_admins,
     read_manual_schedules,
     remove_manual_schedule,
 )
@@ -121,6 +122,7 @@ class ScheduledMonitor(ScheduleModule):
 
     def __init__(self):
         self.last_monitor_time = datetime.datetime.now()
+        self._notified_auth_failures: set[str] = set()
 
     async def ret(self, message_pack: Union[MessagePack, None]):
         send_list = self._load_subscriptions()
@@ -166,7 +168,18 @@ class ScheduledMonitor(ScheduleModule):
 
     async def _run_source(self, name, function):
         try:
-            return await asyncio.to_thread(function)
+            result = await asyncio.to_thread(function)
+            self._notified_auth_failures.discard(name)
+            return result
+        except WeiboAuthenticationError:
+            if name not in self._notified_auth_failures:
+                self._notified_auth_failures.add(name)
+                logger.warning("Scheduled monitor source paused: %s authentication failed", name)
+                notify_schedule_admins(
+                    "定时监测：微博抓取已暂停，微博 Cookie 已失效或需要重新登录。"
+                    "更新本机 Cookie 后会自动恢复。"
+                )
+            return None
         except Exception:
             logger.exception("Scheduled monitor source failed: %s", name)
             return None

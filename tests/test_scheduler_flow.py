@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from contextlib import contextmanager
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -19,6 +19,7 @@ from plugins.schedule import (
     MembershipSchedule,
     ScheduledMonitor,
 )
+from plugins.others.weibo import WeiboAuthenticationError
 from toogle.message import MessageChain
 
 
@@ -327,6 +328,52 @@ class SchedulerFlowTest(unittest.IsolatedAsyncioTestCase):
         )
         self.assertIn("4.8级地震", result.asDisplay())
         self.assertIn("测试区域", result.asDisplay())
+
+    async def test_weibo_auth_failure_notifies_once_until_recovered(self):
+        monitor = ScheduledMonitor()
+        subscriptions = {"300": ["save_old_otaku"]}
+        with patch.object(monitor, "_load_subscriptions", return_value=subscriptions), patch.object(
+            monitor,
+            "get_save_old_otaku",
+            side_effect=WeiboAuthenticationError("expired"),
+        ), patch.object(schedule_plugins, "bot_send_message") as group_send, patch.object(
+            schedule_plugins, "notify_schedule_admins"
+        ) as notify:
+            await monitor.ret(None)
+            await monitor.ret(None)
+
+        group_send.assert_not_called()
+        notify.assert_called_once_with(
+            "定时监测：微博抓取已暂停，微博 Cookie 已失效或需要重新登录。"
+            "更新本机 Cookie 后会自动恢复。"
+        )
+
+        with patch.object(monitor, "get_save_old_otaku", return_value=None), patch.object(
+            monitor, "_load_subscriptions", return_value=subscriptions
+        ):
+            await monitor.ret(None)
+        self.assertEqual(monitor._notified_auth_failures, set())
+
+    async def test_schedule_failure_notifies_every_configured_admin(self):
+        failing = scheduler.ScheduleModule()
+        failing.name = "fixture failure"
+
+        async def fail(_message):
+            raise RuntimeError("fixture failure")
+
+        failing.ret = fail
+        with patch.object(scheduler, "bot_send_message", return_value=True) as send, patch.dict(
+            scheduler.config, {"ADMIN_LIST": ["100", "200"]}, clear=False
+        ):
+            self.assertFalse(await failing.ret_wrapper())
+
+        self.assertEqual(
+            send.call_args_list,
+            [
+                call(100, "定时任务失败：fixture failure（RuntimeError），详情见服务日志。", friend=True),
+                call(200, "定时任务失败：fixture failure（RuntimeError），详情见服务日志。", friend=True),
+            ],
+        )
 
 
 if __name__ == "__main__":
