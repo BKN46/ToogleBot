@@ -237,7 +237,12 @@ def _parse_quote(event: dict[str, Any]) -> Quote | None:
         sender_id = original.member.id
         origin = original.message
     else:
-        sender_id = 0
+        reply_data = reply.get("data") if isinstance(reply.get("data"), dict) else {}
+        reply_sender = reply_data.get("user_id") or reply_data.get("qq")
+        sender_info = reply_data.get("sender")
+        if isinstance(sender_info, dict):
+            reply_sender = reply_sender or sender_info.get("user_id") or sender_info.get("id")
+        sender_id = _as_int(reply_sender, 0)
         origin = MessageChain.plain("[引用消息]")
     return Quote(
         id=reply_id,

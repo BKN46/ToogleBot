@@ -5,7 +5,7 @@ from typing import Optional
 
 from toogle.message import At, Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack
-from adapter.http_request import mute_member, quit_group
+from adapter.http_request import get_group_msg_history, mute_member, quit_group
 from toogle.adapter import add_mute
 from toogle.logger import logger
 from tools.pic_recognition import register_shit_pic, unregister_shit_pic
@@ -126,10 +126,40 @@ VOTE_MUTE_DICT = {}
 
 class VoteMute(MessageHandler):
     name = "自动禁言发💩的"
-    trigger = r"^(?:屎|💩|这个不屎)$"
+    trigger = r"^\s*(?:@\d+\s*)*(?:屎|💩|这个不屎)\s*$"
     readme = "自动禁言发💩的；管理员回复图片发送“这个不屎”可取消图片标记"
     interval = 10
     ignore_quote = True
+
+    @staticmethod
+    async def _resolve_quote_sender(message: MessagePack) -> int:
+        if not message.quote or message.quote.sender_id:
+            return message.quote.sender_id if message.quote else 0
+        try:
+            payload = await asyncio.to_thread(
+                get_group_msg_history,
+                str(message.group.id),
+                message.quote.id,
+                1,
+            )
+            data = payload.get("data") if isinstance(payload, dict) else None
+            messages = data.get("messages") if isinstance(data, dict) else None
+            # History may return a neighbouring message; never vote against its sender.
+            first = next((
+                item for item in messages
+                if isinstance(item, dict)
+                and str(item.get("message_id")) == str(message.quote.id)
+            ), None) if isinstance(messages, list) else None
+            sender = first.get("sender") if isinstance(first, dict) else None
+            if isinstance(sender, dict):
+                return int(sender.get("user_id") or 0)
+        except Exception:
+            logger.exception(
+                "VoteMute quote lookup failed: group=%s quote_id=%s",
+                message.group.id,
+                message.quote.id,
+            )
+        return 0
 
     async def ret(self, message: MessagePack) -> Optional[MessageChain]:
         if message.message_type != "group":
@@ -155,10 +185,16 @@ class VoteMute(MessageHandler):
         if message_content not in ["屎", "💩"]:
             return
         if not message.quote:
+            logger.info("VoteMute ignored: group=%s reason=missing_quote", message.group.id)
             return MessageChain.plain("请回复你觉得是屎的发言", quote=message.as_quote())
 
-        target_id = message.quote.sender_id
+        target_id = await self._resolve_quote_sender(message)
         if not target_id:
+            logger.warning(
+                "VoteMute ignored: group=%s reason=quote_sender_unresolved quote_id=%s",
+                message.group.id,
+                message.quote.id,
+            )
             return MessageChain.plain("找不到被引用消息的发送者", quote=message.as_quote())
         vote_mute_dict_key = f"{message.group.id}_{target_id}"
 
@@ -173,8 +209,23 @@ class VoteMute(MessageHandler):
             }
 
         mute_member_cnt = len(VOTE_MUTE_DICT[vote_mute_dict_key]['vote_member'])
+        logger.info(
+            "VoteMute progress: group=%s target=%s votes=%s",
+            message.group.id,
+            target_id,
+            mute_member_cnt,
+        )
         if mute_member_cnt == 3:
-            await asyncio.to_thread(mute_member, message.group.id, target_id, 600)
+            try:
+                await asyncio.to_thread(mute_member, message.group.id, target_id, 600)
+            except Exception:
+                logger.exception(
+                    "VoteMute ban failed: group=%s target=%s votes=%s",
+                    message.group.id,
+                    target_id,
+                    mute_member_cnt,
+                )
+                raise
             if pics := message.quote.message.get(Image): 
                 pic_bytes = await asyncio.to_thread(pics[0].getBytes)
                 await asyncio.to_thread(register_shit_pic, pic_bytes)

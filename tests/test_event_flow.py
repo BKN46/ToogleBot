@@ -91,6 +91,27 @@ class EventConversionTest(unittest.TestCase):
         self.assertEqual(pack.quote.id, 42)
         self.assertEqual(pack.quote.message.asDisplay(), "origin")
 
+    def test_group_reply_uses_sender_id_when_local_history_misses_quote(self):
+        event = {
+            "post_type": "message",
+            "message_type": "group",
+            "message_id": 44,
+            "group_id": 100,
+            "user_id": 201,
+            "self_id": 999,
+            "sender": {"user_id": 201, "card": "fixture voter"},
+            "message": [
+                {"type": "reply", "data": {"id": "404", "user_id": "987654"}},
+                {"type": "text", "data": {"text": "💩"}},
+            ],
+        }
+
+        pack = msg_queue.parse_event(event)
+
+        self.assertIsNotNone(pack.quote)
+        self.assertEqual(pack.quote.sender_id, 987654)
+        self.assertEqual(pack.quote.message.asDisplay(), "[引用消息]")
+
     def test_self_message_is_not_enqueued(self):
         event = {
             "post_type": "message",
