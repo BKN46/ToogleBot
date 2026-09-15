@@ -1032,6 +1032,7 @@ class MagnetParse(MessageHandler):
     interval = 3600
     readme = "尝试解析磁力链接内容"
     price = 10
+    timeout = 900
 
     async def ret(self, message: MessagePack) -> MessageChain:
         if do_magnet_preview is None or parse_size is None:
@@ -1043,42 +1044,19 @@ class MagnetParse(MessageHandler):
             )
         # res = do_magnet_parse(message.message.asDisplay())
         # return MessageChain.plain(res, quote=message.as_quote())
-        res = do_magnet_preview(message.message.asDisplay())
-        bot_send_message(message.group.id, MessageChain.plain(f"已获取磁链，正在解析中", quote=message.as_quote()))
+        # Only current event Plain segments are inspected; quoted/forwarded history is excluded.
+        current_text = "".join(x.asDisplay() for x in message.message.root if isinstance(x, Plain))
+        bot_send_message(message, MessageChain.plain("已经收到，正在解析中...", quote=message.as_quote()))
+        res = await asyncio.to_thread(do_magnet_preview, current_text)
         if isinstance(res, str):
-            return MessageChain.plain(res, quote=message.as_quote())
+            return MessageChain([ForwardMessage.get_quick_forward_message([MessageChain.plain(res)]).root[0]])
         else:
-            resource_name = res['name']
-            resource_size = parse_size(res['size'])
-            resource_count = res['count']
-            if not res['screenshots']:
-                return MessageChain.plain(f"{resource_name}({resource_count}文件 {resource_size})无预览", quote=message.as_quote())
-
-            pics_url = [x['screenshot'] for x in res['screenshots']]
-
-            # image concat
-            try:
-                pics = [PIL.Image.open(requests.get(x, stream=True).content) for x in pics_url]
-                total_width, total_height = max([x.width for x in pics]), sum([x.height for x in pics])
-                combined_pic = PIL.Image.new("RGB", (total_width, total_height))
-                y_offset = 0
-                for pic in pics:
-                    combined_pic.paste(pic, (0, y_offset))
-                    y_offset += pic.height
-                io_buf = io.BytesIO()
-                combined_pic.save(io_buf, format="PNG")
-                imgs = [Image(bytes=io_buf.getvalue())]
-            except Exception as e:
-                # imgs = [Image(url=x).compress(max_height=400) for x in pics_url]
-                imgs = []
-
-            if not imgs:
-                return MessageChain([
-                message.as_quote(),
-                Plain(f"磁链内容解析成功：\n名称: {resource_name}\n大小: {resource_size}\n文件数: {resource_count}\n预览加载失败")
-                ])
-            else:
-                return MessageChain([
-                    message.as_quote(),
-                    Plain(f"磁链内容解析成功：\n名称: {resource_name}\n大小: {resource_size}\n文件数: {resource_count}\n预览:\n"),
-                ] + imgs)
+            rate = res.get('download_speed', 0)
+            speed = f"{rate / 1048576:.2f} MB/s" if rate >= 1048576 else f"{rate / 1024:.2f} KB/s"
+            summary = Plain(f"原始种子: {current_text}\n名称: {res['name']}\n大小: {parse_size(res['size'])}\n文件数: {res['count']}\nDHT节点: {res.get('dht_nodes', 0)}\n资源健康度(做种): {res.get('seeds', 0)}\n下载速度: {speed}\n综合耗时: {res.get('elapsed', 0):.2f}s")
+            nodes = [MessageChain([summary])]
+            nodes.append(MessageChain.plain(res.get('file_tree', '文件列表不可用')))
+            if res.get('sheet'):
+                buf = io.BytesIO(); res['sheet'].save(buf, format='JPEG', quality=88)
+                nodes.append(MessageChain([Image(bytes=buf.getvalue())]))
+            return ForwardMessage.get_quick_forward_message(nodes)

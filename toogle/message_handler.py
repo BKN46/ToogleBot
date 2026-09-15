@@ -146,6 +146,7 @@ class MessagePack:
 
 
 class MessageHandler:
+    timeout: int | None = None
     name = "BKN的聊天机器人组件"
     trigger = r""
     readme = "这是一个BKN的聊天机器人组件"

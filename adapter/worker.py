@@ -126,7 +126,8 @@ async def process_message(message_pack: MessagePack, worker_index: int) -> None:
         try:
             if not plugin.is_trigger(display_text):
                 continue
-            async with asyncio.timeout(_config_int("PLUGIN_TIMEOUT_SECONDS", 120)):
+            timeout = plugin.timeout or _config_int("PLUGIN_TIMEOUT_SECONDS", 120)
+            async with asyncio.timeout(timeout):
                 await _run_plugin(plugin_wrapper, message_pack, worker_index)
         except asyncio.CancelledError:
             raise
