@@ -10,8 +10,8 @@ DEFAULT_CONFIG_PATH = PROJECT_ROOT / ".env"
 CONFIG_DEFAULTS: dict[str, Any] = {
     "WORKER_NUM": "4",
     "MESSAGE_DISPATCHER_NUM": "4",
-    "PLUGIN_TIMEOUT_SECONDS": "120",
-    "EVENT_LOOP_TIMEOUT_SECONDS": "180",
+    "PLUGIN_TIMEOUT_SECONDS": "300",
+    "EVENT_LOOP_TIMEOUT_SECONDS": "600",
     "DOUBAO_IMAGE_MODEL": "doubao-seedream-5-0-260128",
     "DOUBAO_VIDEO_MODEL": "doubao-seedance-1-5-pro-251215",
     "AUTODL_API_BASE_URL": "https://api.autodl.com",
@@ -22,7 +22,7 @@ CONFIG_DEFAULTS: dict[str, Any] = {
     "WEB_SEARCH_API_URL": "",
     "WEB_SEARCH_FALLBACK_URL": "https://m.so.com/index.php",
     "WEB_SEARCH_TIMEOUT_SECONDS": "10",
-    "WEB_SEARCH_MAX_RESULTS": "5",
+    "WEB_SEARCH_MAX_RESULTS": "10",
     "WEB_SEARCH_LANGUAGE": "zh-CN",
     "SERPAPI_API_URL": "https://serpapi.com/search.json",
     "SERPAPI_COUNTRY": "cn",
@@ -32,6 +32,10 @@ CONFIG_DEFAULTS: dict[str, Any] = {
     "ORCAROUTER_API_URL": "https://api.orcarouter.ai/v1",
     "ORCAROUTER_MODEL": "z-ai/glm-5.3-flash",
     "LLM_DEFAULT_PROVIDER": "moonshot",
+    "NSFW_MODEL_PATH": ".cache/nsfw/falconsai-int8.onnx",
+    "NSFW_THREADS": "4",
+    "NSFW_THRESHOLD": "0.5",
+    "NSFW_SUGGESTIVE_THRESHOLD": "0.1",
 }
 config: dict[str, Any] = {}
 

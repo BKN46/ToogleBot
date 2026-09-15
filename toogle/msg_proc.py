@@ -13,7 +13,7 @@ from toogle.adapter import bot_send_message
 from configs import config
 from plugins.admin import VOTE_MUTE_DICT
 from toogle.utils import SETU_RECORD_PATH, print_err
-from tools.pic_recognition import detect_pic_nsfw, is_shit_pic
+from tools.pic_recognition import detect_pic_nsfw, is_shit_pic, nsfw_thresholds
 from plugins.gpt import gpt_censor, GetOpenAIConversation
 
 POST_PROC_LOCK = threading.Lock()
@@ -47,19 +47,21 @@ async def chat_earn(message_pack: MessagePack):
         if str(message_pack.group.id) in config.get('NSFW_LIST', []) + config.get('ANTI_NSFW_LIST', []):
             if len(pics) > 5:
                 pics = pics[:5]
-            setu_detect(message_pack, pics)
+            await setu_detect(message_pack, pics)
         if str(message_pack.group.id) in config.get('ANTI_SHIT_LIST', []):
             await shit_pic_detect(message_pack, pics)
 
 
-def setu_detect(message_pack: MessagePack, pics):
+async def setu_detect(message_pack: MessagePack, pics):
     cnt, raw_cnt = 0, 0
+    _, nsfw_threshold = nsfw_thresholds()
     for pic in pics:
         start_time = time.time()
-        score, repeat = detect_pic_nsfw(pic.getBytes(), output_repeat=True) # type: ignore
+        pic_bytes = await asyncio.to_thread(pic.getBytes)
+        score, repeat = await asyncio.to_thread(detect_pic_nsfw, pic_bytes, output_repeat=True)
         use_time = (time.time() - start_time) * 1000
         logger.info(f"Pic analysis done, nsfw score {score:.5f}, use time {use_time:.2f}ms") # type: ignore
-        if score >= 0.25:
+        if score >= nsfw_threshold:
             if not repeat:
                 cnt +=1
             raw_cnt += 1

@@ -1,6 +1,6 @@
 # Mirai -> NapCat 迁移 TODO
 
-更新时间：2026-08-17
+更新时间：2026-09-15
 
 基线：当前工作树为 NapCat 迁移主线；旧行为参考
 `origin/archived-mirai2-version`。本清单按阻断程度排序，`[x]` 只表示有源码或本地验证
@@ -13,7 +13,8 @@
 - [x] 明确项目为直接运行源码的非打包应用，设置 `[tool.uv] package = false`，锁文件
   根项目为 `virtual`；`uv sync` / `uv run` 不再尝试构建不存在的 `ToogleBot/tooglebot` 包。
 - [x] 审计并声明当前源码直接 import 的第三方依赖：`python-a2s`、`libtorrent`、`lupa`、
-  MySQL client、`wordcloud`、`tqdm` 和 OpenNSFW2 所需的 `tensorflow` 已加入
+  MySQL client、`wordcloud`、`tqdm` 和 ONNX Runtime 已加入；旧 OpenNSFW2/TensorFlow
+  仅保留在 `nsfw-baseline` 依赖组用于对比
   `pyproject.toml` 并锁定；`poyo` 的旧 import 已删除，当前源码没有 `thulac` import，
   `networkx`/`numpy` 仍由其他包间接带入。
 - [ ] 区分核心依赖和可选插件依赖；缺少可选依赖时只禁用对应插件并在启动报告说明。
@@ -389,9 +390,9 @@ failed=0；帮助页 smoke 通过。缺可选依赖/数据的聚合模块改为�
 <!-- Runtime recovery update 2026-09-11 -->
 2026-09-11 当前恢复机制：正常运行 `run.sh` 不再因 NapCat 端口未就绪退出，
 由适配层退避重连；`RUN_DRY_RUN=1` 仍执行端口预检查。
-普通插件和消息后处理受 `PLUGIN_TIMEOUT_SECONDS`（默认 120 秒）限制；
+普通插件和消息后处理受 `PLUGIN_TIMEOUT_SECONDS`（默认 300 秒）限制；
 worker 关闭超时覆盖满队列投递退出标记的等待。
-事件循环连续阻塞超过 `EVENT_LOOP_TIMEOUT_SECONDS`（默认 180 秒，最小 10 秒）
+事件循环连续阻塞超过 `EVENT_LOOP_TIMEOUT_SECONDS`（默认 600 秒，最小 10 秒）
 时，独立线程令进程异常退出，由 systemd 重启。此兜底会丢失内存队列及未保存状态，
 不能替代同步插件 I/O 迁移，也不能保证外部操作恰好执行一次。
 验证覆盖：`test_worker_flow.py` 的超时恢复与满队列关闭、`test_watchdog.py` 的子进程阻塞退出。

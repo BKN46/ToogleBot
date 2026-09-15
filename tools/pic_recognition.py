@@ -1,7 +1,6 @@
 import hashlib
 import io
 import json
-import tempfile
 import threading
 import time
 from pathlib import Path
@@ -12,6 +11,7 @@ import imagehash
 from PIL import UnidentifiedImageError, Image
 
 from toogle.logger import logger
+from tools.nsfw_model import NsfwDetector
 
 PIC_BLOOM = bloom_filter.BloomFilter(max_elements=10**6, error_rate=0.01, filename='data/pic_bloom')
 SFW_BLOOM = bloom_filter.BloomFilter(max_elements=10**6, error_rate=0.01, filename='data/sfw_bloom')
@@ -20,6 +20,19 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SHIT_PIC_EXEMPTIONS_PATH = PROJECT_ROOT / "data" / "not_shit_pics.json"
 _SHIT_PIC_EXEMPTIONS: set[str] | None = None
 _SHIT_PIC_EXEMPTIONS_LOCK = threading.RLock()
+_NSFW_LOCK = threading.RLock()
+_NSFW_DETECTOR = None
+_NSFW_SETTINGS = None
+
+
+def nsfw_thresholds() -> tuple[float, float]:
+    from configs import config
+
+    suggestive = float(config.get("NSFW_SUGGESTIVE_THRESHOLD", "0.1"))
+    explicit = float(config.get("NSFW_THRESHOLD", "0.5"))
+    if not 0 <= suggestive < explicit <= 1:
+        raise ValueError("NSFW thresholds must satisfy 0 <= suggestive < explicit <= 1")
+    return suggestive, explicit
 
 
 def _load_shit_pic_exemptions() -> set[str]:
@@ -48,31 +61,30 @@ def _save_shit_pic_exemptions(exemptions: set[str]) -> None:
 
 
 def detect_pic_nsfw(pic: bytes, output_repeat=False):
-    pic_md5 = hashlib.md5(pic).hexdigest()
-    if pic_md5 in SFW_BLOOM:
-        if output_repeat:
-            return -1, False
-        return -1
-    repeat = pic_md5 in PIC_BLOOM
-    PIC_BLOOM.add(pic_md5)
+    global _NSFW_DETECTOR, _NSFW_SETTINGS
+    from configs import config
 
-    import opennsfw2
-    with tempfile.NamedTemporaryFile(delete=False) as f:
-        f.write(pic)
-        pic_path = f.name
-    try:
-        start_time = time.time()
-        score = opennsfw2.predict_image(pic_path)
-        use_time = (time.time() - start_time) * 1000
-        logger.info(
-            "Pic analysis done, nsfw score %.5f, use time %.2fms",
-            score,
-            use_time,
-        )
-    except UnidentifiedImageError:
-        score = -1
-    finally:
-        Path(pic_path).unlink(missing_ok=True)
+    pic_md5 = hashlib.md5(pic).hexdigest()
+    with _NSFW_LOCK:
+        if pic_md5 in SFW_BLOOM:
+            return (0.0, False) if output_repeat else 0.0
+        repeat = pic_md5 in PIC_BLOOM
+        path = Path(config.get("NSFW_MODEL_PATH", ".cache/nsfw/falconsai-int8.onnx"))
+        if not path.is_absolute():
+            path = PROJECT_ROOT / path
+        settings = (path, int(config.get("NSFW_THREADS", "4")))
+        start_time = time.perf_counter()
+        if _NSFW_DETECTOR is None or settings != _NSFW_SETTINGS:
+            _NSFW_DETECTOR = NsfwDetector(*settings)
+            _NSFW_SETTINGS = settings
+        try:
+            score = _NSFW_DETECTOR.predict(pic)
+        except (UnidentifiedImageError, OSError, Image.DecompressionBombError):
+            score = -1
+        if score >= 0:
+            PIC_BLOOM.add(pic_md5)
+        logger.info("Pic analysis done, nsfw score %.5f, use time %.2fms",
+                    score, (time.perf_counter() - start_time) * 1000)
     if output_repeat:
         return score, repeat
     return score # type: ignore

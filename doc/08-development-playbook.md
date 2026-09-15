@@ -67,9 +67,10 @@ uv run python -W error::ResourceWarning -m unittest discover -s tests -p 'test_*
 `uv run python -W error::ResourceWarning -m unittest discover -s private/tests -p 'test_*.py'`；
 私有目录及兼容入口不进入 Git 或普通 CI，也不计入公开 registry 数量。
 
-当前依赖清单还显式包含图片 NSFW 检测所需的 TensorFlow，以及 `python-a2s`、
-`libtorrent`、`lupa`、MySQL connector、`wordcloud` 和 `tqdm` 等可选/离线功能库。
-TensorFlow 2.21 与 `h5py` 3.14 系列绑定；修改任一版本约束后必须重新运行
+当前依赖清单还显式包含图片 NSFW 检测所需的 ONNX Runtime 和 `numpy`，以及
+`python-a2s`、`libtorrent`、`lupa`、MySQL connector、`wordcloud` 和 `tqdm` 等
+可选/离线功能库。旧 OpenNSFW2/TensorFlow 及其 `h5py` 约束移入
+`nsfw-baseline` 依赖组，仅用于模型对比；修改任一版本约束后必须重新运行
 `uv lock` 和 `uv sync --frozen`。
 
 本机旧 `venv/bin/python` 只作为迁移期应急解释器，不能替代 clean `uv sync` 验收。
@@ -186,9 +187,9 @@ TensorFlow 2.21 与 `h5py` 3.14 系列绑定；修改任一版本约束后必须
 <!-- Runtime recovery update 2026-09-11 -->
 2026-09-11 当前恢复机制：正常运行 `run.sh` 不再因 NapCat 端口未就绪退出，
 由适配层退避重连；`RUN_DRY_RUN=1` 仍执行端口预检查。
-普通插件和消息后处理受 `PLUGIN_TIMEOUT_SECONDS`（默认 120 秒）限制；
+普通插件和消息后处理受 `PLUGIN_TIMEOUT_SECONDS`（默认 300 秒）限制；
 worker 关闭超时覆盖满队列投递退出标记的等待。
-事件循环连续阻塞超过 `EVENT_LOOP_TIMEOUT_SECONDS`（默认 180 秒，最小 10 秒）
+事件循环连续阻塞超过 `EVENT_LOOP_TIMEOUT_SECONDS`（默认 600 秒，最小 10 秒）
 时，独立线程令进程异常退出，由 systemd 重启。此兜底会丢失内存队列及未保存状态，
 不能替代同步插件 I/O 迁移，也不能保证外部操作恰好执行一次。
 NapCat 另有 `tooglebot-napcat-probe.timer` 每 2 分钟调用只读 `get_status`；连续两次

@@ -40,7 +40,7 @@ except ImportError:
     CSGO = None
 import plugins.others.baseball as baseball
 import plugins.others.milkywayidle as Milkywayidle
-from tools.pic_recognition import SFW_BLOOM, detect_pic_nsfw
+from tools.pic_recognition import SFW_BLOOM, detect_pic_nsfw, nsfw_thresholds
 
 try:
     JOKING_HAZARD_GAME_DATA = pickle.load(open("data/joking_hazard.pkl", "rb"))
@@ -982,29 +982,34 @@ class NFSWorNot(MessageHandler):
     trigger = r"这个色不色|^这个不色"
     thread_limit = True
     interval = 0
-    readme = "图像识别判断NSFW\n使用Open-NSFW2模型，为Keras实现Yahoo Open-NSFW\n模型为ResNet使用ImageNet 1000预训练后使用NSFW数据集finetune\nOpen-NSFW文章: https://yahooeng.tumblr.com/post/151148689421/open-sourcing-a-deep-learning-solution-for\nResNet论文: https://arxiv.org/pdf/1512.03385v1"
+    readme = "图像识别判断NSFW\n使用 FalconsAI ViT 本地模型（INT8 ONNX）"
     price = 2
 
     async def ret(self, message: MessagePack) -> MessageChain:
         pics = message.message.get(Image)
         
         if not pics:
-            return MessageChain.plain("没看到图", quote=message.as_quote())
+            return MessageChain.plain("没看到图", quote=message.as_quote(), no_charge=True, no_interval=True)
         
         if message.message.asDisplay().startswith("这个不色"):
             for pic in pics:
-                SFW_BLOOM.add(hashlib.md5(pic.getBytes()).hexdigest())
+                pic_bytes = await asyncio.to_thread(pic.getBytes)
+                SFW_BLOOM.add(hashlib.md5(pic_bytes).hexdigest())
             return MessageChain.plain("收到", quote=message.as_quote())
 
         res = ""
-        judge = lambda x: '不色' if x < 0.1 else '还行' if x < 0.25 else '色'
+        suggestive_threshold, nsfw_threshold = nsfw_thresholds()
+        judge = lambda x: '不色' if x < suggestive_threshold else '还行' if x < nsfw_threshold else '色'
         start_time = time.time()
         safe, mod, nsfw = 0, 0, 0
         for i, pic in enumerate(pics):
-            rate, repeat = detect_pic_nsfw(pic.getBytes(), output_repeat=True) # type: ignore
-            if rate < 0.1:
+            pic_bytes = await asyncio.to_thread(pic.getBytes)
+            rate, repeat = await asyncio.to_thread(detect_pic_nsfw, pic_bytes, output_repeat=True)
+            if rate < 0:
+                return MessageChain.plain("图片无法识别", quote=message.as_quote(), no_charge=True, no_interval=True)
+            if rate < suggestive_threshold:
                 safe += 1
-            elif rate < 0.25:
+            elif rate < nsfw_threshold:
                 mod += 1
             else:
                 nsfw += 1

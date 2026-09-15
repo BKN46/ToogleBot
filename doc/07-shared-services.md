@@ -175,7 +175,7 @@ HTML 页面结构。
 `draw_pic_text()`、缩放和 MP4/GIF 转换。图片缩放使用 Pillow 当前的
 `Image.Resampling.LANCZOS` API，兼容 Pillow 10+；字体统一从 `tools/fonts/` 读取。
 
-`tools/pic_recognition.py` 使用 BloomFilter、imagehash 和 `opennsfw2`。平均哈希为空时
+`tools/pic_recognition.py` 使用 BloomFilter、imagehash 和 FalconsAI ViT INT8 ONNX；推理经 ONNX Runtime 并在 worker 线程执行。平均哈希为空时
 注册和查询都会直接返回，避免污染 BloomFilter 或把损坏图片误判为命中。首次模型 import
 或推理很慢，不应阻塞 WebSocket loop；模型冒烟应单独标记。
 
@@ -198,9 +198,9 @@ HTML 页面结构。
 <!-- Runtime recovery update 2026-09-11 -->
 2026-09-11 当前恢复机制：正常运行 `run.sh` 不再因 NapCat 端口未就绪退出，
 由适配层退避重连；`RUN_DRY_RUN=1` 仍执行端口预检查。
-普通插件和消息后处理受 `PLUGIN_TIMEOUT_SECONDS`（默认 120 秒）限制；
+普通插件和消息后处理受 `PLUGIN_TIMEOUT_SECONDS`（默认 300 秒）限制；
 worker 关闭超时覆盖满队列投递退出标记的等待。
-事件循环连续阻塞超过 `EVENT_LOOP_TIMEOUT_SECONDS`（默认 180 秒，最小 10 秒）
+事件循环连续阻塞超过 `EVENT_LOOP_TIMEOUT_SECONDS`（默认 600 秒，最小 10 秒）
 时，独立线程令进程异常退出，由 systemd 重启。此兜底会丢失内存队列及未保存状态，
 不能替代同步插件 I/O 迁移，也不能保证外部操作恰好执行一次。
 验证覆盖：`test_worker_flow.py` 的超时恢复与满队列关闭、`test_watchdog.py` 的子进程阻塞退出。

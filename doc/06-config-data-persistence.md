@@ -29,7 +29,9 @@
 | `RECV_QUEUE_SIZE`、`SEND_QUEUE_SIZE`、`WORK_QUEUE_SIZE` | adapter queue/worker | 有界队列容量，非法值回退到内置默认值。 |
 | `WORKER_NUM` | `adapter/worker.py` | 同一 event loop 的 worker task 数，当前配置默认 4；余额和冷却的并发一致性仍待审计。 |
 | `MESSAGE_DISPATCHER_NUM` | `bot.py` | 消息分发协程数，默认 4，最小 1。 |
-| `PLUGIN_TIMEOUT_SECONDS`、`EVENT_LOOP_TIMEOUT_SECONDS` | worker / watchdog | 插件及后处理超时默认 120 秒；事件循环阻塞退出阈值默认 180 秒，最小 10 秒。 |
+| `PLUGIN_TIMEOUT_SECONDS`、`EVENT_LOOP_TIMEOUT_SECONDS` | worker / watchdog | 插件及后处理超时默认 300 秒；事件循环阻塞退出阈值默认 600 秒，最小 10 秒。 |
+| `NSFW_MODEL_PATH`、`NSFW_THREADS` | `tools/pic_recognition.py` | FalconsAI ViT INT8 ONNX 模型路径（默认 `.cache/nsfw/falconsai-int8.onnx`）和 ONNX Runtime 线程数（默认 4）。模型需先用 `tools.nsfw_check download` 下载并校验。 |
+| `NSFW_THRESHOLD`、`NSFW_SUGGESTIVE_THRESHOLD` | `tools/pic_recognition.py` / NSFW 插件 | 明确 NSFW 和擦边分类阈值，默认分别为 0.5 和 0.1，必须满足 `0 <= suggestive < explicit <= 1`。 |
 | `BOT_TIMEZONE` | `toogle/scheduler.py` | APScheduler 时区，默认 `Asia/Shanghai`。 |
 | `ADMIN_LIST` | 多处 | 管理员 QQ 列表，通常应为字符串列表。 |
 | `SUPERUSERS` | `plugins/runPython.py` | 解释器高权限用户。 |
@@ -41,7 +43,7 @@
 | `WEB_SEARCH_API_URL` | `tools/web_search.py` | 搜索 endpoint；360 默认 `https://m.so.com/index.php`、DuckDuckGo 默认 `https://api.duckduckgo.com/`，JSON provider 必填。 |
 | `WEB_SEARCH_FALLBACK_URL` | `tools/web_search.py` | SerpApi/DuckDuckGo 失败后的 360 搜索 fallback endpoint，默认 `https://m.so.com/index.php`。 |
 | `WEB_SEARCH_API_KEY` | `tools/web_search.py` | 可选 JSON provider Bearer token；只保存在本机 `.env`，不得写入 fixture、日志或文档示例。 |
-| `WEB_SEARCH_TIMEOUT_SECONDS`、`WEB_SEARCH_MAX_RESULTS`、`WEB_SEARCH_LANGUAGE` | `tools/web_search.py` | 请求超时（默认 10 秒）、单次结果上限（默认 5，硬上限 20）及 JSON provider language 参数。 |
+| `WEB_SEARCH_TIMEOUT_SECONDS`、`WEB_SEARCH_MAX_RESULTS`、`WEB_SEARCH_LANGUAGE` | `tools/web_search.py` | 请求超时（默认 10 秒）、单次结果上限（默认 10，硬上限 20）及 JSON provider language 参数。 |
 | `SERPAPI_API_KEY`、`SERPAPI_API_URL`、`SERPAPI_COUNTRY`、`SERPAPI_QUOTA_COOLDOWN_SECONDS` | `tools/web_search.py` | SerpApi Google 搜索 API key、endpoint、国家参数及临时限流熔断秒数（默认 86400）；明确的月度额度耗尽会持久化到 `data/serpapi_quota.json` 并跳过本月后续请求；key 仅保存在本机 `.env`。 |
 | `DEEPSEEK_WEB_MODEL`、`DEEPSEEK_WEB_URL` | `plugins/gpt.py` | “查一下”模型和 OpenAI 兼容 endpoint；默认官方可用的 `deepseek-v4-flash-vision-exp`、`https://api.deepseek.com`。 |
 | `ORCAROUTER_API_KEY`、`ORCAROUTER_API_URL`、`ORCAROUTER_MODEL` | `toogle/llm_adapter.py` | OrcaRouter OpenAI-compatible key、endpoint（默认 `https://api.orcarouter.ai/v1`）和模型；默认 `z-ai/glm-5.3-flash`。key 仅保存在本机 `.env`。 |
@@ -206,9 +208,9 @@ Mirai 日志读取器和对应统计脚本已经删除；聊天总结改读当�
 <!-- Runtime recovery update 2026-09-11 -->
 2026-09-11 当前恢复机制：正常运行 `run.sh` 不再因 NapCat 端口未就绪退出，
 由适配层退避重连；`RUN_DRY_RUN=1` 仍执行端口预检查。
-普通插件和消息后处理受 `PLUGIN_TIMEOUT_SECONDS`（默认 120 秒）限制；
+普通插件和消息后处理受 `PLUGIN_TIMEOUT_SECONDS`（默认 300 秒）限制；
 worker 关闭超时覆盖满队列投递退出标记的等待。
-事件循环连续阻塞超过 `EVENT_LOOP_TIMEOUT_SECONDS`（默认 180 秒，最小 10 秒）
+事件循环连续阻塞超过 `EVENT_LOOP_TIMEOUT_SECONDS`（默认 600 秒，最小 10 秒）
 时，独立线程令进程异常退出，由 systemd 重启。此兜底会丢失内存队列及未保存状态，
 不能替代同步插件 I/O 迁移，也不能保证外部操作恰好执行一次。
 验证覆盖：`test_worker_flow.py` 的超时恢复与满队列关闭、`test_watchdog.py` 的子进程阻塞退出。
