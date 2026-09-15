@@ -1,3 +1,4 @@
+from configs import config
 from toogle.message import Image, MessageChain, Plain
 from toogle.message_handler import MessageHandler, MessagePack, get_user_name
 from plugins.gpt import GetOpenAIConversation
