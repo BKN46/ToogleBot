@@ -8,6 +8,20 @@ import toogle.logger as logger
 PROJECT_ROOT = Path(__file__).resolve().parent
 DEFAULT_CONFIG_PATH = PROJECT_ROOT / ".env"
 CONFIG_DEFAULTS: dict[str, Any] = {
+    "KIMI_SEARCH_MODEL": "kimi-k2.7-code",
+    "SEARCH_FALLBACK_MODEL": "deepseek-flash",
+    "KIMI_SEARCH_URL": "https://api.moonshot.cn/v1",
+    "NEWS_RSS_URLS": [
+        "https://www.chinanews.com.cn/rss/importnews.xml",
+        "https://www.chinanews.com.cn/rss/china.xml",
+        "https://www.chinanews.com.cn/rss/world.xml",
+        "https://www.chinanews.com.cn/rss/finance.xml",
+        "https://www.chinanews.com.cn/rss/society.xml",
+    ],
+    "NEWS_MAX_ITEMS": "15",
+    "NEWS_AI_TIMEOUT_SECONDS": "45",
+    "NEWS_AI_MODEL": "deepseek-flash",
+    "NEWS_AI_USE_PROXY": "0",
     "WORKER_NUM": "4",
     "MESSAGE_DISPATCHER_NUM": "4",
     "PLUGIN_TIMEOUT_SECONDS": "300",
@@ -99,7 +113,7 @@ key_check = {
     "GPTModel": "GPT相关功能",
     "GPTUrl": "GPT相关功能",
     "BLACK_LIST": "黑名单",
-    "GROUP_LIST": "每日新闻",
+    "CHAT_GROUP_LIST": "主动聊天和每日新闻",
     "DISABLED_MODULE": "禁用功能",
     "WT_DATAMINE_GIT": "战雷拆包数据库查询功能",
     "SCRIPING_ANT_TOKEN": "涉及Cloudflare反反爬功能",
