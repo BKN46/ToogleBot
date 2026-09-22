@@ -32,6 +32,7 @@ dependencies = [
     "tqdm>=4.67.2",
     "wordcloud>=1.9.6",
     "websockets>=16.0",
+    "av>=16,<18",
 ]
 
 [dependency-groups]

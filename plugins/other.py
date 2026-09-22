@@ -1037,7 +1037,7 @@ class MagnetParse(MessageHandler):
     async def ret(self, message: MessagePack) -> MessageChain:
         if do_magnet_preview is None or parse_size is None:
             return MessageChain.plain(
-                "磁链解析依赖 libtorrent 未安装",
+                "磁链解析依赖 libtorrent 或 av 未安装",
                 quote=message.as_quote(),
                 no_charge=True,
                 no_interval=True,
@@ -1049,7 +1049,11 @@ class MagnetParse(MessageHandler):
         bot_send_message(message, MessageChain.plain("已经收到，正在解析中...", quote=message.as_quote()))
         res = await asyncio.to_thread(do_magnet_preview, current_text)
         if isinstance(res, str):
-            return MessageChain([ForwardMessage.get_quick_forward_message([MessageChain.plain(res)]).root[0]])
+            return MessageChain(
+                [ForwardMessage.get_quick_forward_message([MessageChain.plain(res)]).root[0]],
+                no_charge=True,
+                no_interval=True,
+            )
         else:
             rate = res.get('download_speed', 0)
             speed = f"{rate / 1048576:.2f} MB/s" if rate >= 1048576 else f"{rate / 1024:.2f} KB/s"
