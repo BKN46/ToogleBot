@@ -63,6 +63,9 @@ uv sync --frozen
 旧 OpenNSFW2/TensorFlow 仅在 `nsfw-baseline` 依赖组中用于对比。修改 `pyproject.toml` 后先运行
 `uv lock` 再重新同步。
 
+磁链截图还使用锁文件中的 PyAV（`av`）读取索引并按需下载分片；更新后需重新
+`uv sync --frozen`。下载粒度、限额和验证范围见 [业务插件地图](./doc/05-plugin-map.md)。
+
 ### 2. 配置 NapCat
 
 安装并启动 NapCat，确保开启 OneBot 11 WebSocket 服务。action 和数据模型参考
@@ -104,11 +107,24 @@ BOT_TIMEZONE=Asia/Shanghai
 
 ### 直接运行
 
+“查一下”使用独立配置 `KIMI_SEARCH_MODEL`（默认 `kimi-k2.7-code`）和Kimi官方
+Formula搜索工具；不改变 `.gpt` 或每日新闻的模型。失败仍免扣费/冷却。
+Kimi不可用时自动回退 `deepseek-flash` 和现有本地搜索方案；两条链路都失败才返回错误。
+
+每日新闻：每天 10 点（`BOT_TIMEZONE`，默认北京时间）向 `CHAT_GROUP_LIST` 推送
+首次生成时刻前24小时的新闻，经AI精选默认15条，顶部显示生成时间，正文只有标题和简述。
+当天首次成功生成后落盘缓存，后续手动查询和定时推送复用；次日零点清理，重启后也会检查日期。
+免费中新网 RSS 提供候选，AI 独立使用 `deepseek-flash` 非思考模式和已有DeepSeek密钥；
+排除官话宣传，优先国内外重大事件及民生实际变化，合格条目不足15条时不凑数。
+`NEWS_RSS_URLS`、`NEWS_MAX_ITEMS` 可调整新闻源和条数，模型调用可能产生费用。
+发送 `每日新闻` 或 `.news` 可手动查看截至当前的过去24小时新闻，仅回复当前群或私聊，不触发全群推送。
+RSS 保留条数有限，不保证全量覆盖；源失败不回退旧闻。详见 [调度说明](doc/07-shared-services.md#每日新闻)。
+
 ```bash
 ./run.sh
 ```
 
-`run.sh` 只启动本地 ToogleBot 进程，不调用 Docker。它会选择 `venv` / `.venv` 中的
+`run.sh` 只启动本地 ToogleBot 进程，不调用 Docker。它会优先选择 `.venv`、回退 `venv` 中的
 Python、检查 `.env` 和 NapCat WebSocket，并阻止重复启动。调试选项：
 
 ```bash

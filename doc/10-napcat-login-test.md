@@ -182,6 +182,10 @@ python tools/napcat_login_check.py --account "$NAPCAT_MAIN_ACCOUNT" --timeout 18
 
 ## 阶段 D：ToogleBot 联动
 
+每日新闻上线可先只读确认 RSS 可用、systemd job 注册和 WebSocket 连接，
+不要手动调用 `DailyNews.ret()` 验证生产群群发。其离线测试 mock 全部发送；
+真实投递测试仍需按下述双账号、目标群及显式确认流程执行。
+
 基础群文本已启用，执行顺序固定：
 
 1. 主账号按阶段 A/B 登录并通过 `tools/napcat_login_check.py`。

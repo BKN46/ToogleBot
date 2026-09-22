@@ -73,6 +73,14 @@ uv run python -W error::ResourceWarning -m unittest discover -s tests -p 'test_*
 `nsfw-baseline` 依赖组，仅用于模型对比；修改任一版本约束后必须重新运行
 `uv lock` 和 `uv sync --frozen`。
 
+磁链截图依赖锁定的 `av`（PyAV），使用其 FFmpeg 库和按需分片文件对象，不再调用
+系统 ffprobe/ffmpeg 子进程。离线回归运行
+`uv run python -W error::ResourceWarning -m unittest discover -s tests -p 'test_magnet_preview.py'`，
+测试使用模拟 torrent 与现场生成的 MP4，不连接 DHT、不下载真实磁链、不发送 QQ 消息。
+
+`run.sh`（含 systemd 的 ToogleBot worker）优先使用 `uv sync --frozen` 管理的
+`.venv/bin/python`；不存在时才回退旧 `venv/bin/python`，显式 `PYTHON_BIN` 优先级最高。
+更新依赖后需重启 `tooglebot.service`，已运行进程不会自动重新导入依赖。
 本机旧 `venv/bin/python` 只作为迁移期应急解释器，不能替代 clean `uv sync` 验收。
 
 源码 import 有线程、文件和插件加载副作用。没有隔离环境时，不运行 `import bot` 作为
@@ -106,6 +114,10 @@ uv run python -W error::ResourceWarning -m unittest discover -s tests -p 'test_*
 
 ## 修改外部 API/爬虫
 
+Kimi搜索回归：`uv run python -m unittest discover -s tests -p 'test_kimi_search.py'`，
+mock Formula声明/执行/回答，验证思考上下文保留和无搜索证据不返回付费答案。
+真实模型列表与工具声明可只读探测，执行搜索或生成仍属于付费调用，不纳入自动测试。
+
 - 为 requests 设置连接和读取 timeout。
 - 网络获取与 HTML/JSON 解析拆开。
 - 保存不含 Cookie/token/用户信息的响应 fixture。
@@ -124,7 +136,13 @@ uv run python -W error::ResourceWarning -m unittest discover -s tests -p 'test_*
 
 ## 修改调度
 
-代码型任务放 `plugins/schedule.py`，共享注册和手动任务逻辑放
+每日新闻离线回归：`uv run python -W error::ResourceWarning -m unittest discover -s tests -p 'test_daily_news.py'`。
+使用内嵌虚构 RSS fixture、mock AI 和发送门面，不抓真实新闻、不调用付费API、不发 QQ 消息；
+缓存测试将 `NEWS_CACHE_PATH` 指向临时目录，禁止使用真实 `data/daily_news.json`。
+源只读可用性、systemd 任务注册、真实消息送达需分别验证。
+
+代码型任务放根 `plugins/`（通用定时入口为 `schedule.py`，新闻业务为 `daily_news.py`），
+RSS 抓取和摘要构建等业务逻辑与新闻插件同文件；共享注册和手动任务逻辑放
 `toogle/scheduler.py`。至少覆盖：
 
 - cron 字段正确，scheduler 已 start。

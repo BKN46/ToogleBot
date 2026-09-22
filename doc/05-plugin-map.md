@@ -11,10 +11,11 @@
 | `plugins/autodl.py` | AutoDL 容器实例 Pro API 管理 | `.autodl` 管理命令覆盖实例创建、列表、详情、状态、开关机、释放和私有镜像；仅 `ADMIN_LIST` 管理员可用，网络请求在 worker 线程中执行。 |
 | `plugins/basic.py` | 随机选择、世界时间、骂人、抽奖、反撤回、投票、吃什么、昵称 | `data/lottery/`、`user_info.json`、撤回事件。 |
 | `plugins/currencyExchange.py` | 货币转换 | 外部汇率 API。 |
+| `plugins/daily_news.py` | 每日10点AI新闻精选、零点缓存清理 | 同文件包含 RSS/AI/日期缓存及定时插件；结果含生成时间头、标题与简述，当天首次成功生成后复用；`每日新闻` / `.news` 仅回复当前会话。 |
 | `plugins/debug.py` | 微博/撤回统计/服务器查询/竞猜/异步等待/日志/GB 红包/生图 | 当前 11 个插件类；高权限调试命令使用 `admin_only`，外部 I/O 已移出 event loop，专属配置和本地数据见 06。 |
 | `plugins/dice.py` | 通用骰子、战锤骰制转换 | NumPy、SciPy、Matplotlib。 |
 | `plugins/economy.py` | 赞助入口、余额管理 | SQLite 余额、会员。 |
-| `plugins/gpt.py` | GPT 对话、主动聊天、“查一下”、总结 | `.gpt` 使用现有 OpenAI 兼容配置；“查一下”使用 DeepSeek 视觉模型的标准函数工具调用，默认接入 SerpApi Google，失败自动切 DuckDuckGo/360；已识别的 SerpApi 额度耗尽会短期熔断该源；成功结果附搜索引擎标注，失败结果免扣费/冷却。 |
+| `plugins/gpt.py` | GPT 对话、主动聊天、“查一下”、总结 | `.gpt` 使用现有配置；“查一下”独立使用 `kimi-k2.7-code` 与Kimi官方Formula搜索，附搜索标注，失败免扣费/冷却；不改每日新闻或全局模型。 |
 | `plugins/math.py` | 数学绘图、计算器、Wolfram、勾股、坠落、单位转换 | Matplotlib、Wolfram 辅助模块。 |
 | `plugins/online_ai.py` | NovelAI、Midjourney、豆包图片/视频 | 豆包模型由根配置选择；重型步骤 offload，视频原文件经群文件 action 上传并附 GIF 预览。 |
 | `plugins/other.py` | 游戏、站点、服务器、法律、NSFW、磁链等垂直功能 | 最大业务文件；依赖 `plugins/others/` 和大量本地数据。 |
@@ -30,6 +31,9 @@
 
 ## 当前加载审计
 
+“查一下”在Kimi不可用时自动回退DeepSeek Flash与本地搜索编排（沿用SerpApi/
+DuckDuckGo/360配置）；Kimi成功不调用备用，备用必须取得搜索证据才返回付费回答。
+
 2026-09-15 修复 `remaking.py` 缺少根配置 `config` 导入导致故事生成分支
 抛出 NameError；未调用真实模型、生图 API 或写入 remake 数据进行验收。
 
@@ -37,6 +41,37 @@
 最大边 960px 的 2x3 合成图。文件列表独立成节点，从 torrent 根目录起展示两层，
 最多 50 个文件；同层文件夹优先，再按大小降序排列，文件夹大小包含所有后代。
 此展示变更仅做本地验证，未发送真实 QQ 消息。
+
+2026-09-16 磁链预览当前实现：PyAV 通过可 seek 的 `TorrentVideoReader` 按实际读取
+范围请求 torrent 分片，取代固定首尾分片和按文件大小比例估算截图位置。元数据取得前
+默认禁用内容下载；读取仅返回经 libtorrent 校验且 `read_piece` 成功的数据，不读取
+稀疏文件空洞。六张截图共用容器索引，从目标时间前的关键帧解码至目标时间；已下载
+分片复用，内存缓存最多四片。只有六张全部解码成功才返回预览，失败免扣费、免冷却。
+最小粒度为完整 torrent 分片，另有 FFmpeg 探测/32 KiB 读取缓冲开销，不承诺理论最小
+字节数；无索引、长 GOP 等资源可能需要更多数据。单次请求分片总量上限 128 MiB，
+默认元数据等待 180 秒、总读取/解码检查期限 720 秒，超过即失败而非退回整文件下载。
+`tests/test_magnet_preview.py` 覆盖跨文件偏移、分片复用、下载限额/超时/读取错误，
+真实 libtorrent 的零默认优先级和 partfile 读取，以及带较大尾部 moov、前置索引 MP4、
+MKV 和可变帧大小的本地视频经真实 PyAV 解码得到六帧。未发送 QQ 消息。
+
+2026-09-16 后续按用户提供磁链做本机临时目录诊断：一个 2,053,875,272 字节 MP4
+的分片大小为 2 MiB，原策略下载 0、1、978、979 号分片后，ffprobe 退出码为 1，
+报 `moov atom not found`，JSON 为 `{}`，复现旧代码的 `'format'` 异常。
+其 `moov` 从文件偏移 2,048,675,173 开始，长度 5,200,099 字节，覆盖 976 至 979
+号分片；对照下载补齐 976、977 后，ffprobe 成功读出时长 6017.058725 秒。
+此对照结果确认原首尾固定分片策略不足，是上述按需读取实现的回归依据。
+该轮诊断仅验证元数据与时长探测，临时下载已清理，未发送 QQ 消息。
+
+同日新实现本机实测（Python 3.12、PyAV 17.1.0）：该视频成功生成六帧和 960x810
+合成图，请求 16 个分片、32,220,873 字节（30.73 MiB，约文件大小 1.57%），耗时
+93.52 秒；临时数据已清理。手动管理的 torrent 会话在 DHT 启动后重新 announce，
+避免初始路由表未就绪时一直等待首次查询；无 peer 仍会明确超时。
+该统计是应用请求的唯一完整分片总量，不包含协议开销或网络重传，不代表所有资源的
+固定下载比例。全量 184 项单测通过；已有无关模块仍报告未关闭文件的 ResourceWarning。
+
+接口最后核对：2026-09-16，依据 [PyAV 文件对象与缓冲](https://pyav.basswood.io/docs/stable/api/_globals.html)、
+[PyAV seek/解码](https://pyav.basswood.io/docs/stable/api/container.html) 和
+[libtorrent 分片优先级/read_piece](https://libtorrent.org/reference-Torrent_Handle.html)。
 
 2026-08-17 对不含本机私有扩展的公开 registry 执行 smoke，得到 90 个普通、2 个主动、
 3 个定时插件，4 个按配置禁用，`PluginLoadReport.failed` 为 0；其中 11 个 debug 插件类均已
@@ -49,7 +84,7 @@ registry 审计结果。
 
 | 条件 | 当前行为 |
 | --- | --- |
-| 无 `libtorrent` | `other.py` 仍加载，磁链插件返回依赖缺失且不扣费。 |
+| 无 `libtorrent` 或 `av` | `other.py` 仍加载，磁链插件返回依赖缺失且不扣费。 |
 | 无 `mysql-connector` | CSGO 查询/库存功能返回依赖缺失，其他 `other.py` 插件保留。 |
 | 无 `python-a2s` | 仅 CS 服务器状态查询不可用。 |
 | 无 `data/baidu_cookie` | `tools.py` 仍加载，百度指数调用时提示未配置。 |
@@ -61,9 +96,8 @@ registry 审计结果。
 
 2026-07-17 已核对并恢复两个付费功能的产品边界：
 
-- “查一下”只匹配显式 `^查一下`，价格 12 gb、冷却 600 秒；使用 `DEEPSEEK_WEB_MODEL`
-  （默认官方可用的 `deepseek-v4-flash-vision-exp`）和标准 `web_search` function tool，先执行
-  `tools/web_search.search()` 再生成最终回答；只有获得模型回答才结算，
+- “查一下”只匹配显式 `^查一下`，价格 12 gb、冷却 600 秒；2026-09-18起使用
+  `KIMI_SEARCH_MODEL` 和Kimi Formula搜索，只有获得联网证据和完整模型回答才结算，
   输入超限、超时、主/备用模型失败均免扣费且不写冷却。
 - `.gpt` 价格仍为 5 gb、冷却 600 秒；输入/能力校验失败和模型服务错误同样不结算。
 - 豆包图片/视频价格仍为 50 gb、冷却 300 秒。图片成功即正常结算；视频要求群文件上传

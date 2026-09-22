@@ -9,6 +9,14 @@
 尚未完成的是全量 typed schema 和普通运行配置的环境变量覆盖；新增 key 必须在使用处
 显式转换/校验，不能重新引入 `eval()`。
 
+## 每日新闻缓存
+
+每日新闻成功生成后保存到项目根下 `data/daily_news.json`（版本1，`generated_at` 为带
+时区ISO时间戳，`digest` 为含生成时间头的完整文本）。按 scheduler 时区的自然日复用，
+每天00:00及下次访问时清理过期/无效缓存，失败或无新闻不缓存；重启不丢失当天结果。
+写入先使用 `data/daily_news.json.tmp` 再原子替换，`data/daily_news.lock` 提供跨线程/
+进程互斥；锁文件保留。仅此可再生成缓存被清理，不改其他运行数据，无旧业务数据迁移。
+
 ## 本机私有扩展
 
 环境专用实现、说明和测试统一放在根 `private/`，该目录及其位于公开模块目录中的兼容
@@ -33,6 +41,12 @@
 | `NSFW_MODEL_PATH`、`NSFW_THREADS` | `tools/pic_recognition.py` | FalconsAI ViT INT8 ONNX 模型路径（默认 `.cache/nsfw/falconsai-int8.onnx`）和 ONNX Runtime 线程数（默认 4）。模型需先用 `tools.nsfw_check download` 下载并校验。 |
 | `NSFW_THRESHOLD`、`NSFW_SUGGESTIVE_THRESHOLD` | `tools/pic_recognition.py` / NSFW 插件 | 明确 NSFW 和擦边分类阈值，默认分别为 0.5 和 0.1，必须满足 `0 <= suggestive < explicit <= 1`。 |
 | `BOT_TIMEZONE` | `toogle/scheduler.py` | APScheduler 时区，默认 `Asia/Shanghai`。 |
+| `CHAT_GROUP_LIST` | 主动聊天、`plugins/daily_news.py` | 每日新闻的目标群列表，空列表不抓取、不推送；不使用旧 `GROUP_LIST`。 |
+| `NEWS_RSS_URLS` | `plugins/daily_news.py` | 1 至 10 个 RSS 2.0 URL 的列表；默认中新网要闻、国内、国际、财经、社会五个频道，无需密钥。 |
+| `NEWS_MAX_ITEMS` | `plugins/daily_news.py` | AI精选条数上限，默认15，允许1至30；符合重大事件/民生变化标准的候选不足时少发，不用宣传报道凑数。 |
+| `NEWS_AI_MODEL` | `plugins/daily_news.py` | 默认 `deepseek-flash`，固定使用 deepseek profile，复用已有 DeepSeek 密钥和 `DEEPSEEK_WEB_URL`，不改全局聊天模型。 |
+| `NEWS_AI_TIMEOUT_SECONDS` | `plugins/daily_news.py` | AI请求超时，默认45秒，允许5至90秒，不含RSS抓取耗时。 |
+| `NEWS_AI_USE_PROXY` | `plugins/daily_news.py` | 默认0直连，1使用全局请求代理。 |
 | `ADMIN_LIST` | 多处 | 管理员 QQ 列表，通常应为字符串列表。 |
 | `SUPERUSERS` | `plugins/runPython.py` | 解释器高权限用户。 |
 | `CONCURRENCY` | 暂无有效使用 | 已明确保留多插件命中，应删除该旧配置。 |
@@ -45,9 +59,11 @@
 | `WEB_SEARCH_API_KEY` | `tools/web_search.py` | 可选 JSON provider Bearer token；只保存在本机 `.env`，不得写入 fixture、日志或文档示例。 |
 | `WEB_SEARCH_TIMEOUT_SECONDS`、`WEB_SEARCH_MAX_RESULTS`、`WEB_SEARCH_LANGUAGE` | `tools/web_search.py` | 请求超时（默认 10 秒）、单次结果上限（默认 10，硬上限 20）及 JSON provider language 参数。 |
 | `SERPAPI_API_KEY`、`SERPAPI_API_URL`、`SERPAPI_COUNTRY`、`SERPAPI_QUOTA_COOLDOWN_SECONDS` | `tools/web_search.py` | SerpApi Google 搜索 API key、endpoint、国家参数及临时限流熔断秒数（默认 86400）；明确的月度额度耗尽会持久化到 `data/serpapi_quota.json` 并跳过本月后续请求；key 仅保存在本机 `.env`。 |
-| `DEEPSEEK_WEB_MODEL`、`DEEPSEEK_WEB_URL` | `plugins/gpt.py` | “查一下”模型和 OpenAI 兼容 endpoint；默认官方可用的 `deepseek-v4-flash-vision-exp`、`https://api.deepseek.com`。 |
+| `DEEPSEEK_WEB_MODEL`、`DEEPSEEK_WEB_URL` | DeepSeek profile及旧搜索辅助函数 | 保留现有默认模型/地址，2026-09-18起不控制“查一下”；每日新闻通过 `NEWS_AI_MODEL` 单独覆盖模型。 |
+| `KIMI_SEARCH_MODEL`、`KIMI_SEARCH_URL` | “查一下” | 默认 `kimi-k2.7-code`、`https://api.moonshot.cn/v1`，独立于全局聊天模型；复用 `GPTSecretMoonshot`（回退 `GPTSecret`）。 |
+| `SEARCH_FALLBACK_MODEL` | “查一下”备用 | 默认 `deepseek-flash`；Kimi不可用时走DeepSeek profile和本地搜索编排，沿用DeepSeek密钥、地址及WEB_SEARCH配置。 |
 | `ORCAROUTER_API_KEY`、`ORCAROUTER_API_URL`、`ORCAROUTER_MODEL` | `toogle/llm_adapter.py` | OrcaRouter OpenAI-compatible key、endpoint（默认 `https://api.orcarouter.ai/v1`）和模型；默认 `z-ai/glm-5.3-flash`。key 仅保存在本机 `.env`。 |
-| `LLM_DEFAULT_PROVIDER` | `plugins/gpt.py` / `toogle/llm_adapter.py` | 通用 `.gpt`、图片解牌、remake、审查调用的默认 profile；可选 `moonshot`、`orcarouter`，默认 `moonshot`。 |
+| `LLM_DEFAULT_PROVIDER` | `plugins/gpt.py` / `toogle/llm_adapter.py` | 通用 `.gpt`、图片解牌、remake、审查调用的默认 profile；可选 `moonshot`、`orcarouter`，默认 `moonshot`；每日新闻独立使用DeepSeek。 |
 
 `MIRAI_QQ` 已不属于新配置且运行时读取已移除。帮助命令固定前缀不需要 self id；如需
 `@机器人` 前缀，可暂用明确的 `BOT_QQ` / `QQ_ACCOUNT`，长期应来自 NapCat lifecycle。
@@ -88,16 +104,15 @@ API 的 nginx location 片段安装到 `/etc/nginx/conf.d/tooglebot-api-location
 ## 外部服务配置
 
 - GPT：`GPTSecret`、`GPTModel`、`GPTModelLarge`、`GPTUrl`；“查一下”使用
-  `GPTSecretDeepseek`（回退到 `GPTSecret`）以及 `DEEPSEEK_WEB_MODEL`/
-  `DEEPSEEK_WEB_URL`。
+  `GPTSecretMoonshot`（回退到 `GPTSecret`）以及 `KIMI_SEARCH_MODEL`/`KIMI_SEARCH_URL`。
 - 所有模型 HTTP 请求统一由 `toogle/llm_adapter.py` 处理。下游通过 `provider=deepseek`、
   `provider=moonshot` 或 `provider=orcarouter` 选择 profile，统一使用 chat、stream、
   completion 和 tool-loop 接口；tool-loop 同时兼容标准 `tool_calls` 和部分模型返回的 DSML
-  文本调用，并在回传前规范化；查一下还允许受限的 `open_url` 页面核验，页面读取失败
+  文本调用，并在回传前规范化；旧DeepSeek搜索辅助函数允许受限的 `open_url` 页面核验，页面读取失败
   会降级为工具错误并继续基于搜索结果作答。OrcaRouter 默认 endpoint 为 `https://api.orcarouter.ai/v1`，
   模型为 `z-ai/glm-5.3-flash`；2026-09-01 `/v1/models` 探针确认该模型可用，尚未执行真实生成验收。
   通用 `.gpt`/图片/remake/审查 facade 使用 `LLM_DEFAULT_PROVIDER`（默认 `moonshot`），
-  修改该 key 即可在 Moonshot 与 OrcaRouter 间切换；“查一下”固定使用 DeepSeek profile。
+  修改该 key 即可在 Moonshot 与 OrcaRouter 间切换；“查一下”固定使用独立Moonshot搜索通道。
 - NovelAI：`NovelAISecret`。
 - 豆包：`DOUBAO_API_KEY`、`DOUBAO_IMAGE_MODEL`、`DOUBAO_VIDEO_MODEL`。两个模型 key 在
   `configs.CONFIG_DEFAULTS` 中有当前默认值，可由 `.env` 覆盖；插件内不再写死模型名。
@@ -123,16 +138,16 @@ AutoDL 容器实例 Pro API 管理实例和私有镜像；所有命令同时受 
 使用 `instance_uuid` 查询参数以兼容当前 API 行为。
 
 在线搜索由 `tools/web_search.py` 提供，不依赖 NapCat 或消息模型。`search(query)` 是同步
-入口，`asearch(query)` 使用线程 offload；“查一下”在 worker 线程中通过 DeepSeek 标准
-function tool 调用该搜索，再把 `SearchResponse.as_dict()` 作为 `role=tool` 结果回传模型。
+入口，`asearch(query)` 使用线程 offload；旧DeepSeek搜索辅助函数通过标准function tool
+调用该搜索，再把 `SearchResponse.as_dict()` 作为 `role=tool` 结果回传模型。“查一下”当前不走此路径。
 二者都返回含 title、url、snippet、source 的 `SearchResponse`，而不是暴露外部服务的原始 schema。
 默认 SerpApi Google Search API 返回结构化 `organic_results`，避免网页验证码和 HTML
 解析；SerpApi 失败自动切换免费 DuckDuckGo Instant Answer API，后者失败再切 360，也可
 配置自建 JSON/SearXNG endpoint。SerpApi 返回 HTTP 429 且错误正文表明账号搜索额度已耗尽
 时，临时限流会在进程内熔断该 provider（默认 86400 秒）；明确的月度额度耗尽会写入
 `data/serpapi_quota.json`，直到下月 1 日前跨重启跳过 SerpApi，后续请求直接从 DuckDuckGo/360
-开始，避免每条“查一下”重复触发已知额度错误。“查一下”已接入该工具并由 DeepSeek function
-tool 决定搜索 query，成功结果底部标注实际 provider，搜索失败单独提示“搜索服务出错”。
+开始，避免搜索请求重复触发已知额度错误。旧DeepSeek function tool决定搜索query，
+保留该辅助函数兼容调用；2026-09-18起“查一下”独立使用Kimi Formula搜索。
 SerpApi 协议于 2026-09-03 按官方错误码文档复核；额度耗尽降级使用脱敏 HTTP 429 fixture
 验证，未调用真实密钥或付费服务。
 
@@ -151,6 +166,10 @@ SerpApi 协议于 2026-09-03 按官方错误码文档复核；额度耗尽降级
 `toogle/plugins/...` 引用已经迁移。
 
 ### 运行状态和缓存
+
+磁链截图继续使用仓库根 `test/magnet/magnet-preview-*` 临时目录，结束时先移除 torrent
+并释放会话，再清理分片/partfile；不保存完整视频或新增持久配置。PyAV 按实际读取请求
+分片，最多请求 128 MiB（以完整分片计），内存缓存四片，详情与验证见 05。
 
 `data/` 整体被 `.gitignore` 忽略，典型内容：
 
