@@ -5,7 +5,7 @@ from configs import config
 from adapter import msg_queue, worker
 from toogle import adapter
 from plugins.admin import VOTE_MUTE_DICT, VoteMute
-from toogle.message import Group, Image, Member, MessageChain, Quote
+from toogle.message import ForwardMessage, Group, Image, Member, MessageChain, Quote
 from toogle.message_handler import MESSAGE_HISTORY, MessagePack
 
 
@@ -135,20 +135,30 @@ class VoteMuteTest(unittest.IsolatedAsyncioTestCase):
             with self.subTest(text=text):
                 self.assertFalse(VoteMute().is_trigger(text))
 
-    async def test_picture_detection_offloads_ban_and_recall(self):
+    async def test_picture_detection_recalls_forwards_then_bans(self):
         from toogle.msg_proc import shit_pic_detect
 
         message = make_vote_pack(1)
         message.message = MessageChain([Image(bytes=b"fixture")])
+        call_order = []
         with patch("toogle.msg_proc.is_shit_pic", return_value=True), patch(
-            "toogle.msg_proc.mute_member"
-        ) as mute, patch("toogle.msg_proc.recall_msg") as recall, patch(
-            "toogle.msg_proc.bot_send_message"
-        ):
+            "toogle.msg_proc.recall_msg", side_effect=lambda *_: call_order.append("recall")
+        ) as recall, patch(
+            "toogle.msg_proc.bot_send_message",
+            side_effect=lambda *_: call_order.append("forward"),
+        ) as send, patch(
+            "toogle.msg_proc.mute_member", side_effect=lambda *_: call_order.append("mute")
+        ) as mute:
             await shit_pic_detect(message, message.message.get(Image))
 
         mute.assert_called_once_with(123, 1, 600)
         recall.assert_called_once_with(1)
+        send.assert_called_once()
+        self.assertEqual(call_order, ["recall", "forward", "mute"])
+        forwarded = send.call_args.args[1].get(ForwardMessage)[0]
+        self.assertEqual(forwarded.node_list[0]["sender"], 1)
+        self.assertEqual(forwarded.node_list[0]["message"].get(Image)[0].getBytes(), b"fixture")
+        self.assertEqual(forwarded.node_list[1]["message"].asDisplay(), "监测到💩图，自动封禁")
 
     async def test_admin_can_exempt_images_from_shit_registration(self):
         message = make_vote_pack(1)

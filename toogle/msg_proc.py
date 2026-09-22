@@ -83,20 +83,19 @@ async def shit_pic_detect(message_pack: MessagePack, pics):
                 'time': time.time(),
                 'vote_member': [0, 0, 0]
             }
-            await asyncio.gather(
-                asyncio.to_thread(
-                    mute_member,
-                    message_pack.group.id,
-                    message_pack.member.id,
-                    600,
-                ),
-                asyncio.to_thread(recall_msg, message_pack.id),
-            )
+            await asyncio.to_thread(recall_msg, message_pack.id)
             bot_send_message(
                 int(message_pack.group.id),
-                MessageChain.create([
-                    Plain(f"监测到💩图，自动封禁"),
+                ForwardMessage.get_quick_forward_message([
+                    (message_pack.member.id, message_pack.member.name, message_pack.message),
+                    (0, "QQ用户", MessageChain.plain("监测到💩图，自动封禁")),
                 ]),
+            )
+            await asyncio.to_thread(
+                mute_member,
+                message_pack.group.id,
+                message_pack.member.id,
+                600,
             )
             break
 
