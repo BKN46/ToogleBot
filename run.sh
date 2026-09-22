@@ -11,10 +11,10 @@ fi
 
 if [[ -n "${PYTHON_BIN:-}" ]]; then
     PYTHON="$PYTHON_BIN"
-elif [[ -x "$ROOT_DIR/venv/bin/python" ]]; then
-    PYTHON="$ROOT_DIR/venv/bin/python"
 elif [[ -x "$ROOT_DIR/.venv/bin/python" ]]; then
     PYTHON="$ROOT_DIR/.venv/bin/python"
+elif [[ -x "$ROOT_DIR/venv/bin/python" ]]; then
+    PYTHON="$ROOT_DIR/venv/bin/python"
 elif command -v python3 >/dev/null 2>&1; then
     PYTHON="$(command -v python3)"
 else
