@@ -11,6 +11,7 @@ import tools.pic_recognition as pic_recognition
 import toogle.adapter as toogle_adapter
 from configs import config
 from plugins.gpt import GetOpenAIConversation, WhatIs
+from plugins.gpt import llm
 from plugins.online_ai import GetDoubaoCompose
 from toogle.message import Group, Image, Member, MessageChain
 from toogle.message_handler import MessagePack
@@ -80,8 +81,8 @@ class ArchivedFixTest(unittest.IsolatedAsyncioTestCase):
         message = make_pack("查一下 fixture")
         for error in (ReadTimeout("timeout"), RuntimeError("service failed")):
             with self.subTest(error=type(error).__name__), patch.object(
-                GetOpenAIConversation,
-                "get_web_search",
+                WhatIs,
+                "search_with_fallback",
                 side_effect=error,
             ):
                 result = await plugin.ret(message)
@@ -125,8 +126,8 @@ class ArchivedFixTest(unittest.IsolatedAsyncioTestCase):
             RuntimeError("fallback failed"),
         ):
             with self.subTest(error=type(fallback_error).__name__), patch.object(
-                GetOpenAIConversation,
-                "get_web_search",
+                WhatIs,
+                "search_with_fallback",
                 side_effect=[
                     RuntimeError("model token limit exceeded"),
                     fallback_error,

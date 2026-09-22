@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 
 from configs import config
 from plugins.gpt import DEEPSEEK_WEB_MODEL, GetOpenAIConversation, SearchExecutionError, WhatIs
+from plugins.gpt import llm
 from toogle.message import Group, Member, MessageChain, Plain, Quote
 from toogle.message_handler import MessagePack
 from tools.web_search import SearchResponse, SearchResponseError, SearchResult
@@ -82,10 +83,10 @@ class DeepSeekWebSearchChainTest(unittest.TestCase):
         )
 
         async def run():
-            with patch.object(GetOpenAIConversation, "get_web_search", return_value="fixture answer") as search:
+            with patch.object(llm, "kimi_search", return_value="fixture answer") as search:
                 result = await WhatIs().ret(message)
                 search.assert_called_once()
-                self.assertTrue(search.call_args.kwargs["include_source"])
+                self.assertEqual(search.call_args.kwargs["model"], "kimi-k2.7-code")
                 return result
 
         import asyncio
@@ -155,7 +156,7 @@ class DeepSeekWebSearchChainTest(unittest.TestCase):
         )
 
         async def run(error):
-            with patch.object(GetOpenAIConversation, "get_web_search", side_effect=error):
+            with patch.object(WhatIs, "search_with_fallback", side_effect=error):
                 return await WhatIs().ret(message)
 
         import asyncio

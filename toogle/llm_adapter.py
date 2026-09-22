@@ -26,6 +26,10 @@ class LLMConfigurationError(LLMError):
     """Provider profile is missing required configuration."""
 
 
+class KimiSearchUnavailable(LLMError):
+    """The official search execution service rejected a request."""
+
+
 _DSML_INVOKE_RE = re.compile(
     r"<(?:｜｜DSML｜｜)?invoke\s+name=[\"'](?P<name>[^\"']+)[\"']\s*>"
     r"(?P<body>.*?)</(?:｜｜DSML｜｜)?invoke>",
@@ -150,6 +154,73 @@ def get_provider(name: str | None = None, *, model: str = "", url: str = "", api
 
 
 class LLMAdapter:
+    def kimi_search(self, text: str | list, *, model: str, url: str, settings: str = "") -> str:
+        profile = get_provider("moonshot", model=model, url=url)
+        formula = "/formulas/moonshot/web-search:latest"
+        with requests.Session() as session:
+            session.trust_env = False
+            session.headers.update({"Authorization": f"Bearer {profile.api_key}"})
+
+            def call(method: str, path: str, body=None):
+                with session.request(method, profile.endpoint(path), json=body, timeout=(5, 60)) as response:
+                    if response.status_code >= 400:
+                        from toogle.logger import logger
+                        stage = "search_execution" if path.endswith("/fibers") else (
+                            "tool_declaration" if path.endswith("/tools") else "model")
+                        logger.warning("Kimi search HTTP failure: stage=%s status=%d",
+                                       stage, response.status_code)
+                        if stage == "search_execution":
+                            raise KimiSearchUnavailable(
+                                "Kimi官方搜索工具暂不可用，请稍后重试。"
+                            )
+                    response.raise_for_status()
+                    return response.json()
+
+            tools = call("GET", formula + "/tools").get("tools")
+            if not isinstance(tools, list) or not tools:
+                raise LLMError("Kimi search tools unavailable")
+            allowed = {tool["function"]["name"] for tool in tools}
+            messages = self._messages(text, settings + "\n请先使用联网搜索核实信息，再回答并注明依据。")
+            searches = 0
+            for round_number in range(4):
+                result = call("POST", "/chat/completions", {
+                    "model": profile.model, "messages": messages, "tools": tools,
+                    "tool_choice": "none" if searches >= 3 or round_number == 3 else "auto",
+                    "max_tokens": 8000,
+                })
+                choice = result["choices"][0]
+                message = choice["message"]
+                calls = message.get("tool_calls") or []
+                if not calls:
+                    content = message.get("content") or ""
+                    if choice.get("finish_reason") != "stop" or not content.strip():
+                        raise LLMError("Kimi search answer incomplete")
+                    if not searches:
+                        if round_number == 3:
+                            break
+                        messages.extend([message, {"role": "user", "content": "请先调用联网搜索工具核实，不要仅凭记忆回答。"}])
+                        continue
+                    return content.strip() + "\n\n[通过Kimi搜索]"
+                if searches + len(calls) > 3 or round_number == 3:
+                    raise LLMError("Kimi search tool budget exceeded")
+                # Preserve reasoning_content as required by K2.7 thinking/tool turns.
+                messages.append(message)
+                for tool_call in calls:
+                    function = tool_call["function"]
+                    if function.get("name") not in allowed:
+                        raise LLMError("Kimi returned an unknown search tool")
+                    fiber = call("POST", formula + "/fibers", function)
+                    if fiber.get("status") != "succeeded":
+                        raise LLMError("Kimi search execution failed")
+                    context = fiber.get("context") or {}
+                    output = context.get("output") or context.get("encrypted_output")
+                    if not output:
+                        raise LLMError("Kimi search returned no evidence")
+                    messages.append({"role": "tool", "tool_call_id": tool_call["id"],
+                                     "content": output if isinstance(output, str) else json.dumps(output, ensure_ascii=False)})
+                    searches += 1
+            raise LLMError("Kimi search did not produce a verified answer")
+
     def __init__(self, *, proxies: Mapping[str, str] | None = None, verify: bool = False):
         self.proxies = dict(proxies or getattr(configs, "proxies", {}) or {}) or None
         self.verify = verify
