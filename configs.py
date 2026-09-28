@@ -50,6 +50,7 @@ CONFIG_DEFAULTS: dict[str, Any] = {
     "NSFW_THREADS": "4",
     "NSFW_THRESHOLD": "0.5",
     "NSFW_SUGGESTIVE_THRESHOLD": "0.1",
+    "AUTO_NSFW_RECALL_ENABLED": "0",
 }
 config: dict[str, Any] = {}
 

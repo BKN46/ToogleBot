@@ -13,7 +13,7 @@ from toogle.adapter import bot_send_message
 from configs import config
 from plugins.admin import VOTE_MUTE_DICT
 from toogle.utils import SETU_RECORD_PATH, print_err
-from tools.pic_recognition import detect_pic_nsfw, is_shit_pic, nsfw_thresholds
+from tools.pic_recognition import detect_pic_nsfw, nsfw_thresholds
 from plugins.gpt import gpt_censor, GetOpenAIConversation
 
 POST_PROC_LOCK = threading.Lock()
@@ -48,8 +48,6 @@ async def chat_earn(message_pack: MessagePack):
             if len(pics) > 5:
                 pics = pics[:5]
             await setu_detect(message_pack, pics)
-        if str(message_pack.group.id) in config.get('ANTI_SHIT_LIST', []):
-            await shit_pic_detect(message_pack, pics)
 
 
 async def setu_detect(message_pack: MessagePack, pics):
@@ -70,34 +68,11 @@ async def setu_detect(message_pack: MessagePack, pics):
         update_setu_record(message_pack.group.id, message_pack.member.id, cnt)
         MESSAGE_HISTORY.add(f"setu_{message_pack.group.id}", message_pack)
     if raw_cnt > 0 and not message_pack.message.get(ForwardMessage, forward_layer=1):
-        if str(message_pack.group.id) in config.get('ANTI_NSFW_LIST', []):
+        if (
+            str(config.get("AUTO_NSFW_RECALL_ENABLED", "0")) == "1"
+            and str(message_pack.group.id) in config.get('ANTI_NSFW_LIST', [])
+        ):
             DelayedRecall.add_recall(message_pack.group.id, message_pack)
-
-
-async def shit_pic_detect(message_pack: MessagePack, pics):
-    for pic in pics:
-        pic_bytes = await asyncio.to_thread(pic.getBytes)
-        if await asyncio.to_thread(is_shit_pic, pic_bytes):
-            vote_mute_dict_key = f"{message_pack.group.id}_{message_pack.member.id}"
-            VOTE_MUTE_DICT[vote_mute_dict_key] = {
-                'time': time.time(),
-                'vote_member': [0, 0, 0]
-            }
-            await asyncio.to_thread(recall_msg, message_pack.id)
-            bot_send_message(
-                int(message_pack.group.id),
-                ForwardMessage.get_quick_forward_message([
-                    (message_pack.member.id, message_pack.member.name, message_pack.message),
-                    (0, "QQ用户", MessageChain.plain("监测到💩图，自动封禁")),
-                ]),
-            )
-            await asyncio.to_thread(
-                mute_member,
-                message_pack.group.id,
-                message_pack.member.id,
-                600,
-            )
-            break
 
 
 async def chat_cencor(message_pack: MessagePack):

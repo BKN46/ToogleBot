@@ -77,7 +77,11 @@ class NsfwFlowTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(response.no_interval)
 
     async def test_automatic_detection_uses_new_threshold_and_repeat_contract(self):
-        with patch.dict(config, {"NSFW_THRESHOLD": "0.5", "ANTI_NSFW_LIST": ["100"]}), patch.object(
+        with patch.dict(config, {
+            "NSFW_THRESHOLD": "0.5",
+            "ANTI_NSFW_LIST": ["100"],
+            "AUTO_NSFW_RECALL_ENABLED": "1",
+        }), patch.object(
             msg_proc, "detect_pic_nsfw", side_effect=[(0.3, False), (0.8, True)]
         ), patch.object(msg_proc, "give_balance") as earn, patch.object(
             msg_proc, "update_setu_record"

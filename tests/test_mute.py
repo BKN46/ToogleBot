@@ -5,7 +5,7 @@ from configs import config
 from adapter import msg_queue, worker
 from toogle import adapter
 from plugins.admin import VOTE_MUTE_DICT, VoteMute
-from toogle.message import ForwardMessage, Group, Image, Member, MessageChain, Quote
+from toogle.message import Group, Image, Member, MessageChain, Quote
 from toogle.message_handler import MESSAGE_HISTORY, MessagePack
 
 
@@ -29,6 +29,9 @@ def make_vote_pack(member_id: int, quote_sender_id: int = 987) -> MessagePack:
 class VoteMuteTest(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         VOTE_MUTE_DICT.clear()
+        auto_moderation = patch.dict(config, {"AUTO_NSFW_RECALL_ENABLED": "1"})
+        auto_moderation.start()
+        self.addCleanup(auto_moderation.stop)
         network = patch("adapter.http_request.requests.request", side_effect=AssertionError("Unexpected HTTP call"))
         network.start()
         self.addCleanup(network.stop)
@@ -135,30 +138,19 @@ class VoteMuteTest(unittest.IsolatedAsyncioTestCase):
             with self.subTest(text=text):
                 self.assertFalse(VoteMute().is_trigger(text))
 
-    async def test_picture_detection_recalls_forwards_then_bans(self):
-        from toogle.msg_proc import shit_pic_detect
+    async def test_auto_nsfw_recall_is_disabled_without_opt_in(self):
+        from toogle.msg_proc import setu_detect
 
         message = make_vote_pack(1)
         message.message = MessageChain([Image(bytes=b"fixture")])
-        call_order = []
-        with patch("toogle.msg_proc.is_shit_pic", return_value=True), patch(
-            "toogle.msg_proc.recall_msg", side_effect=lambda *_: call_order.append("recall")
-        ) as recall, patch(
-            "toogle.msg_proc.bot_send_message",
-            side_effect=lambda *_: call_order.append("forward"),
-        ) as send, patch(
-            "toogle.msg_proc.mute_member", side_effect=lambda *_: call_order.append("mute")
-        ) as mute:
-            await shit_pic_detect(message, message.message.get(Image))
+        with patch.dict(config, {"AUTO_NSFW_RECALL_ENABLED": "0", "ANTI_NSFW_LIST": ["123"]}), patch(
+            "toogle.msg_proc.detect_pic_nsfw", return_value=(1.0, True)
+        ), patch("toogle.msg_proc.nsfw_thresholds", return_value=(0.1, 0.5)), patch(
+            "toogle.msg_proc.DelayedRecall.add_recall"
+        ) as recall:
+            await setu_detect(message, message.message.get(Image))
 
-        mute.assert_called_once_with(123, 1, 600)
-        recall.assert_called_once_with(1)
-        send.assert_called_once()
-        self.assertEqual(call_order, ["recall", "forward", "mute"])
-        forwarded = send.call_args.args[1].get(ForwardMessage)[0]
-        self.assertEqual(forwarded.node_list[0]["sender"], 1)
-        self.assertEqual(forwarded.node_list[0]["message"].get(Image)[0].getBytes(), b"fixture")
-        self.assertEqual(forwarded.node_list[1]["message"].asDisplay(), "监测到💩图，自动封禁")
+        recall.assert_not_called()
 
     async def test_admin_can_exempt_images_from_shit_registration(self):
         message = make_vote_pack(1)
