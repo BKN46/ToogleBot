@@ -93,7 +93,8 @@ API 的 nginx location 片段安装到 `/etc/nginx/conf.d/tooglebot-api-location
 | `ECO_GROUP` | 启用余额检查/聊天收益的群。 |
 | `CHAT_GROUP_LIST` | 允许主动聊天插件运行的群。 |
 | `GROUP_LIST` | 主群列表和部分群发逻辑。 |
-| `NSFW_LIST`、`ANTI_NSFW_LIST`、`ANTI_SHIT_LIST` | 图片后处理和排行策略。 |
+| `NSFW_LIST`、`ANTI_NSFW_LIST`、`ANTI_SHIT_LIST` | 图片后处理和排行策略；群列表本身不再自动启用群管理动作。 |
+| `AUTO_NSFW_RECALL_ENABLED` | 色图自动撤回总开关，默认 `0` 关闭；只有明确设为 `1` 时，`ANTI_NSFW_LIST` 命中的图片才进入延迟撤回。 |
 | `CENSOR_LIST` | 内容审查群。 |
 | `TOOGLEPICGEN_GROUP_LIST` | 允许普通成员使用 TooglePicGen 的群；管理员不受此列表限制。 |
 | `HISTORY_SAVE_PATH` | `MESSAGE_HISTORY` pickle 文件。 |

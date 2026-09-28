@@ -217,9 +217,9 @@ failed=0；帮助页 smoke 通过。缺可选依赖/数据的聚合模块改为�
   + 有界 asyncio queue，默认一个 worker。
 - [ ] 将同步 HTTP、SQLite、模型和 CPU 渲染按调用显式 async 化或 offload。豆包图片/视频
   生成轮询、下载、GIF 转换和群文件上传已用 `asyncio.to_thread()` 完成；2026-08-10
-  投票禁言、图片自动禁言和对应撤回也已 offload，其他插件待审计。2026-09-21 已将屎图
-  自动处置固定为撤回、合并转发原消息及原提示、再禁言；`tests.test_mute` 全部 action mock
-  覆盖该顺序，未做真实群管理 action 验收。
+  投票禁言和对应撤回也已 offload，其他插件待审计。2026-09-27 移除屎图自动判定、撤回、
+  转发和禁言；保留 `ANTI_SHIT_LIST` 中“屎/💩”三票投票禁言及管理员解除图片标记。色图
+  自动撤回仍由 `AUTO_NSFW_RECALL_ENABLED` 独立控制。
 - [x] 修复真实群消息暴露的 clean data 阻断：首次 SQLite 连接在锁保护下幂等执行
   `sqlite.sql`；空库会创建 3 张基础表并有临时库单测、本机空库实测。版本升级 migration
   仍作为 P2 独立任务保留。

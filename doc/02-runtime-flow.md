@@ -145,7 +145,8 @@ event -> history -> active registry -> `ret_wrapper()` -> outbound queue -> NapC
 图片渲染。默认单 worker 保证正确性，但这些调用仍可能阻塞 WebSocket event loop；需要按
 插件标注执行类型并逐步改为 async client 或受控 `asyncio.to_thread()`。豆包图片/视频的
 生成轮询、下载、GIF 转换和群文件上传已在 2026-07-17 offload；禁言/撤回的自动后处理和
-投票插件调用已在 2026-08-10 offload；这不代表其他插件已完成。
+投票插件调用已在 2026-08-10 offload；色图自动撤回仍由独立开关控制，屎图不再做自动
+判定、撤回或禁言；“屎”投票禁言仍由 VoteMute 插件负责。这不代表其他插件已完成。
 
 ## 发消息链路
 

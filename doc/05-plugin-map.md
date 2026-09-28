@@ -7,7 +7,7 @@
 | 文件 | 插件/功能 | 主要依赖或状态 |
 | --- | --- | --- |
 | `plugins/meta.py` | ping、帮助列表 | 通过只读 provider 使用当前 registry；旧 `MIRAI_QQ` 依赖已移除。 |
-| `plugins/admin.py` | 插件刷新、临时禁用、自动禁言、退群、取消屎图标记 | `.reload` 仅管理员可用，刷新配置、全部插件 registry 和代码型 scheduler job；其余功能涉及 NapCat 禁言/退群 HTTP action、图片哈希等高副作用。 |
+| `plugins/admin.py` | 插件刷新、临时禁用、投票禁言、退群、取消屎图标记 | `.reload` 仅管理员可用，刷新配置、全部插件 registry 和代码型 scheduler job；投票禁言由 `ANTI_SHIT_LIST` 控制；图片不再自动判定后撤回禁言。其余功能涉及 NapCat 禁言/退群 HTTP action、图片哈希等高副作用。 |
 | `plugins/autodl.py` | AutoDL 容器实例 Pro API 管理 | `.autodl` 管理命令覆盖实例创建、列表、详情、状态、开关机、释放和私有镜像；仅 `ADMIN_LIST` 管理员可用，网络请求在 worker 线程中执行。 |
 | `plugins/basic.py` | 随机选择、世界时间、骂人、抽奖、反撤回、投票、吃什么、昵称 | `data/lottery/`、`user_info.json`、撤回事件。 |
 | `plugins/currencyExchange.py` | 货币转换 | 外部汇率 API。 |

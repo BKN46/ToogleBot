@@ -170,7 +170,7 @@ Markdown smoke 的成功条件必须是：发送前从独立观察账号建立 m
 这些函数有真实副作用。自动测试必须 mock HTTP transport；不得对真实 QQ、群或文件
 执行验收。`mute_member` 对应官方[群组禁言](https://napcat.apifox.cn/226656791e0)，
 请求使用字符串 `group_id`/`user_id` 和秒数 `duration`。当前底层 client 仍同步，但
-投票禁言和图片自动禁言的调用点已通过 `asyncio.to_thread()` offload；退群、群文件字段、
+投票禁言的调用点已通过 `asyncio.to_thread()` offload；退群、群文件字段、
 bounded timeout、`raise_for_status()` 和 OneBot `status/retcode` 失败均有单测，统一
 client 的重试、脱敏日志和异步 API 仍待补。
 

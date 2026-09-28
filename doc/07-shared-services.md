@@ -199,11 +199,10 @@ SQLite 基础 schema 会自动 bootstrap；其他图片下载、模型推理和�
 WebSocket 主 event loop。禁言/撤回的自动后处理已通过 `asyncio.to_thread()` offload，
 其余同步 I/O 仍是下一轮性能与稳定性重点。
 
-`toogle/msg_proc.py` 还保留图片检测、撤回、禁言和延迟合并转发。命中已登记屎图时，
-当前实现会依次撤回原消息、以合并转发保留原消息和“监测到💩图，自动封禁”提示、再禁言
-发送者；`tests.test_mute` 使用 mock action 覆盖这个顺序，未在真实群执行。部分检测调用
-当前被注释，不应从代码存在推断功能已启用。group/friend recall notice 已写入撤回历史，
-其余 notice/request 尚未迁移。
+`toogle/msg_proc.py` 还保留图片检测、色图延迟撤回和通用延迟合并转发。屎图不再进行
+自动判定、撤回、转发或禁言；`ANTI_SHIT_LIST` 仍由 `VoteMute` 使用，三票后禁言被引用
+消息的发送者。管理员“这个不屎”仍可解除图片标记。group/friend recall notice 已写入
+撤回历史，其余 notice/request 尚未迁移。
 
 “屎”三人投票禁言在 `ANTI_SHIT_LIST` 群启用，匹配允许 QQ 回复附带的前置 @ 和首尾空白；
 被投票者仍由引用确定，不能由 @ 指定。引用消息若未命中本地 history，会通过

@@ -144,6 +144,7 @@ import I/O、建立预期插件 manifest，并把指定 reload 优化成真正�
 
 VoteMute 的匹配允许前置 `@<QQ>` 和空白，以兼容回复附带的 `At`；业务正文仍须是完整的
 “屎”、对应 emoji 或“这个不屎”。禁言目标取自 `Quote.sender_id`，不取 `At.target`。
+管理员“这个不屎”可解除图片标记；图片本身不再触发自动撤回或禁言。
 2026-09-10 回归测试覆盖 `reply + at + text` 经 worker 和 PluginWrapper 两层匹配后计票，
 以及 @ 与引用发送者不一致时仍只对引用发送者计票。
 
