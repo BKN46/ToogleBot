@@ -83,6 +83,10 @@ uv run python -W error::ResourceWarning -m unittest discover -s tests -p 'test_*
 更新依赖后需重启 `tooglebot.service`，已运行进程不会自动重新导入依赖。
 本机旧 `venv/bin/python` 只作为迁移期应急解释器，不能替代 clean `uv sync` 验收。
 
+2026-10-24 宿主机磁盘维护将未运行的备用 `venv` 校验迁到
+`/home/root-storage/legacy-environments/ToogleBot-venv`，原 `venv` 路径保留符号链接；
+运行中的 `.venv` 与 ToogleBot worker 保持原位，启动与回退命令继续使用原路径。
+
 源码 import 有线程、文件和插件加载副作用。没有隔离环境时，不运行 `import bot` 作为
 普通 lint；必须运行时加 timeout，并说明可能访问本地数据或外部服务。
 
