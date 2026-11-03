@@ -127,7 +127,7 @@ class Calculator(MessageHandler):
         running_res = Calculator.get_exec(Calculator.func_preproc(text[:-1]))
         if type(running_res) in [float, int] and running_res >= 10**7: # type: ignore
             running_res = f"{running_res:,}"
-        return MessageChain.create([message.as_quote(), Plain(running_res)])
+        return MessageChain.create([message.as_quote(), Plain(str(running_res))])
 
     @staticmethod
     def func_preproc(func_str):
