@@ -15,7 +15,7 @@
 | `plugins/debug.py` | 微博/撤回统计/服务器查询/竞猜/异步等待/日志/GB 红包/生图 | 当前 11 个插件类；高权限调试命令使用 `admin_only`，外部 I/O 已移出 event loop，专属配置和本地数据见 06。 |
 | `plugins/dice.py` | 通用骰子、战锤骰制转换 | NumPy、SciPy、Matplotlib。 |
 | `plugins/economy.py` | 赞助入口、余额管理 | SQLite 余额、会员。 |
-| `plugins/gpt.py` | GPT 对话、主动聊天、“查一下”、总结 | `.gpt` 使用现有配置；“查一下”独立使用 `kimi-k2.7-code` 与Kimi官方Formula搜索，附搜索标注，失败免扣费/冷却；不改每日新闻或全局模型。 |
+| `plugins/gpt.py` | GPT 对话、主动聊天、“查一下”、总结 | `.gpt` 使用现有配置；“查一下”固定使用 `deepseek-flash` 与 DeepSeek 官方 Search API，附搜索标注，失败免扣费/冷却；不改每日新闻或全局模型。 |
 | `plugins/math.py` | 数学绘图、计算器、Wolfram、勾股、坠落、单位转换 | Matplotlib、Wolfram 辅助模块。 |
 | `plugins/online_ai.py` | NovelAI、Midjourney、豆包图片/视频 | 豆包模型由根配置选择；重型步骤 offload，视频原文件经群文件 action 上传并附 GIF 预览。 |
 | `plugins/other.py` | 游戏、站点、服务器、法律、NSFW、磁链等垂直功能 | 最大业务文件；依赖 `plugins/others/` 和大量本地数据。 |
@@ -31,8 +31,11 @@
 
 ## 当前加载审计
 
-“查一下”在Kimi不可用时自动回退DeepSeek Flash与本地搜索编排（沿用SerpApi/
-DuckDuckGo/360配置）；Kimi成功不调用备用，备用必须取得搜索证据才返回付费回答。
+2026-10-17起“查一下”直接使用 `deepseek-flash` 和 DeepSeek 官方搜索，停用 Kimi、
+SerpApi、DuckDuckGo、360 及自建搜索回退，旧搜索源配置不影响此命令。必须取得非空
+搜索证据和完整回答才结算；最多10次模型请求、10次工具调用（含可选页面读取）。
+额度用完显式要求最终答案，`stop`但以“请稍等”等过程话术收尾时继续请求，
+耗尽请求、搜索或模型失败均免扣费/冷却。离线验证与未实测范围见07。
 
 2026-09-15 修复 `remaking.py` 缺少根配置 `config` 导入导致故事生成分支
 抛出 NameError；未调用真实模型、生图 API 或写入 remake 数据进行验收。
@@ -96,9 +99,9 @@ registry 审计结果。
 
 2026-07-17 已核对并恢复两个付费功能的产品边界：
 
-- “查一下”只匹配显式 `^查一下`，价格 12 gb、冷却 600 秒；2026-09-18起使用
-  `KIMI_SEARCH_MODEL` 和Kimi Formula搜索，只有获得联网证据和完整模型回答才结算，
-  输入超限、超时、主/备用模型失败均免扣费且不写冷却。
+- “查一下”只匹配显式 `^查一下`，价格 12 gb、冷却 600 秒；当前使用
+  `deepseek-flash` 和 DeepSeek 官方搜索，只有获得联网证据和完整模型回答才结算，
+  输入超限、超时、搜索或模型失败均免扣费且不写冷却。
 - `.gpt` 价格仍为 5 gb、冷却 600 秒；输入/能力校验失败和模型服务错误同样不结算。
 - 豆包图片/视频价格仍为 50 gb、冷却 300 秒。图片成功即正常结算；视频要求群文件上传
   成功才结算，上传失败但 GIF 预览成功时返回预览并免扣费。私聊没有群文件目标，也按

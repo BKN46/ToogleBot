@@ -41,7 +41,7 @@ CONFIG_DEFAULTS: dict[str, Any] = {
     "SERPAPI_API_URL": "https://serpapi.com/search.json",
     "SERPAPI_COUNTRY": "cn",
     "SERPAPI_QUOTA_COOLDOWN_SECONDS": "86400",
-    "DEEPSEEK_WEB_MODEL": "deepseek-v4-flash-vision-exp",
+    "DEEPSEEK_WEB_MODEL": "deepseek-flash",
     "DEEPSEEK_WEB_URL": "https://api.deepseek.com",
     "ORCAROUTER_API_URL": "https://api.orcarouter.ai/v1",
     "ORCAROUTER_MODEL": "z-ai/glm-5.3-flash",

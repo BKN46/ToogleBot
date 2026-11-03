@@ -53,15 +53,14 @@
 | `ENVIRONMENT` | 暂无有效使用 | 历史环境标识。 |
 | `AUTODL_API_BASE_URL` | `plugins/autodl.py` | AutoDL API 地址，默认 `https://api.autodl.com`；仅在测试或官方地址变更时覆盖。 |
 | `AUTODL_API_TOKEN` | `plugins/autodl.py` | AutoDL 开发者 Token；只保存在本机 `.env`，缺失时插件仍可加载但命令返回未配置，日志和聊天不回显。 |
-| `WEB_SEARCH_PROVIDER` | `tools/web_search.py` | 在线搜索后端；默认 `serpapi`（Google Search API），也可设为 `qihoo360`、`duckduckgo` 或 `json`/`searxng`。 |
+| `WEB_SEARCH_PROVIDER` | `tools/web_search.py` 旧通用入口 | 仅控制保留的 `search()`/`asearch()`，默认 `serpapi`；不再控制“查一下”，该命令固定调用 `search_deepseek()`。 |
 | `WEB_SEARCH_API_URL` | `tools/web_search.py` | 搜索 endpoint；360 默认 `https://m.so.com/index.php`、DuckDuckGo 默认 `https://api.duckduckgo.com/`，JSON provider 必填。 |
 | `WEB_SEARCH_FALLBACK_URL` | `tools/web_search.py` | SerpApi/DuckDuckGo 失败后的 360 搜索 fallback endpoint，默认 `https://m.so.com/index.php`。 |
 | `WEB_SEARCH_API_KEY` | `tools/web_search.py` | 可选 JSON provider Bearer token；只保存在本机 `.env`，不得写入 fixture、日志或文档示例。 |
-| `WEB_SEARCH_TIMEOUT_SECONDS`、`WEB_SEARCH_MAX_RESULTS`、`WEB_SEARCH_LANGUAGE` | `tools/web_search.py` | 请求超时（默认 10 秒）、单次结果上限（默认 10，硬上限 20）及 JSON provider language 参数。 |
+| `WEB_SEARCH_TIMEOUT_SECONDS`、`WEB_SEARCH_MAX_RESULTS`、`WEB_SEARCH_LANGUAGE` | `tools/web_search.py` | 请求读取超时（默认10秒）、单次结果上限（默认10；DeepSeek硬上限50、旧入口20）；language仅用于旧provider。DeepSeek连接超时5秒。 |
 | `SERPAPI_API_KEY`、`SERPAPI_API_URL`、`SERPAPI_COUNTRY`、`SERPAPI_QUOTA_COOLDOWN_SECONDS` | `tools/web_search.py` | SerpApi Google 搜索 API key、endpoint、国家参数及临时限流熔断秒数（默认 86400）；明确的月度额度耗尽会持久化到 `data/serpapi_quota.json` 并跳过本月后续请求；key 仅保存在本机 `.env`。 |
-| `DEEPSEEK_WEB_MODEL`、`DEEPSEEK_WEB_URL` | DeepSeek profile及旧搜索辅助函数 | 保留现有默认模型/地址，2026-09-18起不控制“查一下”；每日新闻通过 `NEWS_AI_MODEL` 单独覆盖模型。 |
-| `KIMI_SEARCH_MODEL`、`KIMI_SEARCH_URL` | “查一下” | 默认 `kimi-k2.7-code`、`https://api.moonshot.cn/v1`，独立于全局聊天模型；复用 `GPTSecretMoonshot`（回退 `GPTSecret`）。 |
-| `SEARCH_FALLBACK_MODEL` | “查一下”备用 | 默认 `deepseek-flash`；Kimi不可用时走DeepSeek profile和本地搜索编排，沿用DeepSeek密钥、地址及WEB_SEARCH配置。 |
+| `DEEPSEEK_WEB_MODEL`、`DEEPSEEK_WEB_URL` | DeepSeek profile | 默认 `deepseek-flash`、`https://api.deepseek.com`；“查一下”固定覆盖模型为 `deepseek-flash`，模型请求沿用此URL；搜索始终使用官方固定URL，不使用旧搜索endpoint。每日新闻模型独立。 |
+| `KIMI_SEARCH_MODEL`、`KIMI_SEARCH_URL`、`SEARCH_FALLBACK_MODEL` | 历史配置 | 保留兼容，2026-10-17起“查一下”不再读取，不会触发Kimi或其他搜索回退。 |
 | `ORCAROUTER_API_KEY`、`ORCAROUTER_API_URL`、`ORCAROUTER_MODEL` | `toogle/llm_adapter.py` | OrcaRouter OpenAI-compatible key、endpoint（默认 `https://api.orcarouter.ai/v1`）和模型；默认 `z-ai/glm-5.3-flash`。key 仅保存在本机 `.env`。 |
 | `LLM_DEFAULT_PROVIDER` | `plugins/gpt.py` / `toogle/llm_adapter.py` | 通用 `.gpt`、图片解牌、remake、审查调用的默认 profile；可选 `moonshot`、`orcarouter`，默认 `moonshot`；每日新闻独立使用DeepSeek。 |
 
@@ -104,8 +103,8 @@ API 的 nginx location 片段安装到 `/etc/nginx/conf.d/tooglebot-api-location
 
 ## 外部服务配置
 
-- GPT：`GPTSecret`、`GPTModel`、`GPTModelLarge`、`GPTUrl`；“查一下”使用
-  `GPTSecretMoonshot`（回退到 `GPTSecret`）以及 `KIMI_SEARCH_MODEL`/`KIMI_SEARCH_URL`。
+- GPT：`GPTSecret`、`GPTModel`、`GPTModelLarge`、`GPTUrl`；“查一下”的模型和搜索
+  均复用 `GPTSecretDeepseek`（兼容回退到 `GPTSecret`），不需要新增搜索密钥。
 - 所有模型 HTTP 请求统一由 `toogle/llm_adapter.py` 处理。下游通过 `provider=deepseek`、
   `provider=moonshot` 或 `provider=orcarouter` 选择 profile，统一使用 chat、stream、
   completion 和 tool-loop 接口；tool-loop 同时兼容标准 `tool_calls` 和部分模型返回的 DSML
@@ -113,7 +112,7 @@ API 的 nginx location 片段安装到 `/etc/nginx/conf.d/tooglebot-api-location
   会降级为工具错误并继续基于搜索结果作答。OrcaRouter 默认 endpoint 为 `https://api.orcarouter.ai/v1`，
   模型为 `z-ai/glm-5.3-flash`；2026-09-01 `/v1/models` 探针确认该模型可用，尚未执行真实生成验收。
   通用 `.gpt`/图片/remake/审查 facade 使用 `LLM_DEFAULT_PROVIDER`（默认 `moonshot`），
-  修改该 key 即可在 Moonshot 与 OrcaRouter 间切换；“查一下”固定使用独立Moonshot搜索通道。
+  修改该 key 即可在 Moonshot 与 OrcaRouter 间切换；“查一下”固定使用DeepSeek搜索通道。
 - NovelAI：`NovelAISecret`。
 - 豆包：`DOUBAO_API_KEY`、`DOUBAO_IMAGE_MODEL`、`DOUBAO_VIDEO_MODEL`。两个模型 key 在
   `configs.CONFIG_DEFAULTS` 中有当前默认值，可由 `.env` 覆盖；插件内不再写死模型名。
@@ -138,17 +137,22 @@ AutoDL 容器实例 Pro API 管理实例和私有镜像；所有命令同时受 
 还需要显式 `CONFIRM` 参数。接口依据官方文档（最后核对：2026-08-20）；GET 状态/详情
 使用 `instance_uuid` 查询参数以兼容当前 API 行为。
 
-在线搜索由 `tools/web_search.py` 提供，不依赖 NapCat 或消息模型。`search(query)` 是同步
-入口，`asearch(query)` 使用线程 offload；旧DeepSeek搜索辅助函数通过标准function tool
-调用该搜索，再把 `SearchResponse.as_dict()` 作为 `role=tool` 结果回传模型。“查一下”当前不走此路径。
-二者都返回含 title、url、snippet、source 的 `SearchResponse`，而不是暴露外部服务的原始 schema。
-默认 SerpApi Google Search API 返回结构化 `organic_results`，避免网页验证码和 HTML
+在线搜索由 `tools/web_search.py` 提供，不依赖 NapCat 或消息模型。“查一下”使用线程
+offload 执行 `get_web_search()`，标准function tool固定调用 `search_deepseek()`，请求
+`POST https://api.deepseek.com/v1/tools/search`，以同一DeepSeek密钥作Bearer鉴权。
+query在本地校验1～128个字符；count默认10、上限50，`need_content=false`，官方长摘要
+summary优先归一为snippet，site_name/date映射为source/published。空结果允许继续查询，
+但不算成功证据；错误不会回退到其他API，也不会读写SerpApi额度状态。
+官方接口最后核对：2026-10-17，[Search文档](https://api-docs.deepseek.com/zh-cn/api/search/)。
+
+旧 `search(query)` / `asearch(query)` 仅保留兼容，后者使用线程offload；均返回含
+title、url、snippet、source的 `SearchResponse`。以下为旧入口行为，不用于“查一下”：
+SerpApi Google Search API返回结构化 `organic_results`，避免网页验证码和 HTML
 解析；SerpApi 失败自动切换免费 DuckDuckGo Instant Answer API，后者失败再切 360，也可
 配置自建 JSON/SearXNG endpoint。SerpApi 返回 HTTP 429 且错误正文表明账号搜索额度已耗尽
 时，临时限流会在进程内熔断该 provider（默认 86400 秒）；明确的月度额度耗尽会写入
 `data/serpapi_quota.json`，直到下月 1 日前跨重启跳过 SerpApi，后续请求直接从 DuckDuckGo/360
-开始，避免搜索请求重复触发已知额度错误。旧DeepSeek function tool决定搜索query，
-保留该辅助函数兼容调用；2026-09-18起“查一下”独立使用Kimi Formula搜索。
+开始，避免搜索请求重复触发已知额度错误。旧provider实现保留，但“查一下”不再调用。
 SerpApi 协议于 2026-09-03 按官方错误码文档复核；额度耗尽降级使用脱敏 HTTP 429 fixture
 验证，未调用真实密钥或付费服务。
 

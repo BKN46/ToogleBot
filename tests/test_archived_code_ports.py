@@ -82,7 +82,7 @@ class ArchivedFixTest(unittest.IsolatedAsyncioTestCase):
         for error in (ReadTimeout("timeout"), RuntimeError("service failed")):
             with self.subTest(error=type(error).__name__), patch.object(
                 WhatIs,
-                "search_with_fallback",
+                "search",
                 side_effect=error,
             ):
                 result = await plugin.ret(message)
@@ -118,7 +118,7 @@ class ArchivedFixTest(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(result.no_charge)
             self.assertTrue(result.no_interval)
 
-    async def test_what_is_fallback_failures_do_not_charge(self):
+    async def test_what_is_compact_retry_failures_do_not_charge(self):
         plugin = WhatIs()
         message = make_pack("查一下 fixture")
         for fallback_error in (
@@ -127,7 +127,7 @@ class ArchivedFixTest(unittest.IsolatedAsyncioTestCase):
         ):
             with self.subTest(error=type(fallback_error).__name__), patch.object(
                 WhatIs,
-                "search_with_fallback",
+                "search",
                 side_effect=[
                     RuntimeError("model token limit exceeded"),
                     fallback_error,

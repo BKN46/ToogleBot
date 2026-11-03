@@ -241,12 +241,45 @@ API 安全要求：
 
 ## 图片、视频和识别
 
+当前实现（2026-10-17）：“查一下”直接使用 `deepseek-flash`，复用DeepSeek模型
+profile和现有密钥，搜索固定走 `POST https://api.deepseek.com/v1/tools/search`。
+`get_web_search()` 的标准function tool调用 `tools.web_search.search_deepseek()`，
+把官方长摘要、站点名称和日期归一后作为 `role=tool` 回传；结果标注 `[通过DeepSeek搜索]`。
+不调用Kimi、SerpApi、DuckDuckGo、360或自建搜索，失败直接免扣费/冷却，不做跨源回退。
+原 `KIMI_SEARCH_*`、`SEARCH_FALLBACK_MODEL` 和旧provider配置不影响此命令。
+保留可选的公开页面 `open_url` 核验；页面读取失败可基于已有搜索证据回答。
+严格模式必须取得非空搜索证据、`finish_reason=stop`的完整答案，最多10次模型请求和
+10次工具调用（含页面读取）；最后一次请求/工具额度用完后明确要求收尾，等待/计划
+话术继续请求，耗尽或截断时报错，不将过程回复作为付费结果。插件总超时仍480秒。
+`.gpt`、每日新闻路由保持原配置。Kimi方法和旧通用搜索入口仅保留兼容，不在此命令链路中。
+官方接口最后核对2026-10-17：[Search](https://api-docs.deepseek.com/zh-cn/api/search/)、
+[搜索指南](https://api-docs.deepseek.com/zh-cn/guides/search/)、
+[模型名称](https://api-docs.deepseek.com/zh-cn/)。
+离线验收：`test_deepseek_search_api.py` 覆盖官方schema/鉴权/参数边界、群聊与私聊
+完整链路、旧配置不影响路由、HTTP失败不回退、空结果/无证据拒绝、过程回复和截断、
+10次调用/请求上限；`test_deepseek_web_search.py`、`test_search_fallback.py`验证回复
+引用、错误免扣费和停用回退。2026-10-17 Python 3.12环境锁定依赖同步、语法编译、
+搜索相关41项和全量234项测试通过；既有无关模块仍报告文件未关闭ResourceWarning。
+未调用真实付费模型/搜索，未发送QQ消息。
+同日18:06（Asia/Shanghai）按用户要求重启 `tooglebot.service`；systemd为active/running，
+registry加载normal=96、active=2、scheduled=6、disabled=3、failed=0，4个worker启动，
+日志确认NapCat WebSocket connected。此为启动验收，不代表真实付费搜索/回答已验收。
+
+以下为历史实现与验收记录，已由上述当前链路替代：
+
 2026-09-18 “查一下”独立改用 `KIMI_SEARCH_MODEL=kimi-k2.7-code` 和
 `KIMI_SEARCH_URL=https://api.moonshot.cn/v1`，凭证使用Moonshot profile。
 `LLMAdapter.kimi_search()` 获取 `moonshot/web-search:latest` Formula工具声明，
 模型返回标准tool call后原样提交name/arguments到fibers，验证succeeded及output/
-encrypted_output再回传模型，保留完整assistant（含reasoning_content）。最多4轮模型、
-3次搜索；未搜索或回答截断时明确失败，不收费。K2.7不能关闭思考，因此该入口不传
+encrypted_output再回传模型，保留完整assistant（含reasoning_content）。2026-10-12起最多
+10次模型请求、10次搜索调用（同轮多个tool call分别计数，最终回答与续问也计入模型
+请求上限）；最后一次模型请求或搜索额度用完时禁用工具并追加明确的最终回答指令。
+`finish_reason=stop`只表示本次生成结束：以“请稍等”等等待话术或第一人称继续核实计划
+收尾的文本会保留上下文继续请求，不直接附搜索成功标注；重复过程回复耗尽10次请求、
+未搜索或回答截断时明确失败，沿用备用链路，两条链路均失败才免扣费/冷却。
+此文本判断是针对常见过程话术的启发式检查，不保证识别所有未完成回答；明确说明
+信息未公开/无法核实的最终答复可以正常返回。插件总超时仍为480秒，次数上限不保证
+慢请求能全部执行完。K2.7不能关闭思考，因此该入口不传
 `thinking=disabled`，也不复用旧DeepSeek工具循环。独立Session直连，超时有界。
 其他 `.gpt`、每日新闻及旧 `get_web_search()` 辅助函数保持原路由。
 只读实测模型列表包含K2.7，Formula工具声明返回web_search；212项单测通过，
@@ -262,23 +295,30 @@ SerpApi→DuckDuckGo→360，沿用已配置源及额度熔断；只有成功搜
 Kimi成功不调用备用，两条链路都失败免扣费/冷却；回复沿用实际搜索源标注。
 `SEARCH_FALLBACK_MODEL` 默认deepseek-flash，仅控制此备用链路，不改每日新闻和其他模型。
 未发送QQ测试消息，未执行付费搜索/生成实测。
-官方接口最后核对2026-09-18：[K2.7](https://platform.kimi.com/docs/guide/kimi-k2-7-code-quickstart)、
+2026-10-12离线验收：`test_kimi_search.py`覆盖用户报告的报价查询过程回复后继续搜索、
+10次搜索/请求边界、批量tool结果对应、额度用完后的收尾与过程回复修复、重复过程回复
+拒绝、有效不确定结论和截断拒绝；`test_search_fallback.py`覆盖未完成回答触发备用。
+Python 3.12锁定环境依赖同步、语法编译和全量225项单测通过；已有无关模块仍报告
+未关闭文件ResourceWarning，不计入本次功能修复。
+未调用真实付费模型/搜索，也未发送QQ消息，历史Kimi上游故障仍未恢复实测。
+官方接口最后核对2026-10-12：[K2.7](https://platform.kimi.com/docs/guide/kimi-k2-7-code-quickstart)、
 [Formula工具](https://platform.kimi.com/docs/guide/use-official-tools)。
 
 `toogle/llm_adapter.py` 是统一 LLM 适配层。DeepSeek、Moonshot、OrcaRouter 均通过同一组
 `chat()`、`chat_stream()`、`completion()`、`stream_logic_chain()` 和 `tool_loop()` 方法访问；
 业务插件不应直接调用模型 HTTP endpoint，切换 provider 只需修改 profile 参数或根配置。
-旧DeepSeek工具适配层会将标准 `tool_calls` 与 DSML 文本形式统一为 assistant/tool 消息，支持
+DeepSeek工具适配层会将标准 `tool_calls` 与 DSML 文本形式统一为 assistant/tool 消息，支持
 `web_search`/`open_url` 调用；达到搜索轮次上限后追加明确的最终回答指令，页面核验失败
 也不会丢弃已有搜索证据，避免协议标记或过程性半截文本泄露到聊天正文。
 
-`tools/web_search.py` 是平台无关的在线搜索契约。它提供同步 `search()` 和不阻塞 event
+`tools/web_search.py` 是平台无关的在线搜索契约。当前“查一下”仅用 `search_deepseek()`；
+以下为保留的旧入口行为：它提供同步 `search()` 和不阻塞 event
 loop 的 `asearch()`，将 DuckDuckGo 或 SearXNG-like JSON 响应归一为 `SearchResponse` /
 `SearchResult`；默认使用 SerpApi Google 结构化 provider，失败自动切 DuckDuckGo，再失败
 切 360，其他 provider 仍可配置。SerpApi 返回 `organic_results`，不依赖网页验证码或
 HTML 页面结构。
-旧 `get_web_search()` 通过 DeepSeek 标准 `function` tool 调用此契约，并将工具结果
-回传模型完成多轮链路；配置和密钥规则见 06，解析及两轮 tool-chain 均有 mock 测试，
+`get_web_search()` 现已改为固定调用DeepSeek官方搜索；配置和密钥规则见06。
+旧provider解析及两轮 tool-chain 均有 mock 测试，
 2026-09-01 已完成本机 SerpApi 查询、DeepSeek tool-chain 和 provider fallback 验收。
 
 `toogle/utils.py` 提供 `text2img()`、`list2img()`、`draw_rich_text()`、

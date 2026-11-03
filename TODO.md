@@ -1,6 +1,6 @@
 # Mirai -> NapCat 迁移 TODO
 
-更新时间：2026-09-18
+更新时间：2026-10-17
 
 基线：当前工作树为 NapCat 迁移主线；旧行为参考
 `origin/archived-mirai2-version`。本清单按阻断程度排序，`[x]` 只表示有源码或本地验证
@@ -8,10 +8,27 @@
 
 ## P0：阻断构建或核心收发
 
+- [x] 2026-10-17 “查一下”切换为 `deepseek-flash` + DeepSeek官方Search API
+  `/v1/tools/search`，停用Kimi及SerpApi/DuckDuckGo/360/自建搜索回退；复用DeepSeek密钥，
+  旧搜索配置不影响此命令。保留非空证据/完整回答才结算、过程回复续查、10次模型请求/
+  工具调用上限和失败免扣费。离线验收：
+  `uv run python -W error::ResourceWarning -m unittest discover -s tests -p 'test_*search*.py'`
+  通过41项fixture/mock测试；`uv sync --frozen`、语法编译和全量234项单测通过。
+  既有无关模块仍报告文件未关闭ResourceWarning；同日按用户要求重启服务，active/running、
+  registry failed=0、WebSocket connected。未执行真实付费API或QQ发送，详见06/07。
+
+- [x] 2026-10-12 修复“查一下”把 `stop` 的“请稍等”过程回复当作最终答案：保留上下文
+  继续查询，搜索用完/最后请求明确要求基于证据收尾；模型请求与搜索调用均放宽至最多
+  10次，重复过程回复耗尽请求或截断时走已有备用。离线验收：
+  `uv run python -W error::ResourceWarning -m unittest discover -s tests -p 'test_kimi_search.py'`
+  通过11项fixture/mock测试，备用回归见 `test_search_fallback.py`；锁定依赖同步、语法编译
+  和全量225项单测通过，已有无关模块仍报告未关闭文件ResourceWarning；未实测付费API或QQ。
+
 - [ ] 2026-09-19 “查一下”外部阻断：Kimi Formula搜索执行HTTP500（上游401），模型
   和声明接口HTTP200；已实测定位并补阶段日志/免扣费提示，搜索恢复尚未验证，详见07。
   已增加自动回退DeepSeek Flash与本地搜索编排，mock覆盖Kimi成功、失败回退、无搜索
-  证据拒绝及双失败免扣费；Kimi上游问题本身仍未恢复验证。
+  证据拒绝及双失败免扣费；Kimi上游问题本身仍未恢复验证。2026-10-17此链路已停用，
+  不再阻断当前“查一下”，保留此项仅供未来恢复Kimi时复核。
 
 - [x] 2026-09-18 “查一下”单独恢复Kimi K2.7（官方ID `kimi-k2.7-code`）与Kimi
   Formula搜索；保留thinking/tool上下文，不影响 `.gpt`、每日新闻和旧DeepSeek辅助函数。

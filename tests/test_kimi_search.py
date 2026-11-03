@@ -6,15 +6,33 @@ from configs import config
 from toogle.llm_adapter import KimiSearchUnavailable, LLMAdapter, LLMError
 
 
+TOOLS = {"tools": [{"type": "function", "function": {"name": "web_search"}}]}
+EVIDENCE = {"status": "succeeded", "context": {"encrypted_output": "encrypted fixture"}}
+PROGRESS = "我需要进一步确认650 km极地/太阳同步轨道的具体报价，以及中国商业发射的最新价格区间。请稍等。"
+
+
+def tool_turn(*call_ids):
+    return {"choices": [{"finish_reason": "tool_calls", "message": {
+        "role": "assistant", "content": "我会继续查询。", "reasoning_content": "reasoning fixture",
+        "tool_calls": [{"id": call_id, "type": "function", "function": {
+            "name": "web_search", "arguments": '{"query":"fixture"}'}} for call_id in call_ids],
+    }}]}
+
+
+def answer_turn(content, finish_reason="stop"):
+    return {"choices": [{"message": {"role": "assistant", "content": content},
+                          "finish_reason": finish_reason}]}
+
+
 class KimiSearchTests(unittest.TestCase):
-    def run_search(self, payloads):
+    def run_search(self, payloads, seen=None):
         session = MagicMock()
-        seen = []
+        seen = [] if seen is None else seen
         def request(method, url, **kwargs):
             seen.append((method, url, copy.deepcopy(kwargs)))
             response = MagicMock()
             response.__enter__.return_value = response
-            payload = payloads.pop(0)
+            payload = copy.deepcopy(payloads.pop(0))
             response.status_code = payload.pop("_http_status", 200)
             response.json.return_value = payload
             return response
@@ -46,7 +64,75 @@ class KimiSearchTests(unittest.TestCase):
         with self.assertRaises(LLMError):
             self.run_search([{"tools": [{"function": {"name": "web_search"}}]}] + [
                 {"choices": [{"message": {"role": "assistant", "content": "memory answer"}, "finish_reason": "stop"}]}
-            ] * 4)
+            ] * 10)
+
+    def test_reported_progress_reply_continues_search_with_context(self):
+        progress = answer_turn(PROGRESS)
+        result, seen = self.run_search([
+            TOOLS, tool_turn("s1"), EVIDENCE, progress,
+            tool_turn("s2"), EVIDENCE, answer_turn("fixture final answer"),
+        ])
+        self.assertEqual(result, "fixture final answer\n\n[通过Kimi搜索]")
+        continuation = seen[4][2]["json"]
+        self.assertEqual(continuation["tool_choice"], "auto")
+        self.assertEqual(continuation["messages"][-2], progress["choices"][0]["message"])
+        self.assertEqual(continuation["messages"][-4]["reasoning_content"], "reasoning fixture")
+        self.assertIn("完成查询", continuation["messages"][-1]["content"])
+
+    def test_ten_searches_are_allowed_then_explicitly_finalize(self):
+        call_ids = [f"s{index}" for index in range(10)]
+        result, seen = self.run_search([
+            TOOLS, tool_turn(*call_ids), *([EVIDENCE] * 10), answer_turn("final answer"),
+        ])
+        self.assertIn("final answer", result)
+        self.assertEqual(sum(url.endswith("/fibers") for _, url, _ in seen), 10)
+        final_body = seen[-1][2]["json"]
+        self.assertEqual(final_body["tool_choice"], "none")
+        self.assertIn("完整最终答案", final_body["messages"][-1]["content"])
+        self.assertEqual([message["tool_call_id"] for message in final_body["messages"]
+                          if message["role"] == "tool"], call_ids)
+
+    def test_tenth_model_request_is_reserved_for_final_answer(self):
+        payloads = [TOOLS]
+        for index in range(9):
+            payloads.extend([tool_turn(f"s{index}"), EVIDENCE])
+        payloads.append(answer_turn("final answer"))
+        _, seen = self.run_search(payloads)
+        model_requests = [kwargs["json"] for _, url, kwargs in seen if url.endswith("/chat/completions")]
+        self.assertEqual(len(model_requests), 10)
+        self.assertTrue(all(body["tool_choice"] == "auto" for body in model_requests[:-1]))
+        self.assertEqual(model_requests[-1]["tool_choice"], "none")
+        self.assertIn("完整最终答案", model_requests[-1]["messages"][-1]["content"])
+
+    def test_progress_after_search_budget_can_still_be_repaired(self):
+        result, seen = self.run_search([
+            TOOLS, tool_turn(*(f"s{index}" for index in range(10))), *([EVIDENCE] * 10),
+            answer_turn(PROGRESS), answer_turn("无法确认具体报价；已查到的依据为fixture。"),
+        ])
+        self.assertNotIn(PROGRESS, result)
+        self.assertEqual(seen[-1][2]["json"]["tool_choice"], "none")
+
+    def test_repeated_progress_fails_within_ten_model_requests(self):
+        seen = []
+        with self.assertRaisesRegex(LLMError, "progress message"):
+            self.run_search([TOOLS, tool_turn("s1"), EVIDENCE] + [answer_turn(PROGRESS)] * 9, seen)
+        self.assertEqual(sum(url.endswith("/chat/completions") for _, url, _ in seen), 10)
+
+    def test_factual_uncertainty_is_a_valid_final_answer(self):
+        answer = "公开资料未披露650 km太阳同步轨道报价，需要进一步确认。"
+        result, seen = self.run_search([TOOLS, tool_turn("s1"), EVIDENCE, answer_turn(answer)])
+        self.assertEqual(result, answer + "\n\n[通过Kimi搜索]")
+        self.assertEqual(len(seen), 4)
+
+    def test_truncated_answer_cannot_return_success(self):
+        with self.assertRaisesRegex(LLMError, "answer incomplete"):
+            self.run_search([TOOLS, tool_turn("s1"), EVIDENCE, answer_turn("partial", "length")])
+
+    def test_over_budget_batch_is_rejected_before_any_search_executes(self):
+        seen = []
+        with self.assertRaisesRegex(LLMError, "budget exceeded"):
+            self.run_search([TOOLS, tool_turn(*(f"s{index}" for index in range(11)))], seen)
+        self.assertFalse(any(url.endswith("/fibers") for _, url, _ in seen))
 
     def test_formula_server_failure_is_identified_as_search_unavailable(self):
         with self.assertRaises(KimiSearchUnavailable):

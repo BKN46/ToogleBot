@@ -442,6 +442,7 @@ class SerpApiProvider:
 def provider_label(provider: str) -> str:
     """Human-readable provider name for message attribution."""
     return {
+        "deepseek": "DeepSeek",
         "serpapi-google": "SerpApi Google",
         "duckduckgo": "DuckDuckGo",
         "qihoo360": "360",
@@ -549,6 +550,48 @@ def _request_get(url: str, *, proxies: Mapping[str, str] | None = None, **kwargs
             return requests.get(url, proxies=None, **kwargs)
         except requests.exceptions.RequestException as direct_error:
             raise direct_error from proxy_error
+
+
+def search_deepseek(query: str, max_results: int | None = None, *, api_key: str | None = None) -> SearchResponse:
+    """Use only DeepSeek's official Search API, regardless of legacy providers."""
+    query = query.strip()
+    if not query or len(query) > 128:
+        raise SearchResponseError("DeepSeek search query must contain 1 to 128 characters")
+    key = str(api_key or configs.config.get("GPTSecretDeepseek") or configs.config.get("GPTSecret") or "").strip()
+    if not key:
+        raise SearchConfigurationError("DeepSeek API key is not configured")
+    configured_limit = _positive_int(configs.config.get("WEB_SEARCH_MAX_RESULTS", 10), 10, maximum=50)
+    limit = configured_limit if max_results is None else _positive_int(max_results, configured_limit, maximum=50)
+    started = time.monotonic()
+    # Keep the credential and endpoint independent of the old search configuration.
+    with requests.Session() as session:
+        session.trust_env = False
+        with session.post(
+            "https://api.deepseek.com/v1/tools/search",
+            headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+            json={"query": query, "count": limit, "need_content": False},
+            timeout=(5, _timeout()),
+        ) as response:
+            response.raise_for_status()
+            try:
+                payload = response.json()
+            except ValueError as exc:
+                raise SearchResponseError("DeepSeek search returned invalid JSON") from exc
+    if not isinstance(payload, Mapping) or not isinstance(payload.get("results"), list):
+        raise SearchResponseError("DeepSeek search results must be an array")
+    results = []
+    for item in payload["results"][:limit]:
+        if not isinstance(item, Mapping):
+            raise SearchResponseError("DeepSeek search result must be an object")
+        result = _result_from_mapping({
+            **item,
+            "snippet": item.get("summary") or item.get("snippet") or "",
+            "source": item.get("site_name") or "",
+        })
+        if result is None:
+            raise SearchResponseError("DeepSeek search result has no usable URL")
+        results.append(result)
+    return SearchResponse(query, tuple(results), "deepseek", max(0, int((time.monotonic() - started) * 1000)))
 
 
 def search(query: str, max_results: int | None = None) -> SearchResponse:

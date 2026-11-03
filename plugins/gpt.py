@@ -14,11 +14,10 @@ from toogle.message_handler import MESSAGE_HISTORY, MessageHandler, MessagePack,
 from toogle.adapter import bot_send_message
 from toogle.logger import logger
 from tools import web_search
-from toogle.llm_adapter import KimiSearchUnavailable, LLMError, llm
+from toogle.llm_adapter import llm
 
 
-# DeepSeek's current official model catalog exposes the vision preview as ``-exp``.
-DEEPSEEK_WEB_MODEL = "deepseek-v4-flash-vision-exp"
+DEEPSEEK_WEB_MODEL = "deepseek-flash"
 DEEPSEEK_WEB_URL = "https://api.deepseek.com"
 
 
@@ -259,7 +258,7 @@ class GetOpenAIConversation(MessageHandler):
                 "description": "Search the web and return current, sourced results.",
                 "parameters": {
                     "type": "object",
-                    "properties": {"query": {"type": "string", "description": "Search query"}},
+                    "properties": {"query": {"type": "string", "description": "Search query (1-128 characters)", "minLength": 1, "maxLength": 128}},
                     "required": ["query"],
                     "additionalProperties": False,
                 },
@@ -278,15 +277,15 @@ class GetOpenAIConversation(MessageHandler):
             },
         }]
         api_key = api_key or config.get("GPTSecretDeepseek") or config.get("GPTSecret")
-        messages = llm._messages(text, settings)
+        messages = llm._messages(text, settings + "\n请先使用联网搜索核实再回答并注明依据，不要只回复计划或请稍等；无法核实的信息请明确说明。")
         def execute(name: str, arguments: dict[str, Any]):
             value = arguments.get("query" if name == "web_search" else "url") if isinstance(arguments, dict) else None
             if name not in {"web_search", "open_url"} or not isinstance(value, str) or not value.strip():
                 return {"error": "invalid tool arguments"}, ""
             try:
                 if name == "web_search":
-                    result = web_search.search(value)
-                    return result.as_dict(), web_search.provider_label(result.provider)
+                    result = web_search.search_deepseek(value, api_key=api_key)
+                    return result.as_dict(), web_search.provider_label(result.provider) if result.results else ""
             except (web_search.WebSearchError, requests.exceptions.RequestException) as exc:
                 logger.warning("web search tool failed: error_type=%s", type(exc).__name__)
                 raise SearchExecutionError("web search failed") from exc
@@ -306,10 +305,11 @@ class GetOpenAIConversation(MessageHandler):
             model=model,
             url=url,
             api_key=api_key,
-            max_rounds=3,
+            max_rounds=10 if require_search else 3,
+            require_search=require_search,
         )
         if require_search and (not providers or not content.strip()):
-            raise SearchExecutionError("fallback did not produce a sourced answer")
+            raise SearchExecutionError("search did not produce a sourced answer")
         if include_source and providers and content:
             content = f"{content.rstrip()}\n\n[通过{'、'.join(dict.fromkeys(providers))}搜索]"
         return content
@@ -402,21 +402,15 @@ class WhatIs(MessageHandler):
     timeout = 480
 
     @staticmethod
-    def search_with_fallback(text, **kwargs):
-        try:
-            return llm.kimi_search(text, **kwargs)
-        except (KimiSearchUnavailable, LLMError, requests.RequestException) as exc:
-            logger.warning("Kimi search unavailable; using local search with DeepSeek: error_type=%s",
-                           type(exc).__name__)
-        result = GetOpenAIConversation.get_web_search(
-            text, model=config["SEARCH_FALLBACK_MODEL"],
-            settings=kwargs.get("settings", ""),
+    def search(text, *, settings=""):
+        return GetOpenAIConversation.get_web_search(
+            text, model=DEEPSEEK_WEB_MODEL,
+            settings=settings,
             url=config.get("DEEPSEEK_WEB_URL", DEEPSEEK_WEB_URL),
             api_key=config.get("GPTSecretDeepseek") or config.get("GPTSecret"),
             include_source=True,
             require_search=True,
         )
-        return result
 
     async def ret(self, message: MessagePack) -> Optional[MessageChain]:
         content = message.message.asDisplay()
@@ -428,18 +422,11 @@ class WhatIs(MessageHandler):
             )
 
         try:
-            res = await asyncio.to_thread(self.search_with_fallback,
+            res = await asyncio.to_thread(self.search,
                 GPTContext.parse_msg_chain(message.message),
-                model=config["KIMI_SEARCH_MODEL"],
                 settings="请解答以下内容，结果精简在500字以内，不要使用markdown格式",
-                url=config["KIMI_SEARCH_URL"],
             )
             return MessageChain.plain(res, quote=message.as_quote())
-        except KimiSearchUnavailable:
-            return MessageChain.plain(
-                "Kimi官方搜索工具暂不可用，请稍后重试。",
-                quote=message.as_quote(), no_interval=True, no_charge=True,
-            )
         except SearchExecutionError:
             return MessageChain.plain(
                 "搜索服务出错，请稍后再试",
@@ -458,11 +445,9 @@ class WhatIs(MessageHandler):
             if "model token limit exceeded" in repr(e):
                 bot_send_message(message, MessageChain.plain("请求模型token数量超限，正在精简输入重试...", quote=message.as_quote()))
                 try:
-                    res = await asyncio.to_thread(self.search_with_fallback,
+                    res = await asyncio.to_thread(self.search,
                         content,
-                        model=config["KIMI_SEARCH_MODEL"],
                         settings="请解答以下内容，结果精简在500字以内",
-                        url=config["KIMI_SEARCH_URL"],
                     )
                     return MessageChain.plain(res, quote=message.as_quote())
                 except SearchExecutionError:

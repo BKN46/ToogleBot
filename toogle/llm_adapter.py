@@ -40,6 +40,12 @@ _DSML_PARAMETER_RE = re.compile(
     r"(?P<value>.*?)</(?:｜｜DSML｜｜)?parameter>",
     re.DOTALL,
 )
+_KIMI_SEARCH_PROGRESS_RE = re.compile(
+    r"(?:请(?:稍等|稍候|耐心等待)|稍等(?:一下|片刻)|稍后(?:为你|为您)?(?:确认|回复|答复)"
+    r"|(?:我(?:还)?(?:需要|将|会)|让我)[^。！？\n]{0,160}(?:搜索|查询|核实|确认|查证)[^。！？\n]*"
+    r"|please\s+wait|let\s+me\s+(?:search|check|verify)[^.!?\n]*)[。！？.!?\s]*$",
+    re.IGNORECASE,
+)
 
 
 def parse_dsml_tool_calls(content: str) -> tuple[list[dict[str, Any]], str]:
@@ -180,12 +186,26 @@ class LLMAdapter:
             if not isinstance(tools, list) or not tools:
                 raise LLMError("Kimi search tools unavailable")
             allowed = {tool["function"]["name"] for tool in tools}
-            messages = self._messages(text, settings + "\n请先使用联网搜索核实信息，再回答并注明依据。")
+            messages = self._messages(text, settings + (
+                "\n请先使用联网搜索核实信息，再回答并注明依据。需要继续核实时请实际调用搜索工具，"
+                "不要只回复搜索计划或请稍等；无法核实的内容请在最终答案中明确说明，不要编造。"
+            ))
+            max_rounds = 10
+            max_searches = 10
             searches = 0
-            for round_number in range(4):
+            final_requested = False
+            for round_number in range(max_rounds):
+                finalizing = searches >= max_searches or round_number == max_rounds - 1
+                if finalizing and searches and not final_requested:
+                    messages.append({
+                        "role": "user",
+                        "content": "搜索次数已达上限或已进入最后一次模型请求。请基于已有搜索证据直接给出完整最终答案并注明依据。"
+                                   "未查到或不能确认的信息请明确说明，不要编造，不要描述下一步计划或说请稍等。",
+                    })
+                    final_requested = True
                 result = call("POST", "/chat/completions", {
                     "model": profile.model, "messages": messages, "tools": tools,
-                    "tool_choice": "none" if searches >= 3 or round_number == 3 else "auto",
+                    "tool_choice": "none" if finalizing else "auto",
                     "max_tokens": 8000,
                 })
                 choice = result["choices"][0]
@@ -196,12 +216,24 @@ class LLMAdapter:
                     if choice.get("finish_reason") != "stop" or not content.strip():
                         raise LLMError("Kimi search answer incomplete")
                     if not searches:
-                        if round_number == 3:
+                        if round_number == max_rounds - 1:
                             break
                         messages.extend([message, {"role": "user", "content": "请先调用联网搜索工具核实，不要仅凭记忆回答。"}])
                         continue
+                    # A protocol stop can still be a search plan rather than an answer.
+                    if _KIMI_SEARCH_PROGRESS_RE.search(content.strip()):
+                        if round_number == max_rounds - 1:
+                            raise LLMError("Kimi search returned only a progress message")
+                        messages.extend([message, {
+                            "role": "user",
+                            "content": "上一条只说明了后续计划，没有完成回答。请继续完成查询并给出最终答案和依据。"
+                                       "如果无法继续核实，请基于已有证据回答并说明缺失信息，不要再说请稍等。",
+                        }])
+                        continue
                     return content.strip() + "\n\n[通过Kimi搜索]"
-                if searches + len(calls) > 3 or round_number == 3:
+                if choice.get("finish_reason") == "length":
+                    raise LLMError("Kimi search tool call incomplete")
+                if searches + len(calls) > max_searches or finalizing:
                     raise LLMError("Kimi search tool budget exceeded")
                 # Preserve reasoning_content as required by K2.7 thinking/tool turns.
                 messages.append(message)
@@ -310,15 +342,19 @@ class LLMAdapter:
         result = self.chat_stream(text, provider=provider, model=model, url=url, api_key=api_key, settings=settings, other_history=other_history, max_tokens=max_tokens, max_time=max_time, tools=tools)
         yield {"yield": result, "reason": "", "res": result, "usage": 0, "error": "", "use_time": 0}
 
-    def tool_loop(self, messages: list[dict[str, Any]], tools: list[dict[str, Any]], executor: Callable[[str, dict[str, Any]], Any], *, provider: str = "deepseek", model: str = "", url: str = "", api_key: str = "", max_rounds: int = 3) -> tuple[str, list[str]]:
+    def tool_loop(self, messages: list[dict[str, Any]], tools: list[dict[str, Any]], executor: Callable[[str, dict[str, Any]], Any], *, provider: str = "deepseek", model: str = "", url: str = "", api_key: str = "", max_rounds: int = 3, require_search: bool = False) -> tuple[str, list[str]]:
         profile = get_provider(provider, model=model, url=url, api_key=api_key)
         used: list[str] = []
         max_tool_rounds = max(1, max_rounds - 1)
         tool_rounds = 0
+        tool_calls = 0
         final_requested = False
-        for round_number in range(max_rounds + 2):
+        for round_number in range(max_rounds if require_search else max_rounds + 2):
+            if require_search and (round_number == max_rounds - 1 or tool_calls >= 10) and not final_requested:
+                final_requested = True
+                messages.append({"role": "user", "content": "请基于已有搜索证据给出完整最终答案，不要继续调用工具或说请稍等；无法核实的内容请明确说明。"})
             tools_enabled = tool_rounds < max_tool_rounds and not final_requested
-            body: dict[str, Any] = {"model": profile.model, "messages": messages, "thinking": {"type": "disabled"}, "max_tokens": 1000}
+            body: dict[str, Any] = {"model": profile.model, "messages": messages, "thinking": {"type": "disabled"}, "max_tokens": 8000 if require_search else 1000}
             if tools_enabled:
                 body["tools"] = tools
                 body["tool_choice"] = "auto"
@@ -338,7 +374,21 @@ class LLMAdapter:
                 structured_calls = dsml_calls
                 assistant = {"role": "assistant", "content": cleaned_content or None, "tool_calls": structured_calls}
             if not structured_calls:
-                return (cleaned_content or assistant.get("content") or ""), used
+                content = cleaned_content or assistant.get("content") or ""
+                if require_search:
+                    if choice.get("finish_reason") != "stop" or not content.strip():
+                        raise LLMError("LLM search answer incomplete")
+                    if not used:
+                        if round_number == max_rounds - 1:
+                            return "", used
+                        messages.extend([assistant, {"role": "user", "content": "请先调用联网搜索核实，不要仅凭记忆回答。"}])
+                        continue
+                    if _KIMI_SEARCH_PROGRESS_RE.search(content.strip()):
+                        messages.extend([assistant, {"role": "user", "content": "请完成查询并给出最终答案，不要只回复计划或请稍等。"}])
+                        continue
+                return content, used
+            if require_search and (not tools_enabled or tool_calls + len(structured_calls) > 10):
+                raise LLMError("LLM search tool budget exceeded")
             messages.append(assistant)
             for call in structured_calls:
                 function = call.get("function") or {}
@@ -352,6 +402,7 @@ class LLMAdapter:
                     used.append(label)
                 messages.append({"role": "tool", "tool_call_id": call.get("id", ""), "content": json.dumps(result, ensure_ascii=False)})
             tool_rounds += 1
+            tool_calls += len(structured_calls)
             if tool_rounds >= max_tool_rounds:
                 final_requested = True
                 messages.append({

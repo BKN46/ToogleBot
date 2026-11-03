@@ -43,7 +43,7 @@ class DeepSeekWebSearchChainTest(unittest.TestCase):
         search_result = SearchResponse(
             query="fixture query",
             results=(SearchResult("Fixture", "https://example.com", "A snippet", "fixture"),),
-            provider="json",
+            provider="deepseek",
             took_ms=3,
         )
         captured = []
@@ -54,11 +54,11 @@ class DeepSeekWebSearchChainTest(unittest.TestCase):
 
         with patch.dict(config, {"GPTSecretDeepseek": "fixture-key"}, clear=False), \
                 patch("plugins.gpt.requests.post", side_effect=post_fixture) as post, \
-                patch("plugins.gpt.web_search.search", return_value=search_result) as search:
+                patch("plugins.gpt.web_search.search_deepseek", return_value=search_result) as search:
             result = GetOpenAIConversation.get_web_search("查一下 fixture", include_source=True)
 
-        self.assertEqual(result, "fixture answer\n\n[通过自建搜索搜索]")
-        search.assert_called_once_with("fixture query")
+        self.assertEqual(result, "fixture answer\n\n[通过DeepSeek搜索]")
+        search.assert_called_once_with("fixture query", api_key="fixture-key")
         self.assertEqual(post.call_count, 2)
         first_body = captured[0]["json"]
         self.assertEqual(first_body["model"], DEEPSEEK_WEB_MODEL)
@@ -83,10 +83,11 @@ class DeepSeekWebSearchChainTest(unittest.TestCase):
         )
 
         async def run():
-            with patch.object(llm, "kimi_search", return_value="fixture answer") as search:
+            with patch.object(GetOpenAIConversation, "get_web_search", return_value="fixture answer") as search:
                 result = await WhatIs().ret(message)
                 search.assert_called_once()
-                self.assertEqual(search.call_args.kwargs["model"], "kimi-k2.7-code")
+                self.assertEqual(search.call_args.kwargs["model"], "deepseek-flash")
+                self.assertTrue(search.call_args.kwargs["require_search"])
                 return result
 
         import asyncio
@@ -136,7 +137,7 @@ class DeepSeekWebSearchChainTest(unittest.TestCase):
 
         with patch.dict(config, {"GPTSecretDeepseek": "fixture-key"}, clear=False), \
                 patch("plugins.gpt.requests.post", side_effect=post_fixture), \
-                patch("plugins.gpt.web_search.search", return_value=search_result) as search:
+                patch("plugins.gpt.web_search.search_deepseek", return_value=search_result) as search:
             result = GetOpenAIConversation.get_web_search("查一下 fixture", include_source=True)
 
         self.assertEqual(result, "final answer\n\n[通过fixture搜索]")
@@ -156,7 +157,7 @@ class DeepSeekWebSearchChainTest(unittest.TestCase):
         )
 
         async def run(error):
-            with patch.object(WhatIs, "search_with_fallback", side_effect=error):
+            with patch.object(WhatIs, "search", side_effect=error):
                 return await WhatIs().ret(message)
 
         import asyncio

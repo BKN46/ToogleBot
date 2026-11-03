@@ -114,8 +114,13 @@ uv run python -W error::ResourceWarning -m unittest discover -s tests -p 'test_*
 
 ## 修改外部 API/爬虫
 
-Kimi搜索回归：`uv run python -m unittest discover -s tests -p 'test_kimi_search.py'`，
-mock Formula声明/执行/回答，验证思考上下文保留和无搜索证据不返回付费答案。
+当前“查一下”回归：`uv run python -W error::ResourceWarning -m unittest discover -s tests -p 'test_*search*.py'`，
+验证DeepSeek官方POST鉴权/schema、长摘要回传、群聊/私聊引用、旧配置不影响路由、
+HTTP失败不跨源回退、无证据/过程回复/截断拒绝和10次请求/工具上限。
+`test_search_fallback.py` 现验证已停用Kimi及其他搜索回退，错误免扣费/冷却。
+Kimi兼容方法回归：`uv run python -m unittest discover -s tests -p 'test_kimi_search.py'`，
+mock Formula声明/执行/回答，验证思考上下文保留、无搜索证据不返回付费答案、
+`stop`过程回复继续查询、10次模型请求/10次搜索上限、显式最终回答和截断拒绝。
 真实模型列表与工具声明可只读探测，执行搜索或生成仍属于付费调用，不纳入自动测试。
 
 - 为 requests 设置连接和读取 timeout。

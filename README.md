@@ -107,9 +107,10 @@ BOT_TIMEZONE=Asia/Shanghai
 
 ### 直接运行
 
-“查一下”使用独立配置 `KIMI_SEARCH_MODEL`（默认 `kimi-k2.7-code`）和Kimi官方
-Formula搜索工具；不改变 `.gpt` 或每日新闻的模型。失败仍免扣费/冷却。
-Kimi不可用时自动回退 `deepseek-flash` 和现有本地搜索方案；两条链路都失败才返回错误。
+“查一下”固定使用 `deepseek-flash` 和 [DeepSeek官方Search API](https://api-docs.deepseek.com/zh-cn/api/search/)，
+模型与搜索均复用 `GPTSecretDeepseek`（兼容回退 `GPTSecret`），不改变 `.gpt` 或每日新闻的路由。
+暂时停用Kimi、SerpApi、DuckDuckGo、360及自建搜索回退；失败免扣费/冷却。
+当前仅通过离线fixture/mock验证，尚未实测真实付费搜索/生成及QQ投递。
 
 每日新闻：每天 10 点（`BOT_TIMEZONE`，默认北京时间）向 `CHAT_GROUP_LIST` 推送
 首次生成时刻前24小时的新闻，经AI精选默认15条，顶部显示生成时间，正文只有标题和简述。
