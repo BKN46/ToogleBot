@@ -183,6 +183,12 @@ scheduler 已由 `bot.py` 显式 start/stop；programmable 分支使用 `Group` 
 校验；旧 `news.ceic.ac.cn/speedsearch.html` 已返回 405，不得恢复。解析有 mock schema
 测试，官方 JSON 另做只读实时 smoke；实时站点可用性不由单元测试保证。
 
+当前地震自动推送仅包含最近 30 分钟内震级大于或等于 6.0 的记录；低于 6.0 级不推送，
+筛选后为空时保持静默。每条记录优先使用官方 `id` 去重；缺少 ID 时使用时间、震级、
+地点及经纬度等字段生成指纹，已发送记录保存到 `data/earthquake_seen.json` 并跨服务重启
+保留 30 天。2026-10-25 回归用例覆盖低于阈值、恰好 6.0 级、高于阈值、重复轮询、
+重启恢复及全部被过滤的情况；未进行真实 QQ 消息发送验收。
+
 ## 后处理
 
 `adapter/post_process.py` 在每条消息进入 worker 时：

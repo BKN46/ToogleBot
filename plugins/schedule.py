@@ -119,12 +119,18 @@ class ScheduledMonitor(ScheduleModule):
     minute="*/5"
     second=0
     earthquake_url = "https://www.ceic.ac.cn/data/data.json"
+    earthquake_state_path = PROJECT_ROOT / "data" / "earthquake_seen.json"
+    earthquake_state_retention = datetime.timedelta(days=30)
 
     def __init__(self):
         self.last_monitor_time = datetime.datetime.now()
         self._notified_auth_failures: set[str] = set()
+        self._sent_earthquake_keys = self._load_earthquake_state()
+        self._pending_earthquake_keys: list[str] = []
 
     async def ret(self, message_pack: Union[MessagePack, None]):
+        # A failed send may leave pending events; retry them on the next poll.
+        self._pending_earthquake_keys = []
         send_list = self._load_subscriptions()
         enabled_sources = {
             info
@@ -156,13 +162,23 @@ class ScheduledMonitor(ScheduleModule):
         for send_title, send_content in send_infos.items():
             if not send_content:
                 continue
+            earthquake_sent = False
             for group, subscribe_list in send_list.items():
                 if not isinstance(subscribe_list, list):
                     logger.warning("Invalid monitor subscription list for group %s", group)
                     continue
-                for info in subscribe_list:
-                    if isinstance(info, str) and info == send_title:
-                        bot_send_message(int(group), send_content)
+                if send_title not in subscribe_list:
+                    continue
+                queued = bot_send_message(int(group), send_content)
+                if send_title == "earth_quake" and queued:
+                    earthquake_sent = True
+            if (
+                send_title == "earth_quake"
+                and earthquake_sent
+                and self._pending_earthquake_keys
+            ):
+                self._mark_earthquakes_sent(self._pending_earthquake_keys)
+                self._pending_earthquake_keys = []
 
         self.last_monitor_time = datetime.datetime.now()
 
@@ -194,6 +210,83 @@ class ScheduledMonitor(ScheduleModule):
             raise ValueError("monitor_send.json must contain an object")
         return payload
 
+    def _load_earthquake_state(self) -> dict[str, float]:
+        path = self.earthquake_state_path
+        if not path.is_file():
+            return {}
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            sent = payload["sent"]
+            if not isinstance(sent, dict):
+                raise ValueError("sent must be an object")
+        except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError):
+            logger.warning("Invalid earthquake deduplication state: %s", path)
+            return {}
+
+        cutoff = (
+            datetime.datetime.now() - self.earthquake_state_retention
+        ).timestamp()
+        state: dict[str, float] = {}
+        for key, timestamp in sent.items():
+            try:
+                timestamp = float(timestamp)
+            except (TypeError, ValueError):
+                continue
+            if timestamp >= cutoff:
+                state[str(key)] = timestamp
+        return state
+
+    def _save_earthquake_state(self) -> None:
+        path = self.earthquake_state_path
+        temporary_path = path.with_suffix(path.suffix + ".tmp")
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            temporary_path.write_text(
+                json.dumps(
+                    {"version": 1, "sent": self._sent_earthquake_keys},
+                    ensure_ascii=False,
+                    sort_keys=True,
+                ),
+                encoding="utf-8",
+            )
+            temporary_path.replace(path)
+        except OSError:
+            logger.exception("Failed to save earthquake deduplication state")
+
+    def _mark_earthquakes_sent(self, keys: list[str]) -> None:
+        now = datetime.datetime.now().timestamp()
+        cutoff = now - self.earthquake_state_retention.total_seconds()
+        self._sent_earthquake_keys = {
+            key: timestamp
+            for key, timestamp in self._sent_earthquake_keys.items()
+            if timestamp >= cutoff
+        }
+        self._sent_earthquake_keys.update({key: now for key in keys})
+        self._save_earthquake_state()
+
+    @staticmethod
+    def _earthquake_key(item: dict) -> str:
+        event_id = item.get("id")
+        if event_id is not None and str(event_id).strip():
+            return f"id:{event_id}"
+        identity = {
+            field: item.get(field)
+            for field in (
+                "time",
+                "magnitude",
+                "location",
+                "latitude",
+                "longitude",
+                "depth",
+            )
+        }
+        return "fields:" + json.dumps(
+            identity,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+
     def get_save_old_otaku(self):
         res = []
         info = get_save_old_otaku(time_limit=self.last_monitor_time.timestamp())
@@ -223,18 +316,30 @@ class ScheduledMonitor(ScheduleModule):
                 raise ValueError("earthquake response must be a list")
             recent_after = datetime.datetime.now() - datetime.timedelta(minutes=30)
             matched = [
-                item
+                (item, self._earthquake_key(item))
                 for item in data
                 if datetime.datetime.strptime(item["time"], "%Y-%m-%d %H:%M:%S")
                 > recent_after
-                and float(item["magnitude"]) > 4.0
+                and float(item["magnitude"]) >= 6.0
             ]
+            new_matched = []
+            new_keys = []
+            for item, key in matched:
+                if (
+                    key in self._sent_earthquake_keys
+                    or key in self._pending_earthquake_keys
+                    or key in new_keys
+                ):
+                    continue
+                new_matched.append(item)
+                new_keys.append(key)
         except (requests.RequestException, KeyError, TypeError, ValueError):
             logger.exception("Failed to fetch earthquake monitor data")
             return None
+        self._pending_earthquake_keys = new_keys
         messages = [
             f"{item['magnitude']}级地震，发生在{item['time']}，位于{item['location']}"
-            for item in matched
+            for item in new_matched
         ]
         if messages:
             return MessageChain.plain(

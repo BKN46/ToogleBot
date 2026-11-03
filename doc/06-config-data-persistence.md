@@ -193,6 +193,7 @@ SerpApi 协议于 2026-09-03 按官方错误码文档复核；额度耗尽降级
 | `data/setu_record*.json` | 图片贡献排行。 |
 | `data/send_api.json` | 主动发送 API 的密钥、群和 qpm。敏感。 |
 | `data/serpapi_quota.json` | SerpApi 月度额度耗尽的临时状态；记录禁用截止时间，不含 API key。 |
+| `data/earthquake_seen.json` | 地震自动推送的已发送事件指纹和时间戳；仅保留最近 30 天，用于跨轮询和服务重启去重。 |
 | `data/lottery/`、图片目录 | 抽奖和群图片功能。 |
 | `data/dnd5e/`、`wt/`、`pcbench/`、`milkywayidle/` 等 | 插件离线数据和缓存。 |
 

@@ -304,13 +304,15 @@ class SchedulerFlowTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_earthquake_monitor_uses_current_official_schema(self):
         monitor = ScheduledMonitor()
+        monitor.earthquake_state_path = Path(self.tempdir.name) / "earthquake_seen.json"
         response = Mock()
         response.json.return_value = [
             {
-                "magnitude": 4.8,
+                "magnitude": magnitude,
                 "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "location": "测试区域",
             }
+            for magnitude in (4.8, "5.9", "6.0", 6.1)
         ]
 
         with patch.object(
@@ -326,8 +328,48 @@ class SchedulerFlowTest(unittest.IsolatedAsyncioTestCase):
             headers={"User-Agent": "ToogleBot earthquake monitor"},
             timeout=(5, 15),
         )
-        self.assertIn("4.8级地震", result.asDisplay())
+        self.assertNotIn("4.8级地震", result.asDisplay())
+        self.assertNotIn("5.9级地震", result.asDisplay())
+        self.assertIn("6.0级地震", result.asDisplay())
+        self.assertIn("6.1级地震", result.asDisplay())
         self.assertIn("测试区域", result.asDisplay())
+
+        with patch.object(schedule_plugins.requests, "get", return_value=response):
+            self.assertIsNone(monitor.get_earth_quake())
+
+        response.json.return_value = response.json.return_value[:2]
+        with patch.object(schedule_plugins.requests, "get", return_value=response):
+            self.assertIsNone(monitor.get_earth_quake())
+
+    async def test_earthquake_monitor_sends_each_event_once_and_restores_state(self):
+        state_path = Path(self.tempdir.name) / "earthquake_seen.json"
+        event = {
+            "id": "CC.fixture.1",
+            "magnitude": 6.2,
+            "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "location": "测试区域",
+        }
+        response = Mock()
+        response.json.return_value = [event]
+
+        with patch.object(ScheduledMonitor, "earthquake_state_path", state_path):
+            monitor = ScheduledMonitor()
+            with patch.object(monitor, "_load_subscriptions", return_value={"300": ["earth_quake", "earth_quake"]}), patch(
+                "plugins.schedule.requests.get", return_value=response
+            ), patch.object(schedule_plugins, "bot_send_message", return_value=True) as send:
+                await monitor.ret(None)
+                await monitor.ret(None)
+
+        send.assert_called_once()
+        self.assertTrue(state_path.is_file())
+
+        with patch.object(ScheduledMonitor, "earthquake_state_path", state_path):
+            restored = ScheduledMonitor()
+            with patch.object(restored, "_load_subscriptions", return_value={"300": ["earth_quake"]}), patch(
+                "plugins.schedule.requests.get", return_value=response
+            ), patch.object(schedule_plugins, "bot_send_message") as restored_send:
+                await restored.ret(None)
+        restored_send.assert_not_called()
 
     async def test_weibo_auth_failure_notifies_once_until_recovered(self):
         monitor = ScheduledMonitor()
