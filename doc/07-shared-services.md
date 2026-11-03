@@ -247,6 +247,12 @@ API 安全要求：
 
 ## 图片、视频和识别
 
+战雷胜率命令在 2026-10-27 将数据抓取、CSV 解析和 Pillow 绘图整体放入
+`asyncio.to_thread()`，当前国家胜率网络请求具备连接/读取超时（5/15 秒），依次尝试
+两个 GitHub 镜像及 raw 直连；流式读取按块检查 45 秒期限和 120 MiB 大小上限。
+避免数据站不可达时阻塞 WebSocket event loop；`thread_limit=True` 本身不承担线程调度。
+所有源失败可用最近 7 天内的有效缓存，数据源、缓存和实测见 05、06。
+
 当前实现（2026-10-17）：“查一下”直接使用 `deepseek-flash`，复用DeepSeek模型
 profile和现有密钥，搜索固定走 `POST https://api.deepseek.com/v1/tools/search`。
 `get_web_search()` 的标准function tool调用 `tools.web_search.search_deepseek()`，

@@ -1,4 +1,7 @@
+import asyncio
 import re
+
+import requests
 
 from toogle.message import Image
 from toogle.message import MessageChain, Plain
@@ -7,6 +10,7 @@ from plugins.thunderskill.get_wt_data import get_line_cost
 from plugins.thunderskill.main import get_player_recent_data
 from plugins.thunderskill.datamine import search, get_missile_detail
 from plugins.thunderskill.get_winrate import draw_winrate_n
+from toogle.logger import logger
 from toogle.utils import list2img
 
 
@@ -72,5 +76,14 @@ class WTWinRate(MessageHandler):
     readme = "战雷历史模式国家胜率查询"
 
     async def ret(self, message: MessagePack) -> MessageChain:
-        pic = draw_winrate_n()
+        try:
+            pic = await asyncio.to_thread(draw_winrate_n)
+        except (requests.RequestException, ValueError, OSError):
+            logger.exception("War Thunder win-rate query failed")
+            return MessageChain.plain(
+                "战雷胜率数据源暂时不可用，请稍后重试。",
+                quote=message.as_quote(),
+                no_charge=True,
+                no_interval=True,
+            )
         return MessageChain.create([Image(bytes=pic)])

@@ -1,0 +1,6 @@
+nation,cls,date,rb_br,rb_lower_br,rb_battles_sum,rb_battles_mean,rb_win_rate,rb_air_frags_per_battle,rb_air_frags_per_death,rb_ground_frags_per_battle,rb_ground_frags_per_death
+Germany,Ground_vehicles,2026-10-26,1.0 ~ 2.0,1.0,734.0,53.18,55.69,0.03,0.04,3.14,2.91
+USA,Ground_vehicles,2026-10-26,1.0 ~ 2.0,1.0,900.0,50,48.25,0.03,0.04,2.5,2.0
+Germany,Ground_vehicles,2026-10-26,2.0 ~ 3.0,2.0,600.0,40,51.5,0.03,0.04,3.0,2.5
+Germany,Aviation,2026-10-26,1.0 ~ 2.0,1.0,1200.0,60,60.0,1,1,0,0
+Germany,Ground_vehicles,2026-10-25,1.0 ~ 2.0,1.0,700.0,50,54.0,0.03,0.04,3,2

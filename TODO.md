@@ -397,6 +397,16 @@ failed=0；帮助页 smoke 通过。缺可选依赖/数据的聚合模块改为�
 
 ### 14. 安全和阻塞 I/O
 
+- [x] 2026-10-27 战雷胜率改为同项目 GitHub raw 数据，修复旧域名连接超时；抓取/绘图
+  移出 event loop，设置 HTTP 超时、CSV/缓存校验及动态画布。`tests.test_wt_winrate`
+  6 项通过；临时目录真实请求生成 2026-10-26 的 10 国/42 BR 区间图片，未发送 QQ 消息。
+  本轮全量 242 项中 241 项通过，既有 NapCat ACL 启动器测试失败，未改动该流程。
+  同日 13:40 实际查询仍遇 GitHub raw 读取超时；已补 GHFast → GH-Proxy → 直连回退，
+  流式下载期限/大小限制和 7 天有效缓存兜底。9 项胜率测试通过，两个镜像完整下载哈希
+  一致，命令在临时目录连续绘图及模拟断网缓存恢复通过；不以该 smoke 声称长期可用。
+  镜像版全量 245 项中 244 项通过（仍仅既有 NapCat ACL 用例失败）；同日 14:40 重启
+  bot 后 active/running、registry failed=0、NapCat WebSocket connected。
+
 - [ ] 管理 HTTP client 统一 timeout、状态/retcode 校验、重试边界和脱敏日志。HTTP 状态、
   OneBot `status/retcode` 及群文件 120 秒 timeout 已统一，重试和结构化脱敏日志仍待补。
 - [ ] 审计同步 requests、模型推理和 CPU 渲染，不阻塞主 event loop。

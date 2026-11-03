@@ -123,6 +123,13 @@ mock Formula声明/执行/回答，验证思考上下文保留、无搜索证据
 `stop`过程回复继续查询、10次模型请求/10次搜索上限、显式最终回答和截断拒绝。
 真实模型列表与工具声明可只读探测，执行搜索或生成仍属于付费调用，不纳入自动测试。
 
+战雷胜率回归：`uv run python -W error::ResourceWarning -m unittest tests.test_wt_winrate`。
+使用 `tests/fixtures/wt_winrate.csv` 和 mock HTTP，覆盖上游 URL/超时、当前日期缓存复用、
+错误响应不覆盖缓存、CSV 校验、跨工作目录绘图、画布高度和群聊/私聊工作线程执行。
+同时覆盖 GHFast/GH-Proxy/直连的超时和错误页回退、流式下载期限/大小上限与响应关闭，
+以及断网使用近期有效缓存、拒绝损坏/过期缓存。
+真实数据源 smoke 需将模块 `save_path` 指向临时目录，不写生产缓存或发送 QQ 消息。
+
 - 为 requests 设置连接和读取 timeout。
 - 网络获取与 HTML/JSON 解析拆开。
 - 保存不含 Cookie/token/用户信息的响应 fixture。

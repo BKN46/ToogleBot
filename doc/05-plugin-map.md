@@ -31,6 +31,36 @@
 
 ## 当前加载审计
 
+2026-10-27 修复“战雷胜率”/`.wtwr`：本机旧 `controlnet.space` 数据站连接超时，改为
+同一 [WT Data Project 上游仓库](https://github.com/ControlNet/wt-data-project.data) 的
+GitHub raw 元数据及 `rb_ranks_1.csv`，保留地面历史模式、1.0 BR 区间的原统计口径。
+当前元数据和国家胜率 CSV 优先通过 `ghfast.top` 镜像获取，失败后依次切换
+`gh-proxy.com` 镜像、GitHub raw 直连；超时、错误页和 CSV 校验失败都会触发切换。
+请求设置连接/读取超时（5/15 秒），流式读取按块检查 45 秒期限及 120 MiB 大小上限，
+每次尝试都会关闭响应。抓取和绘图通过 `asyncio.to_thread()` 执行；失败时
+返回可见提示并免扣费/冷却。CSV 按列名解析和校验，最新日期没有地面数据时不生成空图。
+图像高度按 BR 行数调整，避免新数据的低 BR 行被固定画布截断。字体和缓存按仓库根定位。
+最后核对：2026-10-27，上游 README 和只读请求确认字段及文件仍有效；临时目录实测
+2026-10-26 数据含 10 国、42 个 BR 区间，生成 1270x2610 PNG，生产缓存未改动。
+`test_wt_winrate.py` 6 项与资源路径 3 项单测通过；全量 242 项中 241 项通过，
+既有 `test_napcat_cache_permissions` 启动器用例失败。未发送真实 QQ 测试消息。
+同日 12:14:59（Asia/Shanghai）重启 `tooglebot.service` 加载修复，随后确认
+active/running、registry failed=0、4 个 worker 已启动及 NapCat WebSocket connected。
+
+同日 13:40 的真实查询仍在 GitHub raw 下载 CSV 阶段触发 30 秒 ReadTimeout，因此补上
+上述镜像回退。两镜像完整下载均为 95,625,700 字节，SHA-256 相同，耗时约 5.35/12.29 秒，
+同轮 GitHub 直连读取超时；不能把此前临时 smoke 成功视为长期直连可用。
+修改后通过实际 `WTWinRate.ret()` 在临时目录连续生成两张 1270x2610 PNG，耗时约
+13.97/7.42 秒；首轮下载、次轮缓存复用，模拟断网仍可恢复 2026-10-26 缓存。
+所有网络源失败时只回退到数据日期在最近 7 天内、校验通过的缓存，图中保留实际日期；
+没有可用缓存则返回失败提示。镜像用法最后核对 2026-10-27：
+[GHFast](https://ghfast.top/)、[GH-Proxy](https://gh-proxy.com/)，并完成本机完整文件只读下载。
+`tests.test_wt_winrate` 当前 9 项通过，覆盖跨镜像失败切换、响应关闭、期限/大小上限、
+近期缓存兜底及损坏/过期缓存拒绝；未发送真实 QQ 测试消息，未修改生产缓存。
+镜像版本全量 245 项中 244 项通过，仍仅既有 NapCat ACL 启动器测试失败；语法编译和
+`git diff --check` 通过。14:40:06（Asia/Shanghai）已重启 `tooglebot.service`，确认
+active/running、registry failed=0、4 个 worker 启动且 NapCat WebSocket connected。
+
 2026-10-20 计算器（表达式以 `=` 结尾）回复统一先将运算结果转换为文本，避免将
 浮点数直接放入 `Plain` 和出站 text 字段。保留 Python 运算得到的小数精度及原有大数
 千分位格式。`tests/test_calculator.py` 覆盖群聊/私聊触发、回复显示和出站文本，包含
